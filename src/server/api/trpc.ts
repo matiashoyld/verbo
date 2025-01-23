@@ -9,11 +9,15 @@
 
 import { getAuth } from "@clerk/nextjs/server";
 import { initTRPC, TRPCError } from "@trpc/server";
-import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { db } from "~/server/db";
+
+interface CreateContextOptions {
+  headers: Headers;
+  auth?: ReturnType<typeof getAuth>;
+}
 
 /**
  * 1. CONTEXT
@@ -33,9 +37,10 @@ import { db } from "~/server/db";
  *
  * @see https://create.t3.gg/en/usage/trpc#-serverapitrpcts
  */
-export const createInnerTRPCContext = (opts: CreateNextContextOptions) => {
+export const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
-    auth: getAuth(opts.req),
+    headers: opts.headers,
+    auth: opts.auth,
     db,
   };
 };
@@ -46,7 +51,7 @@ export const createInnerTRPCContext = (opts: CreateNextContextOptions) => {
  *
  * @see https://trpc.io/docs/context
  */
-export const createTRPCContext = (opts: CreateNextContextOptions) => {
+export const createTRPCContext = (opts: CreateContextOptions) => {
   return createInnerTRPCContext(opts);
 };
 
@@ -97,16 +102,14 @@ export const publicProcedure = t.procedure;
 
 /** Reusable middleware that enforces users are logged in before running the procedure. */
 const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
-  const { userId } = ctx.auth;
-
-  if (!userId) {
+  if (!ctx.auth?.userId) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
   return next({
     ctx: {
       auth: ctx.auth,
-      userId,
+      userId: ctx.auth.userId,
     },
   });
 });
@@ -120,3 +123,5 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+
+export const createCallerFactory = t.createCallerFactory;

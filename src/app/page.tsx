@@ -110,7 +110,7 @@ export default function LandingPage() {
                 Designed for Everyone
               </h2>
               <p className="mt-4 text-lg text-gray-600">
-                Whether you're teaching or learning, Verbo.ai enhances your
+                Whether you&apos;re teaching or learning, Verbo.ai enhances your
                 experience
               </p>
             </div>

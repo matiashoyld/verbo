@@ -1,11 +1,13 @@
 import { currentUser } from "@clerk/nextjs/server";
-
-export type Role = "student" | "professor" | "admin";
+import type { Role } from "./auth-utils";
 
 export async function getUserRole(): Promise<Role> {
   const user = await currentUser();
   return (user?.publicMetadata?.role as Role) ?? "student";
 }
+
+// Re-export Role type for convenience
+export type { Role } from "./auth-utils";
 
 export function canAccess(userRole: Role, requiredRole: Role): boolean {
   const roleHierarchy: Record<Role, number> = {

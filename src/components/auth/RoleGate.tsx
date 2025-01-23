@@ -1,6 +1,8 @@
+"use client";
+
 import { useUser } from "@clerk/nextjs";
 import { type ReactNode } from "react";
-import { type Role, canAccess } from "~/lib/auth";
+import { type Role, canAccess } from "~/lib/auth-utils";
 
 interface RoleGateProps {
   children: ReactNode;
