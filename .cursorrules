@@ -1,0 +1,8 @@
+This is a T3 Stack application with Clerk authentication. The stack is modern and well-integrated, focusing on type-safety and developer experience with the combination of TypeScript, tRPC, and Prisma.
+When working with this codebase, you should:
+
+- Use existing shadcn/ui components rather than installing new UI libraries
+- Leverage tRPC for all API endpoints rather than REST
+- Use Clerk's built-in auth functions rather than adding alternative auth solutions
+- Work with the existing Prisma schema for database operations
+- Follow the established Tailwind CSS patterns for styling
