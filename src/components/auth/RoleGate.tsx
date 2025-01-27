@@ -11,7 +11,7 @@ interface RoleGateProps {
 
 export function RoleGate({ children, allowedRole }: RoleGateProps) {
   const { user } = useUser();
-  const userRole = (user?.publicMetadata?.role as Role) ?? "student";
+  const userRole = (user?.unsafeMetadata?.role as Role) ?? "student";
 
   if (!canAccess(userRole, allowedRole)) {
     return (
