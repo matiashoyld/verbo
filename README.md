@@ -16,8 +16,7 @@ A voice-based reading reflection platform that promotes authentic student engage
 8. [Usage](#usage)  
 9. [Authentication](#authentication)  
 10. [Deployment](#deployment)  
-11. [Additional Considerations](#additional-considerations)  
-12. [License](#license)
+11. [Additional Considerations](#additional-considerations)
 
 ---
 
@@ -86,7 +85,7 @@ verbo.ai is built on the [T3 Stack](https://create.t3.gg/), which combines:
   - [OpenAI Whisper](https://openai.com/research/whisper) – Speech-to-text transcription.  
   - [Vercel AI SDK](https://sdk.vercel.ai/) – Typescript toolkit for AI-based question generation, analytics, etc.  
   - [ffmpeg](https://ffmpeg.org/) – Audio processing and conversion.  
-  - Testing with [Jest](https://jestjs.io/), [React Testing Library](https://testing-library.com/), or [Cypress](https://www.cypress.io/) for E2E.  
+  - Testing with [Vitest](https://vitest.dev/), [React Testing Library](https://testing-library.com/), or [Cypress](https://www.cypress.io/) for E2E.  
   - Hosted on [Vercel](https://vercel.com).
 
 ---
@@ -102,38 +101,37 @@ verbo-ai/
 ├─ .prettierrc # Prettier configuration
 ├─ package.json
 ├─ prisma/
-│ ├─ schema.prisma # Prisma schema for database models
+│  ├─ schema.prisma # Prisma schema for database models
 ├─ src/
-│ ├─ pages/ # Next.js pages
-│ │ ├─ api/
-│ │ │ └─ trpc/ # (If you're exposing tRPC through Next's API routes)
-│ │ ├─ index.tsx # Landing page
-│ │ ├─ dashboard.tsx # Professor's main dashboard
-│ │ ├─ student/
-│ │ │ ├─ index.tsx # Student landing / dashboard
-│ │ │ ├─ responses.tsx # Page for recording/listening to responses
-│ │ │ └─ ...
-│ ├─ server/
-│ │ ├─ trpc/
-│ │ │ ├─ index.ts # tRPC router entry
-│ │ │ ├─ questions.ts # tRPC router for question endpoints
-│ │ │ ├─ readings.ts # tRPC router for reading materials
-│ │ │ └─ users.ts # tRPC router for user management
-│ │ ├─ db.ts # Prisma client instance
-│ ├─ components/ # Reusable UI components
-│ │ ├─ ui/
-│ │ │ ├─ Button.tsx
-│ │ │ ├─ Input.tsx
-│ │ │ ├─ Navbar.tsx
-│ │ │ └─ ...
-│ ├─ lib/ # Utility functions, helpers
-│ │ └─ speechToText.ts # Abstraction for speech-to-text logic
-│ ├─ styles/
-│ │ └─ globals.css # Tailwind CSS imports, global styles
+│  ├─ pages/ # Next.js pages
+│  │  ├─ api/
+│  │  │  └─ trpc/ # (If you're exposing tRPC through Next's API routes)
+│  │  ├─ index.tsx # Landing page
+│  │  ├─ dashboard.tsx # Professor's main dashboard
+│  │  ├─ student/
+│  │  │  ├─ index.tsx # Student landing / dashboard
+│  │  │  ├─ responses.tsx # Page for recording/listening to responses
+│  │  │  └─ ...
+│  ├─ server/
+│  │  ├─ trpc/
+│  │  │  ├─ index.ts # tRPC router entry
+│  │  │  ├─ questions.ts # tRPC router for question endpoints
+│  │  │  ├─ readings.ts # tRPC router for reading materials
+│  │  │  └─ users.ts # tRPC router for user management
+│  │  ├─ db.ts # Prisma client instance
+│  ├─ components/ # Reusable UI components
+│  │  ├─ ui/
+│  │  │  ├─ Button.tsx
+│  │  │  ├─ Input.tsx
+│  │  │  ├─ Navbar.tsx
+│  │  │  └─ ...
+│  ├─ lib/ # Utility functions, helpers
+│  │  └─ speechToText.ts # Abstraction for speech-to-text logic
+│  ├─ styles/
+│  │  └─ globals.css # Tailwind CSS imports, global styles
 ├─ tsconfig.json
 └─ README.md
 ```
-
 
 ---
 
@@ -151,8 +149,8 @@ verbo-ai/
 
 1. **Clone the Repository**  
    ```bash
-   git clone https://github.com/your-username/verbo-ai.git
-   cd verbo-ai
+   git clone https://github.com/matiashoyld/verbo.git
+   cd verbo
    ```
 
 2. **Install Dependencies**  
@@ -164,9 +162,9 @@ verbo-ai/
    Create `.env` and set the necessary values:  
    - `DATABASE_URL` – Connection string to your PostgreSQL database (e.g., from Neon)  
    - `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` – Clerk credentials  
-   - `NEXT_PUBLIC_AI_SDK_KEY` or similar for OpenAI / Vercel AI.  
+   - `NEXT_PUBLIC_AI_SDK_KEY` or similar for OpenAI / Vercel AI  
 
-4. **Set Up the Database**   
+4. **Set Up the Database**  
    - Update your `.env` with the correct `DATABASE_URL`.  
    - Run Prisma migrations:  
      ```bash
@@ -208,7 +206,6 @@ Ensure you have properly set up your Clerk application and environment variables
 
 The app is deployed on [Vercel](https://vercel.com), and you can access the live version at [verbo-alpha.vercel.app](https://verbo-alpha.vercel.app/) (source: [verbo-alpha vercel website](https://verbo-alpha.vercel.app/)).
 
-
 ---
 
 ## Additional Considerations
@@ -232,6 +229,6 @@ The app is deployed on [Vercel](https://vercel.com), and you can access the live
    - Infrastructure compliance with educational data privacy regulations (e.g., FERPA).
 
 5. **Testing**  
-   - Unit and integration tests are performed with [Vitest](https://vitest.dev/)  
-   - UI tests can be written with [React Testing Library](https://testing-library.com/)  
+   - Unit and integration tests are performed with [Vitest](https://vitest.dev/).  
+   - UI tests can be written with [React Testing Library](https://testing-library.com/).  
    - Additional E2E coverage can be added if desired.
