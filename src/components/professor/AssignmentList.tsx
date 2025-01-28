@@ -51,9 +51,6 @@ export function AssignmentList() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Current Assignments</CardTitle>
-            <Button onClick={handleNewAssignment}>
-              <PlusCircle className="mr-2 h-4 w-4" /> New Assignment
-            </Button>
           </CardHeader>
           <CardContent>
             <Table>

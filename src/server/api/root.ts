@@ -3,6 +3,7 @@ import {
   createTRPCRouter,
   publicProcedure,
 } from "~/server/api/trpc";
+import { courseRouter } from "~/server/api/routers/course";
 
 /**
  * This is the primary router for your server.
@@ -13,6 +14,7 @@ export const appRouter = createTRPCRouter({
   healthcheck: publicProcedure.query(() => {
     return { status: "ok" };
   }),
+  course: courseRouter,
 });
 
 // export type definition of API

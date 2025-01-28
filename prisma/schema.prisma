@@ -51,6 +51,7 @@ model User {
     role          String    @default("student")
     accounts      Account[]
     sessions      Session[]
+    courses       Course[]
 }
 
 model VerificationToken {
@@ -59,4 +60,15 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model Course {
+    id        String   @id @default(cuid())
+    name      String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
 }
