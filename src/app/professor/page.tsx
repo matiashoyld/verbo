@@ -8,6 +8,7 @@ import { CourseList } from "~/components/professor/CourseList"
 import { RecentActivity } from "~/components/professor/RecentActivity"
 import { AnalyticsSummary } from "~/components/professor/AnalyticsSummary"
 import { AssignmentList } from "~/components/professor/AssignmentList"
+import { CreateAssignmentDialog } from "~/components/professor/CreateAssignmentDialog"
 
 export function ProfessorDashboard() {
   const [activeTab, setActiveTab] = useState("assignments")
@@ -25,6 +26,10 @@ export function ProfessorDashboard() {
         </TabsList>
 
         <TabsContent value="assignments">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Assignments</h2>
+            <CreateAssignmentDialog />
+          </div>
           <AssignmentList />
         </TabsContent>
 
