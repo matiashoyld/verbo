@@ -33,7 +33,7 @@ export function CourseList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <TableRow key={i}>
                   <TableCell>
                     <Skeleton className="h-4 w-[200px]" />

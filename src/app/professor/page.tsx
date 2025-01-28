@@ -10,7 +10,7 @@ import { AnalyticsSummary } from "~/components/professor/AnalyticsSummary"
 import { AssignmentList } from "~/components/professor/AssignmentList"
 import { CreateAssignmentDialog } from "~/components/professor/CreateAssignmentDialog"
 
-export function ProfessorDashboard() {
+export default function Page() {
   const [activeTab, setActiveTab] = useState("assignments")
 
   return (
@@ -84,14 +84,7 @@ export function ProfessorDashboard() {
         </TabsContent>
 
         <TabsContent value="courses">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Courses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CourseList />
-            </CardContent>
-          </Card>
+          <CourseList />
         </TabsContent>
 
         <TabsContent value="analytics">
@@ -109,6 +102,4 @@ export function ProfessorDashboard() {
     </div>
   )
 }
-
-export default ProfessorDashboard;
 
