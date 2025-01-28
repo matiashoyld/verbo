@@ -6,3 +6,4 @@ When working with this codebase, you should:
 - Use Clerk's built-in auth functions rather than adding alternative auth solutions
 - Work with the existing Prisma schema for database operations
 - Follow the established Tailwind CSS patterns for styling
+- Use the "~" path alias prefix for imports (e.g., "~/components/ui/button") rather than "@" as configured in the project's tsconfig.json and components.json
