@@ -1,20 +1,17 @@
 import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
-import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
-import { PlusCircle, FileText, Clock, Users } from "lucide-react"
+import { FileText, Clock, Users } from "lucide-react"
+
+interface Assignment {
+  id: number;
+  name: string;
+  course: string;
+  dueDate: string;
+}
 
 export function AssignmentList() {
-  const [assignments, setAssignments] = useState([
-    { id: 1, name: "Essay on Hamlet", course: "Introduction to Literature", dueDate: "2023-06-15" },
-    { id: 2, name: "Poetry Analysis", course: "Advanced Poetry Analysis", dueDate: "2023-06-20" },
-    { id: 3, name: "Book Review", course: "Modern American Novels", dueDate: "2023-06-25" },
-  ])
-
-  const handleNewAssignment = () => {
-    // This is where you'd typically open a modal or navigate to a new assignment form
-    console.log("New assignment button clicked")
-  }
+  const [assignments] = useState<Assignment[]>([])
 
   return (
     <div className="space-y-6">

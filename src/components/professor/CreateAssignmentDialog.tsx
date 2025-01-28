@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
-import { Loader2, X, Edit2, Trash2, Upload, File } from "lucide-react"
+import { Loader2, X, Upload, File } from "lucide-react"
 import { PlusCircle } from "lucide-react"
 
 type Question = {
@@ -60,10 +60,6 @@ export function CreateAssignmentDialog() {
     setName("")
     setFiles([])
     setQuestions([])
-  }
-
-  const handleFileRemove = (index: number) => {
-    setFiles(files.filter((_, i) => i !== index))
   }
 
   return (
@@ -149,7 +145,7 @@ export function CreateAssignmentDialog() {
                     className="flex-grow"
                   />
                   <Button variant="ghost" size="icon" onClick={() => handleQuestionDelete(question.id)}>
-                    <Trash2 className="h-4 w-4" />
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}

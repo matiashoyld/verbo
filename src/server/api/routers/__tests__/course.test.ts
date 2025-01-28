@@ -7,6 +7,9 @@ import { mockDeep, type DeepMockProxy } from "vitest-mock-extended"
 import { z } from "zod"
 import type { JwtPayload } from "@clerk/types"
 import type { SignedInAuthObject } from "@clerk/nextjs/server"
+import type { Course } from "@prisma/client"
+import { createTRPCContext } from "../../trpc"
+import { appRouter } from "../../root"
 
 // Mock environment variables
 vi.mock("~/env.js", () => ({
@@ -64,6 +67,29 @@ const createTestRouter = (db: PrismaClient) => {
   return router
 }
 
+// Type-safe mock data
+const mockCourse: Course = {
+  id: "1",
+  name: "Test Course",
+  userId: "user1",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+}
+
+// Mock Prisma client with proper types
+const mockPrisma = {
+  course: {
+    findMany: vi.fn().mockResolvedValue([mockCourse]),
+    create: vi.fn().mockResolvedValue(mockCourse),
+    delete: vi.fn().mockResolvedValue(mockCourse),
+  },
+} as unknown as PrismaClient
+
+// Mock auth object with proper types
+const mockAuth = {
+  userId: "user1",
+} as SignedInAuthObject
+
 describe("course router", () => {
   let db: DeepMockProxy<PrismaClient>
   const userId = "test-user-id"
@@ -72,6 +98,7 @@ describe("course router", () => {
 
   beforeEach(() => {
     db = mockDeep<PrismaClient>()
+    vi.clearAllMocks()
   })
 
   const createCaller = () => {

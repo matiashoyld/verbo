@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react"
 import { CourseList } from "../CourseList"
-import { api } from "~/trpc/react"
-import { expect, vi, describe, it } from "vitest"
+import { api } from "~/utils/api"
+import type { UseTRPCQueryResult } from "@trpc/react-query/shared"
+import type { TRPCClientErrorLike } from "@trpc/client"
+import type { Course } from "@prisma/client"
+import { expect, vi, describe, it, beforeEach } from "vitest"
 
 // Mock the tRPC API
 vi.mock("~/trpc/react", () => ({
@@ -39,16 +42,37 @@ const Wrapper = ({ children }: { children: React.ReactNode }) => {
   return <div>{children}</div>
 }
 
+type CourseQueryResult = UseTRPCQueryResult<Course[], TRPCClientErrorLike<unknown>>
+
+const mockCourseData: Course[] = [
+  {
+    id: "1",
+    name: "Test Course 1",
+    userId: "user1",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+]
+
+const mockQueryResult: CourseQueryResult = {
+  data: mockCourseData,
+  isLoading: false,
+  error: null,
+  isError: false,
+  isFetching: false,
+  refetch: vi.fn(),
+} as CourseQueryResult
+
 describe("CourseList", () => {
+  beforeEach(() => {
+    vi.mocked(api.course.getAll.useQuery).mockReturnValue(mockQueryResult)
+  })
+
   it("shows loading state initially", () => {
     vi.mocked(api.course.getAll.useQuery).mockReturnValue({
-      data: undefined,
+      ...mockQueryResult,
       isLoading: true,
-      error: null,
-      isError: false,
-      isFetching: true,
-      refetch: vi.fn(),
-    } as any)
+    })
 
     render(<CourseList />, { wrapper: Wrapper })
     
@@ -74,36 +98,15 @@ describe("CourseList", () => {
   })
 
   it("renders course list when courses exist", () => {
-    const mockCourses = [
-      {
-        id: "1",
-        name: "Introduction to Literature",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: "user1",
-      },
-      {
-        id: "2",
-        name: "Advanced Poetry",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: "user1",
-      },
-    ]
-
     vi.mocked(api.course.getAll.useQuery).mockReturnValue({
-      data: mockCourses,
+      data: mockCourseData,
       isLoading: false,
       error: null,
-      isError: false,
-      isFetching: false,
-      refetch: vi.fn(),
-    } as any)
+    } as CourseQueryResult)
 
     render(<CourseList />, { wrapper: Wrapper })
     
     expect(screen.getByText("Your Courses")).toBeInTheDocument()
-    expect(screen.getByText("Introduction to Literature")).toBeInTheDocument()
-    expect(screen.getByText("Advanced Poetry")).toBeInTheDocument()
+    expect(screen.getByText("Test Course 1")).toBeInTheDocument()
   })
 }) 
