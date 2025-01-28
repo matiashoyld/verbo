@@ -7,3 +7,8 @@ When working with this codebase, you should:
 - Work with the existing Prisma schema for database operations
 - Follow the established Tailwind CSS patterns for styling
 - Use the "~" path alias prefix for imports (e.g., "~/components/ui/button") rather than "@" as configured in the project's tsconfig.json and components.json
+- When creating test files, you should create it following the common T3 Stack and Next.js testing conventions, which is:
+  - Tests are co-located with the code they're testing
+  - Tests for app-wide functionality (like auth) go in src/app/__tests__/
+  - Component-specific tests go in __tests__ directories next to the components
+  - API/tRPC tests go in __tests__ directories next to their routers to co-locate tests with the code they're testing.
