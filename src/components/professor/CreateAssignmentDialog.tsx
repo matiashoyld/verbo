@@ -7,6 +7,19 @@ import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { Loader2, X, Upload, File } from "lucide-react"
 import { PlusCircle } from "lucide-react"
+import { api } from "~/utils/api"
+import { useToast } from "~/hooks/use-toast"
+import { useParams } from "next/navigation"
+import { type TRPCClientErrorLike } from "@trpc/client"
+import { type AppRouter } from "~/server/api/root"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select"
+import { Textarea } from "~/components/ui/textarea"
 
 type Question = {
   id: string
@@ -14,34 +27,170 @@ type Question = {
 }
 
 export function CreateAssignmentDialog() {
+  const { toast } = useToast()
   const [isOpen, setIsOpen] = useState(false)
   const [step, setStep] = useState(1)
   const [name, setName] = useState("")
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("")
   const [files, setFiles] = useState<File[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [questions, setQuestions] = useState<Question[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles(Array.from(e.target.files))
-    }
-  }
+  // Fetch courses
+  const { data: courses, isLoading: isLoadingCourses } = api.course.getAll.useQuery()
+  const utils = api.useUtils()
+
+  const generateQuestions = api.assignment.generateQuestions.useMutation({
+    onSuccess: (data: Question[]) => {
+      setQuestions(data)
+      setIsProcessing(false)
+      setStep(2)
+    },
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      })
+      setIsProcessing(false)
+    },
+  })
+
+  const createAssignment = api.assignment.create.useMutation({
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Assignment created successfully",
+      })
+      // Invalidate the assignments query to trigger a refetch
+      void utils.assignment.getAll.invalidate()
+      setIsOpen(false)
+      setStep(1)
+      setName("")
+      setSelectedCourseId("")
+      setFiles([])
+      setQuestions([])
+    },
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      })
+    },
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!selectedCourseId) {
+      toast({
+        title: "Error",
+        description: "Please select a course",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsProcessing(true)
-    // Simulate file processing and question generation
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-    setQuestions([
-      { id: "1", text: "What is the main theme of the uploaded document?" },
-      { id: "2", text: "Describe the key arguments presented in the text." },
-      { id: "3", text: "How does the author support their thesis?" },
-      { id: "4", text: "What are the potential counterarguments to the main points?" },
-      { id: "5", text: "Summarize the conclusion and its effectiveness." },
-    ])
-    setIsProcessing(false)
-    setStep(2)
+
+    try {
+      const file = files[0] // For now, just handle the first file
+      if (!file) {
+        toast({
+          title: "Error",
+          description: "Please select a file",
+          variant: "destructive",
+        })
+        setIsProcessing(false)
+        return
+      }
+
+      const fileContent = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          if (!reader.result) {
+            reject(new Error("Failed to read file"))
+            return
+          }
+          if (typeof reader.result !== "string") {
+            reject(new Error("Invalid file content"))
+            return
+          }
+          const base64Content = reader.result.split(",")[1]
+          if (!base64Content) {
+            reject(new Error("Invalid base64 content"))
+            return
+          }
+          resolve(base64Content)
+        }
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      await generateQuestions.mutateAsync({
+        content: fileContent,
+        mimeType: file.type,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process files",
+        variant: "destructive",
+      })
+      setIsProcessing(false)
+    }
+  }
+
+  const handleCreate = async () => {
+    if (!selectedCourseId) {
+      toast({
+        title: "Error",
+        description: "Course ID is required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const file = files[0] // For now, just handle the first file
+    if (!file) {
+      toast({
+        title: "Error",
+        description: "Please select a file",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const fileContent = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (!reader.result) {
+          reject(new Error("Failed to read file"))
+          return
+        }
+        if (typeof reader.result !== "string") {
+          reject(new Error("Invalid file content"))
+          return
+        }
+        const base64Content = reader.result.split(",")[1]
+        if (!base64Content) {
+          reject(new Error("Invalid base64 content"))
+          return
+        }
+        resolve(base64Content)
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+
+    await createAssignment.mutateAsync({
+      name,
+      courseId: selectedCourseId,
+      content: fileContent,
+      questions,
+    })
   }
 
   const handleQuestionEdit = (id: string, newText: string) => {
@@ -52,14 +201,15 @@ export function CreateAssignmentDialog() {
     setQuestions(questions.filter((q) => q.id !== id))
   }
 
-  const handleCreate = () => {
-    // Here you would typically send the data to your backend
-    console.log("Creating assignment:", { name, files, questions })
-    setIsOpen(false)
-    setStep(1)
-    setName("")
-    setFiles([])
-    setQuestions([])
+  const handleAddQuestion = () => {
+    const newId = (questions.length + 1).toString()
+    setQuestions([
+      ...questions,
+      {
+        id: newId,
+        text: "",
+      },
+    ])
   }
 
   return (
@@ -75,6 +225,35 @@ export function CreateAssignmentDialog() {
         </DialogHeader>
         {step === 1 && (
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="course">Course</Label>
+              <Select
+                value={selectedCourseId}
+                onValueChange={setSelectedCourseId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a course" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingCourses ? (
+                    <SelectItem value="loading" disabled>
+                      Loading courses...
+                    </SelectItem>
+                  ) : !courses || courses.length === 0 ? (
+                    <div className="p-2 text-center">
+                      <p className="text-sm text-gray-500">No courses available</p>
+                      <p className="text-xs text-gray-400 mt-1">Please create a course first before creating assignments</p>
+                    </div>
+                  ) : (
+                    courses.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {course.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="name">Assignment Name</Label>
               <Input
@@ -95,8 +274,9 @@ export function CreateAssignmentDialog() {
                   <Input
                     id="files"
                     type="file"
-                    onChange={handleFileChange}
+                    onChange={(e) => e.target.files && setFiles(Array.from(e.target.files))}
                     multiple
+                    accept=".pdf,.doc,.docx,.txt"
                     required
                     className="hidden"
                     ref={fileInputRef}
@@ -122,7 +302,7 @@ export function CreateAssignmentDialog() {
                 </div>
               )}
             </div>
-            <Button type="submit" className="w-full" disabled={isProcessing}>
+            <Button type="submit" className="w-full" disabled={isProcessing || !selectedCourseId}>
               {isProcessing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -136,22 +316,39 @@ export function CreateAssignmentDialog() {
         )}
         {step === 2 && (
           <div className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-4">
               {questions.map((question) => (
-                <div key={question.id} className="flex items-center space-x-2">
-                  <Input
+                <div key={question.id} className="flex items-start space-x-2">
+                  <Textarea
                     value={question.text}
                     onChange={(e) => handleQuestionEdit(question.id, e.target.value)}
-                    className="flex-grow"
+                    className="flex-grow min-h-[80px] max-h-[160px] resize-y"
+                    placeholder="Question text..."
                   />
-                  <Button variant="ghost" size="icon" onClick={() => handleQuestionDelete(question.id)}>
+                  <Button variant="ghost" size="icon" className="mt-1" onClick={() => handleQuestionDelete(question.id)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleAddQuestion}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Question
+              </Button>
             </div>
-            <Button onClick={handleCreate} className="w-full">
-              Create Assignment
+            <Button onClick={handleCreate} className="w-full" disabled={createAssignment.isPending}>
+              {createAssignment.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Assignment"
+              )}
             </Button>
           </div>
         )}

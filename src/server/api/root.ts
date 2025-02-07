@@ -4,6 +4,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { courseRouter } from "~/server/api/routers/course";
+import { assignmentRouter } from "~/server/api/routers/assignment";
 
 /**
  * This is the primary router for your server.
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
     return { status: "ok" };
   }),
   course: courseRouter,
+  assignment: assignmentRouter,
 });
 
 // export type definition of API

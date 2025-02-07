@@ -12,3 +12,8 @@ When working with this codebase, you should:
   - Tests for app-wide functionality (like auth) go in src/app/__tests__/
   - Component-specific tests go in __tests__ directories next to the components
   - API/tRPC tests go in __tests__ directories next to their routers to co-locate tests with the code they're testing.
+
+AI Models:
+- The models that I use are:
+  - Google Gemini 2.0 Flash (gemini-2.0-flash-lite-preview-02-05)
+  - OpenAI GPT-4o-mini (gpt-4o-mini)
