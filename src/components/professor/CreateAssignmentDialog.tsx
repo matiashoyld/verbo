@@ -388,8 +388,8 @@ export function CreateAssignmentDialog() {
                   <Textarea
                     value={question.text}
                     onChange={(e) => handleQuestionEdit(question.id, e.target.value)}
-                    className="flex-grow min-h-[80px] max-h-[160px] resize-y"
-                    placeholder="Question text..."
+                    className="flex-grow min-h-[50px] max-h-[100px] resize-y"
+                    placeholder="Write your question here..."
                   />
                   <Button variant="ghost" size="icon" className="mt-1" onClick={() => handleQuestionDelete(question.id)}>
                     <X className="h-4 w-4" />
