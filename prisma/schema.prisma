@@ -78,6 +78,7 @@ model Assignment {
     id          String     @id @default(cuid())
     name        String
     content     String     @db.Text
+    summary     String     @db.Text // Detailed summary of the content
     courseId    String
     course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
     questions   Question[]

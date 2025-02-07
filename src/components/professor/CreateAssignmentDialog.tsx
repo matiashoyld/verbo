@@ -35,11 +35,37 @@ export function CreateAssignmentDialog() {
   const [files, setFiles] = useState<File[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [questions, setQuestions] = useState<Question[]>([])
+  const [summary, setSummary] = useState<string>("")
+  const [isSummaryGenerating, setIsSummaryGenerating] = useState(false)
+  const [isCreatingAssignment, setIsCreatingAssignment] = useState(false)
+  const [pendingSummary, setPendingSummary] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch courses
   const { data: courses, isLoading: isLoadingCourses } = api.course.getAll.useQuery()
   const utils = api.useUtils()
+
+  const generateSummary = api.assignment.generateSummary.useMutation({
+    onSuccess: (data) => {
+      setPendingSummary(data.summary)
+      setIsSummaryGenerating(false)
+      
+      // If we're in the process of creating an assignment, try to create it now
+      if (isCreatingAssignment) {
+        void handleFinalCreate(data.summary)
+      }
+    },
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
+      console.error("Failed to generate summary:", error)
+      setIsSummaryGenerating(false)
+      setPendingSummary("No summary available for this assignment.")
+      
+      // If we're in the process of creating an assignment, try to create it now
+      if (isCreatingAssignment) {
+        void handleFinalCreate("No summary available for this assignment.")
+      }
+    },
+  })
 
   const generateQuestions = api.assignment.generateQuestions.useMutation({
     onSuccess: (data: Question[]) => {
@@ -63,7 +89,6 @@ export function CreateAssignmentDialog() {
         title: "Success",
         description: "Assignment created successfully",
       })
-      // Invalidate the assignments query to trigger a refetch
       void utils.assignment.getAll.invalidate()
       setIsOpen(false)
       setStep(1)
@@ -71,6 +96,8 @@ export function CreateAssignmentDialog() {
       setSelectedCourseId("")
       setFiles([])
       setQuestions([])
+      setSummary("")
+      setIsCreatingAssignment(false)
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast({
@@ -78,6 +105,7 @@ export function CreateAssignmentDialog() {
         description: error.message,
         variant: "destructive",
       })
+      setIsCreatingAssignment(false)
     },
   })
 
@@ -96,7 +124,7 @@ export function CreateAssignmentDialog() {
     setIsProcessing(true)
 
     try {
-      const file = files[0] // For now, just handle the first file
+      const file = files[0]
       if (!file) {
         toast({
           title: "Error",
@@ -129,10 +157,19 @@ export function CreateAssignmentDialog() {
         reader.readAsDataURL(file)
       })
 
-      await generateQuestions.mutateAsync({
-        content: fileContent,
-        mimeType: file.type,
-      })
+      // Start both operations in parallel
+      setIsSummaryGenerating(true)
+      await Promise.all([
+        generateQuestions.mutateAsync({
+          content: fileContent,
+          mimeType: file.type,
+        }),
+        generateSummary.mutateAsync({
+          content: fileContent,
+          mimeType: file.type,
+          questions: [], // Empty array since questions aren't generated yet
+        }),
+      ])
     } catch (error) {
       toast({
         title: "Error",
@@ -140,6 +177,54 @@ export function CreateAssignmentDialog() {
         variant: "destructive",
       })
       setIsProcessing(false)
+    }
+  }
+
+  const handleFinalCreate = async (summaryToUse?: string) => {
+    const file = files[0]
+    if (!file) return
+
+    try {
+      const fileContent = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          if (!reader.result) {
+            reject(new Error("Failed to read file"))
+            return
+          }
+          if (typeof reader.result !== "string") {
+            reject(new Error("Invalid file content"))
+            return
+          }
+          const base64Content = reader.result.split(",")[1]
+          if (!base64Content) {
+            reject(new Error("Invalid base64 content"))
+            return
+          }
+          resolve(base64Content)
+        }
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      // Use the provided summary or the pending one
+      const finalSummary = summaryToUse ?? pendingSummary ?? "No summary available for this assignment."
+
+      await createAssignment.mutateAsync({
+        name,
+        courseId: selectedCourseId,
+        content: fileContent,
+        questions,
+        summary: finalSummary,
+      })
+    } catch (error) {
+      console.error("Error creating assignment:", error)
+      toast({
+        title: "Error",
+        description: "Failed to create assignment",
+        variant: "destructive",
+      })
+      setIsCreatingAssignment(false)
     }
   }
 
@@ -153,7 +238,7 @@ export function CreateAssignmentDialog() {
       return
     }
 
-    const file = files[0] // For now, just handle the first file
+    const file = files[0]
     if (!file) {
       toast({
         title: "Error",
@@ -163,34 +248,14 @@ export function CreateAssignmentDialog() {
       return
     }
 
-    const fileContent = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        if (!reader.result) {
-          reject(new Error("Failed to read file"))
-          return
-        }
-        if (typeof reader.result !== "string") {
-          reject(new Error("Invalid file content"))
-          return
-        }
-        const base64Content = reader.result.split(",")[1]
-        if (!base64Content) {
-          reject(new Error("Invalid base64 content"))
-          return
-        }
-        resolve(base64Content)
-      }
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
+    setIsCreatingAssignment(true)
 
-    await createAssignment.mutateAsync({
-      name,
-      courseId: selectedCourseId,
-      content: fileContent,
-      questions,
-    })
+    // If summary is already available, create the assignment immediately
+    if (!isSummaryGenerating && pendingSummary) {
+      await handleFinalCreate(pendingSummary)
+    }
+    // Otherwise, wait for the summary to be ready
+    // The assignment will be created in the generateSummary.onSuccess callback
   }
 
   const handleQuestionEdit = (id: string, newText: string) => {
@@ -213,7 +278,12 @@ export function CreateAssignmentDialog() {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Prevent closing the dialog while creating the assignment
+      if (!isCreatingAssignment) {
+        setIsOpen(open)
+      }
+    }}>
       <DialogTrigger asChild>
         <Button onClick={() => setIsOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" /> New Assignment
@@ -340,11 +410,15 @@ export function CreateAssignmentDialog() {
                 Add Question
               </Button>
             </div>
-            <Button onClick={handleCreate} className="w-full" disabled={createAssignment.isPending}>
-              {createAssignment.isPending ? (
+            <Button 
+              onClick={handleCreate} 
+              className="w-full" 
+              disabled={createAssignment.isPending || isCreatingAssignment}
+            >
+              {createAssignment.isPending || isCreatingAssignment ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  Creating Assignment...
                 </>
               ) : (
                 "Create Assignment"

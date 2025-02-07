@@ -20,34 +20,32 @@ export const assignmentRouter = createTRPCRouter({
         name: z.string(),
         courseId: z.string(),
         content: z.string(),
-        questions: z.array(z.object({
-          id: z.string(),
-          text: z.string(),
-        })),
+        questions: z.array(
+          z.object({
+            id: z.string(),
+            text: z.string(),
+          }),
+        ),
+        summary: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Create the assignment and its questions in a transaction
-      return ctx.db.$transaction(async (tx) => {
-        // First create the assignment
-        const assignment = await tx.assignment.create({
-          data: {
-            name: input.name,
-            courseId: input.courseId,
-            content: input.content,
-            questions: {
-              create: input.questions.map(q => ({
-                text: q.text,
-              })),
-            },
+      // Create the assignment with the summary
+      const assignment = await ctx.db.assignment.create({
+        data: {
+          name: input.name,
+          courseId: input.courseId,
+          content: input.content,
+          summary: input.summary,
+          questions: {
+            create: input.questions.map((q) => ({
+              text: q.text,
+            })),
           },
-          include: {
-            questions: true,
-          },
-        });
-
-        return assignment;
+        },
       });
+
+      return assignment;
     }),
 
   generateQuestions: protectedProcedure
@@ -150,6 +148,58 @@ Requirements:
           throw new Error(`Failed to generate questions: ${error.message}`);
         }
         throw new Error("Failed to generate questions");
+      }
+    }),
+
+  generateSummary: protectedProcedure
+    .input(
+      z.object({
+        content: z.string(),
+        mimeType: z.string(),
+        questions: z.array(z.object({
+          id: z.string(),
+          text: z.string(),
+        })),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const { text } = await generateText({
+          model,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: `You are a teaching assistant analyzing a document. Create a detailed summary in markdown format that includes:
+
+1. Main points and key concepts
+2. Important details and findings
+3. Methodology (if applicable)
+4. Conclusions and implications
+5. Answers to the following questions:
+${input.questions.map(q => `- ${q.text}`).join('\n')}
+
+IMPORTANT: Your response must be in markdown format and should be comprehensive enough to be used for future question generation while being more concise than the original document.`,
+                },
+                {
+                  type: "file",
+                  data: Buffer.from(input.content, "base64"),
+                  mimeType: input.mimeType,
+                },
+              ],
+            },
+          ],
+        });
+
+        return { summary: text };
+      } catch (error) {
+        console.error("Error in generateSummary:", error);
+        if (error instanceof Error) {
+          throw new Error(`Failed to generate summary: ${error.message}`);
+        }
+        throw new Error("Failed to generate summary");
       }
     }),
 
