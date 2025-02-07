@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
+import { PromptStore } from "~/lib/prompts";
 
 // The API key is read from GOOGLE_GENERATIVE_AI_API_KEY environment variable by default
 const model = google("gemini-2.0-flash-lite-preview-02-05", {
@@ -60,6 +61,7 @@ export const assignmentRouter = createTRPCRouter({
       z.object({
         content: z.string(),
         mimeType: z.string(),
+        numberOfQuestions: z.number().min(1).default(3),
       }),
     )
     .mutation(async ({ input }) => {
@@ -74,30 +76,7 @@ export const assignmentRouter = createTRPCRouter({
               content: [
                 {
                   type: "text",
-                  text: `You are a teaching assistant creating questions based on a document. Create exactly 3 thought-provoking questions that test understanding of key concepts.
-
-IMPORTANT: Your response must be ONLY a JSON object in this exact format, with no additional text or explanation:
-
-{
-  "questions": [
-    {
-      "id": "1",
-      "text": "First question here?"
-    },
-    {
-      "id": "2",
-      "text": "Second question here?"
-    }
-  ]
-}
-
-Requirements:
-1. Response must be valid JSON
-2. Must have exactly 3 questions
-3. Each question must have "id" (string) and "text" (string)
-4. No additional text or explanation outside the JSON
-5. Questions should be thought-provoking and test understanding
-6. Focus on key concepts from the document`,
+                  text: PromptStore.getQuestionGenerationPrompt(input.numberOfQuestions),
                 },
                 {
                   type: "file",
@@ -151,9 +130,9 @@ Requirements:
         }
 
         const questions = parsedResponse.questions;
-        if (questions.length !== 3) {
+        if (questions.length !== input.numberOfQuestions) {
           console.error("Wrong number of questions:", questions.length);
-          throw new Error("Expected 3 questions but got " + questions.length);
+          throw new Error(`Expected ${input.numberOfQuestions} questions but got ${questions.length}`);
         }
 
         return questions;
@@ -187,16 +166,7 @@ Requirements:
               content: [
                 {
                   type: "text",
-                  text: `You are a teaching assistant analyzing a document. Create a detailed summary in markdown format that includes:
-
-1. Main points and key concepts
-2. Important details and findings
-3. Methodology (if applicable)
-4. Conclusions and implications
-5. Answers to the following questions:
-${input.questions.map(q => `- ${q.text}`).join('\n')}
-
-IMPORTANT: Your response must be in markdown format and should be comprehensive enough to be used for future question generation while being more concise than the original document.`,
+                  text: PromptStore.getSummaryGenerationPrompt(input.questions),
                 },
                 {
                   type: "file",
