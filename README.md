@@ -1,22 +1,28 @@
 # verbo.ai
 
+![Verbo.ai Banner](/public/images/verbo-banner.png)
+
+(You can play with the app [here](https://verbo-alpha.vercel.app/))
+
 A voice-based reading reflection platform that promotes authentic student engagement through spoken responses to reading assignments. Professors can upload reading materials, create or customize comprehension questions, and receive valuable insights into student performance through automated transcription, analytics, and feedback tools. By focusing on spoken responses instead of written submissions, verbo.ai helps mitigate the issue of AI-generated text content and restores genuine learning interactions.
 
 ---
 
 ## Table of Contents
 
-1. [Introduction](#introduction)  
-2. [Core Objectives](#core-objectives)  
-3. [Features and Use Cases](#features-and-use-cases)  
-4. [Tech Stack](#tech-stack)  
-5. [Folder Structure](#folder-structure)  
-6. [Prerequisites](#prerequisites)  
-7. [Getting Started](#getting-started)  
-8. [Usage](#usage)  
-9. [Authentication](#authentication)  
-10. [Deployment](#deployment)  
-11. [Additional Considerations](#additional-considerations)
+- [verbo.ai](#verboai)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Core Objectives](#core-objectives)
+  - [Features and Use Cases](#features-and-use-cases)
+  - [Tech Stack](#tech-stack)
+  - [Folder Structure](#folder-structure)
+  - [Prerequisites](#prerequisites)
+  - [Getting Started](#getting-started)
+  - [Usage](#usage)
+  - [Authentication](#authentication)
+  - [Deployment](#deployment)
+  - [Additional Considerations](#additional-considerations)
 
 ---
 
@@ -45,23 +51,28 @@ verbo.ai aims to transform reading assignments into interactive, voice-based ref
 ## Features and Use Cases
 
 • **Professor Onboarding / Setup**  
-  - Upload reading materials (PDF, text, etc.).  
-  - Auto-generate or manually create comprehension questions.  
+
+- Upload reading materials (PDF, text, etc.).  
+- Auto-generate or manually create comprehension questions.  
 
 • **Student Reading & Response**  
-  - Students view assigned readings and questions.  
-  - Submit voice-based responses for real-time transcription and feedback.
+
+- Students view assigned readings and questions.  
+- Submit voice-based responses for real-time transcription and feedback.
 
 • **Analytics & Reporting**  
-  - Aggregated performance metrics (e.g., common issues, average response length, sentiment).  
-  - Dashboard with class-wide or group insights.  
+
+- Aggregated performance metrics (e.g., common issues, average response length, sentiment).  
+- Dashboard with class-wide or group insights.  
 
 • **Professor Dashboard & Feedback**  
-  - View and provide feedback on student submissions.  
-  - Identify unclear or low-confidence answers for additional review.  
+
+- View and provide feedback on student submissions.  
+- Identify unclear or low-confidence answers for additional review.  
 
 • **Security & Privacy**  
-  - Securely handle sensitive data (audio files, transcripts) with encryption, authentication, and role-based permissions.
+
+- Securely handle sensitive data (audio files, transcripts) with encryption, authentication, and role-based permissions.
 
 ---
 
@@ -148,12 +159,14 @@ verbo-ai/
 ## Getting Started
 
 1. **Clone the Repository**  
+
    ```bash
    git clone https://github.com/matiashoyld/verbo.git
    cd verbo
    ```
 
 2. **Install Dependencies**  
+
    ```bash
    npm install
    ```
@@ -167,15 +180,18 @@ verbo-ai/
 4. **Set Up the Database**  
    - Update your `.env` with the correct `DATABASE_URL`.  
    - Run Prisma migrations:  
+
      ```bash
      npx prisma migrate dev
      ```
 
 5. **Start the Development Server**  
+
    ```bash
    npm run dev
    ```
-   This will start the Next.js dev server at http://localhost:3000.
+
+   This will start the Next.js dev server at <http://localhost:3000>.
 
 ---
 
@@ -183,7 +199,7 @@ verbo-ai/
 
 Once the server is running:
 
-- Open http://localhost:3000 to view the landing page.  
+- Open <http://localhost:3000> to view the landing page.  
 - Sign in or sign up (if Clerk is configured).  
 - Professors can access the dashboard to create or upload reading materials, manage questions, and view analytics.  
 - Students can view assigned readings, record voice responses, and receive immediate transcription feedback.
@@ -198,7 +214,7 @@ verbo.ai uses [Clerk](https://clerk.com) for authentication and user management.
 - **User roles** for professors, students, and admin.  
 - **Protected endpoints** via Clerk middleware in Next.js or tRPC.
 
-Ensure you have properly set up your Clerk application and environment variables. For more information, see the official Clerk docs: https://docs.clerk.com.
+Ensure you have properly set up your Clerk application and environment variables. For more information, see the official Clerk docs: <https://docs.clerk.com>.
 
 ---
 
