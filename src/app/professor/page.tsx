@@ -9,13 +9,17 @@ import { RecentActivity } from "~/components/professor/RecentActivity"
 import { AnalyticsSummary } from "~/components/professor/AnalyticsSummary"
 import { AssignmentList } from "~/components/professor/AssignmentList"
 import { CreateAssignmentDialog } from "~/components/professor/CreateAssignmentDialog"
+import { UserNav } from "~/components/ui/user-nav"
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState("assignments")
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Welcome, Professor</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Welcome, Professor</h1>
+        <UserNav />
+      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
