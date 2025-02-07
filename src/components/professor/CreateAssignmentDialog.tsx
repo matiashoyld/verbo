@@ -5,8 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
-import { Loader2, X, Upload, File } from "lucide-react"
-import { PlusCircle } from "lucide-react"
+import { Loader2, X, Upload, File, PlusCircle } from "lucide-react"
 import { api } from "~/utils/api"
 import { useToast } from "~/hooks/use-toast"
 import { type TRPCClientErrorLike } from "@trpc/client"
@@ -94,7 +93,6 @@ export function CreateAssignmentDialog() {
       setSelectedCourseId("")
       setFiles([])
       setQuestions([])
-      setPendingSummary(null)
       setIsCreatingAssignment(false)
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
