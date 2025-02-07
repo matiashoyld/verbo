@@ -9,7 +9,6 @@ import { Loader2, X, Upload, File } from "lucide-react"
 import { PlusCircle } from "lucide-react"
 import { api } from "~/utils/api"
 import { useToast } from "~/hooks/use-toast"
-import { useParams } from "next/navigation"
 import { type TRPCClientErrorLike } from "@trpc/client"
 import { type AppRouter } from "~/server/api/root"
 import {
@@ -35,7 +34,6 @@ export function CreateAssignmentDialog() {
   const [files, setFiles] = useState<File[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [questions, setQuestions] = useState<Question[]>([])
-  const [summary, setSummary] = useState<string>("")
   const [isSummaryGenerating, setIsSummaryGenerating] = useState(false)
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false)
   const [pendingSummary, setPendingSummary] = useState<string | null>(null)
@@ -96,7 +94,7 @@ export function CreateAssignmentDialog() {
       setSelectedCourseId("")
       setFiles([])
       setQuestions([])
-      setSummary("")
+      setPendingSummary(null)
       setIsCreatingAssignment(false)
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {

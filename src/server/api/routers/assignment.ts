@@ -13,6 +13,13 @@ const model = google("gemini-2.0-flash-lite-preview-02-05", {
   ],
 });
 
+type QuestionResponse = {
+  questions: Array<{
+    id: string;
+    text: string;
+  }>;
+};
+
 export const assignmentRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
@@ -111,7 +118,7 @@ Requirements:
           throw new Error("No JSON found in response");
         }
 
-        let parsedResponse;
+        let parsedResponse: unknown;
         try {
           parsedResponse = JSON.parse(jsonMatch[0]);
         } catch (parseError) {
@@ -119,9 +126,28 @@ Requirements:
           throw new Error("Model response was not valid JSON");
         }
 
-        if (!parsedResponse?.questions || !Array.isArray(parsedResponse.questions)) {
+        // Type guard function to check if the response has the correct structure
+        function isQuestionResponse(value: unknown): value is QuestionResponse {
+          return (
+            typeof value === "object" &&
+            value !== null &&
+            "questions" in value &&
+            Array.isArray((value as QuestionResponse).questions) &&
+            (value as QuestionResponse).questions.every(
+              (q): q is { id: string; text: string } =>
+                typeof q === "object" &&
+                q !== null &&
+                "id" in q &&
+                "text" in q &&
+                typeof q.id === "string" &&
+                typeof q.text === "string"
+            )
+          );
+        }
+
+        if (!isQuestionResponse(parsedResponse)) {
           console.error("Invalid response structure:", parsedResponse);
-          throw new Error("Response missing questions array");
+          throw new Error("Response missing questions array or has invalid format");
         }
 
         const questions = parsedResponse.questions;
@@ -130,18 +156,7 @@ Requirements:
           throw new Error("Expected 3 questions but got " + questions.length);
         }
 
-        const validQuestions = questions.every((q: unknown) => 
-          typeof q === "object" && q !== null && 
-          typeof (q as { id: unknown }).id === "string" && 
-          typeof (q as { text: unknown }).text === "string"
-        );
-
-        if (!validQuestions) {
-          console.error("Invalid question format:", questions);
-          throw new Error("Questions have invalid format");
-        }
-
-        return questions as Array<{ id: string; text: string }>;
+        return questions;
       } catch (error) {
         console.error("Error in generateQuestions:", error);
         if (error instanceof Error) {

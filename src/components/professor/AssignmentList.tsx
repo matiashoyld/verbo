@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "~/components/ui/table"
 import { Button } from "~/components/ui/button"
-import { Eye, Loader2, FileX } from "lucide-react"
+import { Eye, FileX } from "lucide-react"
 import { format } from "date-fns"
 import { type RouterOutputs } from "~/utils/api"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
