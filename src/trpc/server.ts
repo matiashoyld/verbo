@@ -7,6 +7,9 @@ import { cache } from "react";
 import { createCaller, type AppRouter } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
 import { createQueryClient } from "./query-client";
+import { httpBatchLink } from "@trpc/client";
+import { appRouter } from "~/server/api/root";
+import { getUrl } from "./shared";
 
 /**
  * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API when
@@ -28,3 +31,11 @@ export const { trpc: api, HydrateClient } = createHydrationHelpers<AppRouter>(
   caller,
   getQueryClient,
 );
+
+export const appRouterCaller = appRouter.createCaller({
+  links: [
+    httpBatchLink({
+      url: getUrl(),
+    }),
+  ],
+});

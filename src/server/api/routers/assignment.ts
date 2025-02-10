@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
 import { PromptStore } from "~/lib/prompts";
@@ -265,5 +265,27 @@ export const assignmentRouter = createTRPCRouter({
       }
 
       return assignment;
+    }),
+
+  getById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const assignment = await ctx.db.assignment.findUnique({
+        where: { id: input.id },
+        include: {
+          course: {
+            include: {
+              user: {
+                select: {
+                  name: true,
+                }
+              }
+            }
+          },
+          questions: true,
+        },
+      })
+
+      return assignment
     }),
 }); 
