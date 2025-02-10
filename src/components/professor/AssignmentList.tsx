@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { api } from "~/utils/api"
 import {
   Table,
@@ -10,17 +11,65 @@ import {
   TableRow,
 } from "~/components/ui/table"
 import { Button } from "~/components/ui/button"
-import { Eye, FileX } from "lucide-react"
+import { Pencil, Trash2, Link2, FileX } from "lucide-react"
 import { format } from "date-fns"
 import { type RouterOutputs } from "~/utils/api"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { Skeleton } from "~/components/ui/skeleton"
 import { CreateAssignmentDialog } from "./CreateAssignmentDialog"
+import { EditAssignmentDialog } from "./EditAssignmentDialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip"
+import { useToast } from "~/hooks/use-toast"
 
 type Assignment = RouterOutputs["assignment"]["getAll"][number]
 
 export function AssignmentList() {
+  const { toast } = useToast()
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null)
+  const [deletingAssignment, setDeletingAssignment] = useState<Assignment | null>(null)
   const { data: assignments, isLoading } = api.assignment.getAll.useQuery()
+  const utils = api.useUtils()
+
+  const deleteAssignment = api.assignment.delete.useMutation({
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Assignment deleted successfully",
+      })
+      void utils.assignment.getAll.invalidate()
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      })
+    },
+  })
+
+  const handleCopyLink = (assignment: Assignment) => {
+    const link = `${window.location.origin}/assignments/${assignment.id}`
+    void navigator.clipboard.writeText(link)
+    toast({
+      title: "Success",
+      description: "Assignment link copied to clipboard",
+    })
+  }
 
   if (isLoading) {
     return (
@@ -114,14 +163,97 @@ export function AssignmentList() {
                 <TableCell>{assignment.questions.length} questions</TableCell>
                 <TableCell>{format(new Date(assignment.createdAt), "MMM d, yyyy")}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon">
-                    <Eye className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setEditingAssignment(assignment)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Edit assignment</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeletingAssignment(assignment)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete assignment</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleCopyLink(assignment)}
+                          >
+                            <Link2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Copy assignment link</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+
+        <EditAssignmentDialog
+          assignment={editingAssignment}
+          isOpen={!!editingAssignment}
+          onOpenChange={(open: boolean) => !open && setEditingAssignment(null)}
+        />
+
+        <AlertDialog
+          open={!!deletingAssignment}
+          onOpenChange={(open: boolean) => !open && setDeletingAssignment(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the assignment
+                and all its questions.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (deletingAssignment) {
+                    void deleteAssignment.mutateAsync({ id: deletingAssignment.id })
+                    setDeletingAssignment(null)
+                  }
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   )

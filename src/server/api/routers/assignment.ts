@@ -214,4 +214,56 @@ export const assignmentRouter = createTRPCRouter({
       },
     });
   }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.assignment.delete({
+        where: { id: input.id },
+      });
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        courseId: z.string(),
+        questions: z.array(
+          z.object({
+            id: z.string(),
+            text: z.string(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Update the assignment
+      const assignment = await ctx.db.assignment.update({
+        where: { id: input.id },
+        data: {
+          name: input.name,
+          courseId: input.courseId,
+        },
+      });
+
+      // Update existing questions and create new ones
+      for (const question of input.questions) {
+        if (question.id.length > 10) { // Existing question (has a real DB id)
+          await ctx.db.question.update({
+            where: { id: question.id },
+            data: { text: question.text },
+          });
+        } else { // New question (has a temporary id)
+          await ctx.db.question.create({
+            data: {
+              text: question.text,
+              assignmentId: assignment.id,
+            },
+          });
+        }
+      }
+
+      return assignment;
+    }),
 }); 
