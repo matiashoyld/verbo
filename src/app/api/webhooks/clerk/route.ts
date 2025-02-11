@@ -4,6 +4,8 @@ import type { WebhookEvent } from "@clerk/nextjs/server";
 import { db } from "~/server/db";
 import { env } from "~/env";
 
+export const runtime = "nodejs";
+
 async function handler(req: Request) {
   // Get the headers
   const headerPayload = headers();
