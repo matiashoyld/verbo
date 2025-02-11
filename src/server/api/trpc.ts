@@ -8,16 +8,12 @@
  */
 
 import { initTRPC, TRPCError } from "@trpc/server";
+import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import type { getAuth } from "@clerk/nextjs/server";
 
 import { db } from "~/server/db";
-
-interface CreateContextOptions {
-  headers: Headers;
-  auth?: ReturnType<typeof getAuth>;
-}
+import { auth } from "@clerk/nextjs";
 
 /**
  * 1. CONTEXT
@@ -26,6 +22,10 @@ interface CreateContextOptions {
  *
  * These allow you to access things when processing a request, like the database, the session, etc.
  */
+
+interface CreateContextOptions {
+  auth: ReturnType<typeof auth>;
+}
 
 /**
  * This helper generates the "internals" for a tRPC context. If you need to use it, you can export
@@ -39,7 +39,6 @@ interface CreateContextOptions {
  */
 export const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
-    headers: opts.headers,
     auth: opts.auth,
     db,
   };
@@ -51,8 +50,11 @@ export const createInnerTRPCContext = (opts: CreateContextOptions) => {
  *
  * @see https://trpc.io/docs/context
  */
-export const createTRPCContext = (opts: CreateContextOptions) => {
-  return createInnerTRPCContext(opts);
+export const createTRPCContext = (_opts: CreateNextContextOptions) => {
+  return {
+    db,
+    auth: auth(),
+  };
 };
 
 /**
@@ -95,21 +97,20 @@ export const createTRPCRouter = t.router;
  * Public (unauthenticated) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
- * guarantee that a user querying is authorized, but you can still access user session data if they
+ * guarantee that a user querying is authorized, but you can still access auth session data if they
  * are logged in.
  */
 export const publicProcedure = t.procedure;
 
 /** Reusable middleware that enforces users are logged in before running the procedure. */
 const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
-  if (!ctx.auth?.userId) {
+  if (!ctx.auth.userId) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
-
   return next({
     ctx: {
+      ...ctx,
       auth: ctx.auth,
-      userId: ctx.auth.userId,
     },
   });
 });
@@ -118,7 +119,7 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
  * Protected (authenticated) procedure
  *
  * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
- * the session is valid and guarantees ctx.auth.userId is not null.
+ * the session is valid and guarantees `ctx.session.user` is not null.
  *
  * @see https://trpc.io/docs/procedures
  */

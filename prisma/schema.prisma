@@ -82,6 +82,7 @@ model Assignment {
     courseId    String
     course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
     questions   Question[]
+    studentAssignments StudentAssignment[]
     createdAt   DateTime   @default(now())
     updatedAt   DateTime   @updatedAt
 
@@ -94,6 +95,7 @@ model Question {
     assignmentId String
     assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
     answers      Answer[]
+    studentResponses StudentResponse[]
     createdAt    DateTime   @default(now())
     updatedAt    DateTime   @updatedAt
 
@@ -111,4 +113,32 @@ model Answer {
     updatedAt  DateTime @updatedAt
 
     @@index([questionId])
+}
+
+model StudentAssignment {
+    id          String     @id @default(cuid())
+    studentName String
+    studentEmail String
+    assignmentId String
+    assignment  Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+    responses   StudentResponse[]
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @updatedAt
+
+    @@unique([studentEmail, assignmentId])
+    @@index([assignmentId])
+}
+
+model StudentResponse {
+    id                  String           @id @default(cuid())
+    questionId          String
+    question            Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+    studentAssignmentId String
+    studentAssignment   StudentAssignment @relation(fields: [studentAssignmentId], references: [id], onDelete: Cascade)
+    audioUrl           String?
+    createdAt          DateTime          @default(now())
+    updatedAt          DateTime          @updatedAt
+
+    @@index([questionId])
+    @@index([studentAssignmentId])
 }

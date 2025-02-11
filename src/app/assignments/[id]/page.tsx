@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { StudentInfoForm } from "~/components/student/StudentInfoForm"
+import { StudentAssignmentView } from "~/components/student/StudentAssignmentView"
 import { serverClient } from "~/server/api/server"
 
 export default async function AssignmentPage({ params }: { params: { id: string } }) {
@@ -11,12 +11,13 @@ export default async function AssignmentPage({ params }: { params: { id: string 
   }
 
   return (
-    <StudentInfoForm
+    <StudentAssignmentView
       assignmentId={assignment.id}
       assignmentName={assignment.name}
       questionCount={assignment.questions.length}
       professorName={assignment.course.user.name ?? "Unknown Professor"}
       courseName={assignment.course.name}
+      questions={assignment.questions}
     />
   )
 } 
