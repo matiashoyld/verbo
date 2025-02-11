@@ -19,13 +19,16 @@ export default authMiddleware({
         req.nextUrl.pathname.startsWith("/sign-up"))
     ) {
       const user = await clerkClient.users.getUser(auth.userId);
-      const role = user.unsafeMetadata.role as Role | undefined;
-
-      if (!role) {
-        return NextResponse.redirect(new URL("/select-role", req.url));
+      
+      // If no role is set, set it to professor
+      if (!user.unsafeMetadata.role) {
+        await clerkClient.users.updateUser(auth.userId, {
+          unsafeMetadata: { role: "professor" },
+        });
+        return NextResponse.redirect(new URL("/professor", req.url));
       }
 
-      return NextResponse.redirect(new URL(`/${role}`, req.url));
+      return NextResponse.redirect(new URL("/professor", req.url));
     }
 
     // Handle users who aren't authenticated
@@ -38,16 +41,16 @@ export default authMiddleware({
       const user = await clerkClient.users.getUser(auth.userId);
       const role = user.unsafeMetadata.role as Role | undefined;
 
-      // If no role is set and they're not already heading to select-role
-      if (!role && !req.nextUrl.pathname.startsWith("/select-role")) {
-        return NextResponse.redirect(new URL("/select-role", req.url));
+      // If no role is set, set it to professor
+      if (!role) {
+        await clerkClient.users.updateUser(auth.userId, {
+          unsafeMetadata: { role: "professor" },
+        });
+        return NextResponse.redirect(new URL("/professor", req.url));
       }
 
-      // Redirect based on role if trying to access the wrong dashboard
-      if (role === "student" && req.nextUrl.pathname.startsWith("/professor")) {
-        return NextResponse.redirect(new URL("/student", req.url));
-      }
-      if (role === "professor" && req.nextUrl.pathname.startsWith("/student")) {
+      // Only allow access to professor routes
+      if (req.nextUrl.pathname.startsWith("/student")) {
         return NextResponse.redirect(new URL("/professor", req.url));
       }
     }
