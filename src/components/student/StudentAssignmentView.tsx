@@ -5,7 +5,7 @@ import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { api } from "~/utils/api"
 import { useToast } from "~/hooks/use-toast"
-import { type Question } from "@prisma/client"
+import { type Question, type StudentResponse } from "@prisma/client"
 import { ArrowRight, Brain, Lightbulb, Mail, MessageSquare, Mic, MicOff, Target, Timer, User } from "lucide-react"
 import { Card, CardContent } from "~/components/ui/card"
 
@@ -22,22 +22,6 @@ const loadingMessages = {
     "Generating feedback...",
     "Processing your insights..."
   ]
-};
-
-// Mock feedback data (replace with actual API response later)
-const mockFeedback = {
-  analysis: {
-    strengths: [
-      "Clear articulation of ideas",
-      "Strong supporting examples",
-      "Logical flow of thoughts"
-    ],
-    improvements: [
-      "Could elaborate more on key points",
-      "Consider alternative perspectives"
-    ],
-    summary: "Your response demonstrates a good understanding of the topic with clear examples. Consider expanding on your key points for even stronger answers."
-  }
 };
 
 function formatTime(seconds: number): string {
@@ -83,6 +67,12 @@ interface StudentAssignmentViewProps {
   questions: Question[]
 }
 
+interface AnalyzedResponse extends StudentResponse {
+  keyTakeaway: string | null
+  strengths: string[]
+  improvements: string[]
+}
+
 export function StudentAssignmentView({
   assignmentId,
   assignmentName,
@@ -103,6 +93,11 @@ export function StudentAssignmentView({
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const { toast } = useToast()
+  const [feedback, setFeedback] = useState<{
+    keyTakeaway: string;
+    strengths: string[];
+    improvements: string[];
+  } | null>(null);
 
   // tRPC mutations
   const createStudentAssignment = api.studentAssignment.create.useMutation({
@@ -121,24 +116,41 @@ export function StudentAssignmentView({
     },
   })
 
-  const createResponse = api.studentAssignment.createResponse.useMutation({
-    onSuccess: () => {
-      setProcessingState('complete')
-      setShowFeedback(true)
-      toast({
-        title: "Success",
-        description: "Your response has been recorded and transcribed.",
-      })
+  const analyzeResponse = api.studentAssignment.analyzeResponse.useMutation({
+    onSuccess: (data: AnalyzedResponse) => {
+      setFeedback({
+        keyTakeaway: data.keyTakeaway ?? "",
+        strengths: data.strengths,
+        improvements: data.improvements,
+      });
+      setProcessingState('complete');
+      setShowFeedback(true);
     },
     onError: (error) => {
-      setProcessingState('idle')
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
-      })
+      });
+      setProcessingState('idle');
     },
-  })
+  });
+
+  const createResponse = api.studentAssignment.createResponse.useMutation({
+    onSuccess: (data) => {
+      setProcessingState('analyzing');
+      // After transcription, analyze the response
+      void analyzeResponse.mutateAsync({ responseId: data.id });
+    },
+    onError: (error) => {
+      setProcessingState('idle');
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Timer effect
   useEffect(() => {
@@ -489,7 +501,7 @@ export function StudentAssignmentView({
             )}
 
             {/* Feedback Section */}
-            {showFeedback && (
+            {showFeedback && feedback && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {/* Summary Card */}
                 <div className="bg-gradient-to-br from-gray-900 to-black text-white p-6 rounded-xl shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-both">
@@ -498,9 +510,9 @@ export function StudentAssignmentView({
                       <Brain className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-2">Key Takeaway</h3>
+                      <h3 className="font-semibold mb-2">Overall Assessment</h3>
                       <p className="text-gray-50 leading-relaxed">
-                        {mockFeedback.analysis.summary}
+                        {feedback.keyTakeaway}
                       </p>
                     </div>
                   </div>
@@ -517,7 +529,7 @@ export function StudentAssignmentView({
                       <h3 className="font-semibold">Key Strengths</h3>
                     </div>
                     <ul className="space-y-3">
-                      {mockFeedback.analysis.strengths.map((strength, index) => (
+                      {feedback.strengths.map((strength: string, index: number) => (
                         <li key={index} className="flex items-start text-muted-foreground">
                           <span className="text-muted-foreground/60 mr-2">•</span>
                           {strength}
@@ -535,7 +547,7 @@ export function StudentAssignmentView({
                       <h3 className="font-semibold">Focus Areas</h3>
                     </div>
                     <ul className="space-y-3">
-                      {mockFeedback.analysis.improvements.map((improvement, index) => (
+                      {feedback.improvements.map((improvement: string, index: number) => (
                         <li key={index} className="flex items-start text-muted-foreground">
                           <span className="text-muted-foreground/60 mr-2">•</span>
                           {improvement}

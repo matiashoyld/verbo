@@ -67,4 +67,45 @@ Provide your analysis in a structured markdown format.`;
 
 Format your feedback in a supportive and encouraging tone using markdown.`;
   }
+
+  static getResponseAnalysisPrompt(question: string, transcription: string, summary: string): string {
+    return `You are an AI teaching assistant analyzing a my verbal response to a question about a paper that I read.
+
+    <paper_summary>
+    ${summary}
+    </paper_summary>
+
+    <question>
+    ${question}
+    </question>
+
+    <transcription_of_my_response>
+    ${transcription}
+    </transcription_of_my_response>
+
+    Analyze my response and provide feedback in the following JSON format. Be concise but specific in your analysis:
+
+    {
+      "keyTakeaway": "In one or two sentences provide an overall assesment of my response.",
+      "strengths": [
+        "First key strength demonstrated in my response",
+        "Second key strength demonstrated in my response",
+        "Third key strength demonstrated in my response (if applicable)"
+      ],
+      "improvements": [
+        "First specific area for improvement",
+        "Second specific area for improvement",
+        "Third specific area for improvement (if applicable)"
+      ]
+    }
+
+    IMPORTANT:
+    1. Response must be valid JSON
+    2. Strengths should highlight specific positive aspects of my response
+    3. Improvements should be constructive and actionable
+    4. Keep all text entries concise but specific
+    5. No additional text or explanation outside the JSON
+    6. IMPORTANT:Everything should be written in the second person (you, your, etc.)
+    7. Consider the context from the paper summary when evaluating the response`;
+  }
 } 

@@ -7,10 +7,23 @@ import { env } from "~/env"
 import fs from "fs"
 import os from "os"
 import path from "path"
+import { google } from "@ai-sdk/google"
+import { generateText } from "ai"
+import { PromptStore } from "~/lib/prompts"
 
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
+})
+
+// Initialize Gemini model
+const model = google("gemini-2.0-flash-lite-preview-02-05", {
+  safetySettings: [
+    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+  ],
 })
 
 // Helper function to convert base64 to a buffer and determine file extension
@@ -232,6 +245,92 @@ export const studentAssignmentRouter = createTRPCRouter({
         } catch (error) {
           console.error("Error cleaning up temporary file:", error)
         }
+      }
+    }),
+
+  analyzeResponse: publicProcedure
+    .input(
+      z.object({
+        responseId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Fetch the response with its question and assignment
+      const response = await ctx.db.studentResponse.findUnique({
+        where: { id: input.responseId },
+        include: { 
+          question: {
+            include: {
+              assignment: true
+            }
+          }
+        },
+      })
+
+      if (!response) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Response not found",
+        })
+      }
+
+      if (!response.transcription) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Response has no transcription",
+        })
+      }
+
+      try {
+        // Generate analysis using Gemini
+        const { text } = await generateText({
+          model,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: PromptStore.getResponseAnalysisPrompt(
+                    response.question.text,
+                    response.transcription,
+                    response.question.assignment.summary,
+                  ),
+                },
+              ],
+            },
+          ],
+        })
+
+        // Parse the JSON response
+        const jsonMatch = text.match(/\{[\s\S]*\}/)
+        if (!jsonMatch) {
+          throw new Error("No JSON object found in response")
+        }
+
+        const analysis = JSON.parse(jsonMatch[0]) as {
+          keyTakeaway: string
+          strengths: string[]
+          improvements: string[]
+        }
+
+        // Update the response with the analysis
+        const updatedResponse = await ctx.db.studentResponse.update({
+          where: { id: input.responseId },
+          data: {
+            keyTakeaway: analysis.keyTakeaway,
+            strengths: analysis.strengths,
+            improvements: analysis.improvements,
+          },
+        })
+
+        return updatedResponse
+      } catch (error) {
+        console.error("Error analyzing response:", error)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to analyze response",
+        })
       }
     }),
 }) 

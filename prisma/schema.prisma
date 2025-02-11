@@ -136,6 +136,9 @@ model StudentResponse {
     studentAssignmentId String
     studentAssignment   StudentAssignment @relation(fields: [studentAssignmentId], references: [id], onDelete: Cascade)
     transcription      String           @db.Text
+    keyTakeaway        String?          @db.Text
+    strengths          String[]         @default([])
+    improvements       String[]         @default([])
     createdAt          DateTime          @default(now())
     updatedAt          DateTime          @updatedAt
 
