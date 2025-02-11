@@ -205,6 +205,11 @@ export const assignmentRouter = createTRPCRouter({
 
   getAll: protectedProcedure.query(async ({ ctx }) => {
     return ctx.db.assignment.findMany({
+      where: {
+        course: {
+          userId: ctx.auth.userId,
+        },
+      },
       include: {
         course: true,
         questions: true,
