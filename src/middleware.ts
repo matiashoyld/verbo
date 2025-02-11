@@ -60,6 +60,7 @@ export const config = {
   matcher: [
     "/((?!.+\\.[\\w]+$|_next).*)",
     "/",
+    "/api/trpc/:path*",
     "/(api|trpc)/((?!webhooks/clerk).*)$",
   ],
 };
