@@ -6,7 +6,7 @@ import { Input } from "~/components/ui/input"
 import { api } from "~/utils/api"
 import { useToast } from "~/hooks/use-toast"
 import { type Question } from "@prisma/client"
-import { BookOpen, User, Mail, ArrowRight, Mic, MicOff, Timer, Brain, MessageSquare, Lightbulb, Target, CheckCircle2 } from "lucide-react"
+import { ArrowRight, Brain, Lightbulb, Mail, MessageSquare, Mic, MicOff, Target, Timer, User } from "lucide-react"
 import { Card, CardContent } from "~/components/ui/card"
 
 type ProcessingState = 'idle' | 'transcribing' | 'analyzing' | 'complete';
@@ -343,7 +343,7 @@ export function StudentAssignmentView({
                 </div>
 
                 {/* Processing Message */}
-                {(processingState === 'transcribing' || processingState === 'analyzing') && (
+                {(processingState === 'transcribing' || processingState === 'analyzing') && loadingMessages[processingState]?.[loadingMessageIndex] && (
                   <p className="absolute top-[calc(50%+4rem)] left-1/2 -translate-x-1/2 text-sm text-muted-foreground w-full text-center">
                     <TypewriterText text={loadingMessages[processingState][loadingMessageIndex]} />
                   </p>

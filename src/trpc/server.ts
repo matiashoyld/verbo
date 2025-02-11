@@ -1,6 +1,7 @@
 import "server-only";
 import { headers } from "next/headers";
 import { auth } from "@clerk/nextjs";
+import { type NextApiRequest, type NextApiResponse } from "next";
 import { appRouter } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
 
@@ -13,8 +14,16 @@ export const createCaller = () => {
 
   return appRouter.createCaller(
     createTRPCContext({
-      headers: heads,
-      auth: authObject,
+      req: { headers: Object.fromEntries(heads.entries()) } as NextApiRequest,
+      res: {} as NextApiResponse,
+      info: {
+        type: "query",
+        accept: "application/jsonl",
+        isBatchCall: false,
+        calls: [],
+        connectionParams: {},
+        signal: new AbortController().signal,
+      },
     }),
   );
 };
