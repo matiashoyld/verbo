@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import type { WebhookEvent } from "@clerk/nextjs/server";
@@ -5,6 +6,17 @@ import { db } from "~/server/db";
 import { env } from "~/env";
 
 export const runtime = "nodejs";
+
+type WebhookBody = {
+  data: {
+    id: string;
+    email_addresses: Array<{ email_address: string }>;
+    image_url: string;
+    first_name: string | null;
+    last_name: string | null;
+  };
+  type: string;
+};
 
 async function handler(req: Request) {
   // Only allow POST requests
@@ -34,9 +46,10 @@ async function handler(req: Request) {
   }
 
   // Get the body
-  let payload: Record<string, unknown>;
+  let payload: WebhookBody;
   try {
-    payload = await req.json();
+    const rawBody = await req.json();
+    payload = rawBody as WebhookBody;
   } catch (err) {
     console.error("Error parsing webhook body:", err);
     return new Response("Error parsing request body", {
