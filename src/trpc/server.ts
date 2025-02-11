@@ -10,7 +10,6 @@ import { createTRPCContext } from "~/server/api/trpc";
  */
 export const createCaller = () => {
   const heads = new Headers(headers());
-  const authObject = auth();
 
   return appRouter.createCaller(
     createTRPCContext({

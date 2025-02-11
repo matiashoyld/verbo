@@ -106,8 +106,11 @@ export function StudentAssignmentView({
 
   // tRPC mutations
   const createStudentAssignment = api.studentAssignment.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       setHasStarted(true)
+      console.log('Student assignment created:', data)
+      setStudentName('')
+      setStudentEmail('')
     },
     onError: (error) => {
       toast({

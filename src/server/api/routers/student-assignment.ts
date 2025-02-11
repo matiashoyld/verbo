@@ -19,7 +19,7 @@ function processAudioData(base64String: string): { buffer: Buffer; extension: st
 
   // Extract MIME type and base64 data
   const matches = base64String.match(/^data:(audio\/[^;]+);base64,(.+)$/)
-  if (!matches || !matches[1] || !matches[2]) {
+  if (!matches?.length || !matches[1] || !matches[2]) {
     console.error('Invalid audio data format. Expected format: data:audio/[type];base64,[data]')
     console.error('Received format:', base64String.substring(0, 100))
     throw new Error('Invalid audio data format')
@@ -37,7 +37,7 @@ function processAudioData(base64String: string): { buffer: Buffer; extension: st
     'audio/wav': 'wav',
   }
 
-  const extension = mimeToExtension[mimeType] || 'webm'
+  const extension = mimeToExtension[mimeType] ?? 'webm'
   console.log('Using extension:', extension, 'for MIME type:', mimeType)
 
   return {
@@ -47,35 +47,35 @@ function processAudioData(base64String: string): { buffer: Buffer; extension: st
 }
 
 // Helper function to transcribe audio using OpenAI Whisper
-async function transcribeAudio(audioUrl: string): Promise<string> {
-  try {
-    // Fetch the audio file
-    const response = await fetch(audioUrl)
-    const audioBlob = await response.blob()
+// async function transcribeAudio(audioUrl: string): Promise<string> {
+//   try {
+//     // Fetch the audio file
+//     const response = await fetch(audioUrl)
+//     const audioBlob = await response.blob()
 
-    // Convert blob to file
-    const audioFile = new File([audioBlob], "audio.webm", { type: "audio/webm" })
+//     // Convert blob to file
+//     const audioFile = new File([audioBlob], "audio.webm", { type: "audio/webm" })
 
-    // Create a FormData instance
-    const formData = new FormData()
-    formData.append("file", audioFile)
-    formData.append("model", "whisper-1")
+//     // Create a FormData instance
+//     const formData = new FormData()
+//     formData.append("file", audioFile)
+//     formData.append("model", "whisper-1")
 
-    // Make request to OpenAI API
-    const transcription = await openai.audio.transcriptions.create({
-      file: audioFile,
-      model: "whisper-1",
-    })
+//     // Make request to OpenAI API
+//     const transcription = await openai.audio.transcriptions.create({
+//       file: audioFile,
+//       model: "whisper-1",
+//     })
 
-    return transcription.text
-  } catch (error) {
-    console.error("Error transcribing audio:", error)
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Failed to transcribe audio",
-    })
-  }
-}
+//     return transcription.text
+//   } catch (error) {
+//     console.error("Error transcribing audio:", error)
+//     throw new TRPCError({
+//       code: "INTERNAL_SERVER_ERROR",
+//       message: "Failed to transcribe audio",
+//     })
+//   }
+// }
 
 export const studentAssignmentRouter = createTRPCRouter({
   create: publicProcedure
