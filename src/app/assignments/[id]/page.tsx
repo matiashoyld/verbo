@@ -3,8 +3,8 @@ import { StudentInfoForm } from "~/components/student/StudentInfoForm"
 import { serverClient } from "~/server/api/server"
 
 export default async function AssignmentPage({ params }: { params: { id: string } }) {
-  const caller = await serverClient()
-  const assignment = await caller.assignment.getById({ id: params.id })
+  const caller = serverClient();
+  const assignment = await caller.assignment.getById({ id: params.id });
 
   if (!assignment) {
     notFound()
