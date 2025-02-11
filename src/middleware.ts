@@ -9,6 +9,7 @@ export default authMiddleware({
     "/sign-up",
     "/sign-in/[[...sign-in]]",
     "/sign-up/[[...sign-up]]",
+    "/api/webhooks/clerk",
   ],
   async afterAuth(auth, req) {
     // If user is signed in and tries to access auth pages, redirect them
@@ -56,5 +57,9 @@ export default authMiddleware({
 });
 
 export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: [
+    "/((?!.+\\.[\\w]+$|_next).*)",
+    "/",
+    "/(api|trpc)/((?!webhooks/clerk).*)$",
+  ],
 };
