@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { api } from "~/utils/api"
@@ -100,8 +100,44 @@ export function StudentAssignmentView({
   const [processingState, setProcessingState] = useState<ProcessingState>('idle')
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0)
   const [showFeedback, setShowFeedback] = useState(false)
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
   const { toast } = useToast()
 
+  // tRPC mutations
+  const createStudentAssignment = api.studentAssignment.create.useMutation({
+    onSuccess: () => {
+      setHasStarted(true)
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      })
+    },
+  })
+
+  const createResponse = api.studentAssignment.createResponse.useMutation({
+    onSuccess: () => {
+      setProcessingState('complete')
+      setShowFeedback(true)
+      toast({
+        title: "Success",
+        description: "Your response has been recorded and transcribed.",
+      })
+    },
+    onError: (error) => {
+      setProcessingState('idle')
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      })
+    },
+  })
+
+  // Timer effect
   useEffect(() => {
     let interval: number | undefined;
     if (isRecording) {
@@ -114,6 +150,7 @@ export function StudentAssignmentView({
     };
   }, [isRecording]);
 
+  // Loading messages effect
   useEffect(() => {
     let interval: number | undefined;
     if (processingState === 'transcribing' || processingState === 'analyzing') {
@@ -128,44 +165,140 @@ export function StudentAssignmentView({
     };
   }, [processingState]);
 
-  const createStudentAssignment = api.studentAssignment.create.useMutation({
-    onSuccess: () => {
-      setHasStarted(true)
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
-    },
-  })
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    await createStudentAssignment.mutateAsync({
+    const studentAssignment = await createStudentAssignment.mutateAsync({
       studentName,
       studentEmail,
       assignmentId,
     })
   }
 
-  const toggleRecording = () => {
-    if (!isRecording) {
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      
+      // Check supported MIME types
+      const supportedTypes = [
+        'audio/webm',
+        'audio/webm;codecs=opus',
+        'audio/ogg;codecs=opus',
+        'audio/mp3',
+      ]
+
+      let mimeType = 'audio/webm'  // default
+      for (const type of supportedTypes) {
+        if (MediaRecorder.isTypeSupported(type)) {
+          mimeType = type
+          console.log('Using MIME type:', mimeType)
+          break
+        }
+      }
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType,
+      })
+      
+      // Clear audio chunks
+      audioChunksRef.current = []
+      
+      // Request data every second
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          console.log('Received audio chunk of size:', e.data.size)
+          audioChunksRef.current.push(e.data)
+        }
+      }
+
+      recorder.onstop = async () => {
+        try {
+          // Get the current student assignment ID
+          const studentAssignmentId = createStudentAssignment.data?.id
+          if (!studentAssignmentId) {
+            throw new Error('Student assignment not found')
+          }
+
+          // Get the current question ID
+          const currentQuestion = questions[currentQuestionIndex]
+          if (!currentQuestion) {
+            throw new Error('Question not found')
+          }
+
+          // Create blob from chunks
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
+          console.log('Created audio blob with type:', mimeType, 'size:', audioBlob.size, 'from', audioChunksRef.current.length, 'chunks')
+          
+          if (audioBlob.size === 0) {
+            throw new Error('No audio data recorded')
+          }
+
+          // Convert blob to base64
+          const base64AudioData = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onloadend = () => {
+              if (typeof reader.result === 'string') {
+                // Log the first 100 characters of the base64 data to check format
+                console.log('Audio data format:', reader.result.substring(0, 100))
+                console.log('Total audio data length:', reader.result.length)
+                resolve(reader.result)
+              } else {
+                reject(new Error('Failed to convert audio to base64'))
+              }
+            }
+            reader.onerror = () => reject(reader.error)
+            reader.readAsDataURL(audioBlob)
+          })
+
+          setProcessingState('transcribing')
+
+          // Create response and transcribe
+          await createResponse.mutateAsync({
+            questionId: currentQuestion.id,
+            studentAssignmentId,
+            audioData: base64AudioData,
+          })
+        } catch (error) {
+          console.error('Error processing audio:', error)
+          toast({
+            title: "Error",
+            description: typeof error === 'object' && error !== null && 'message' in error
+              ? String(error.message)
+              : "Failed to process audio response",
+            variant: "destructive",
+          })
+          setProcessingState('idle')
+        }
+      }
+
+      setMediaRecorder(recorder)
+      recorder.start(1000) // Request data every second
       setIsRecording(true)
       setProcessingState('idle')
       setShowFeedback(false)
-    } else {
+    } catch (error) {
+      console.error('Error accessing microphone:', error)
+      toast({
+        title: "Error",
+        description: "Failed to access microphone. Please ensure you have granted microphone permissions.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop()
+      mediaRecorder.stream.getTracks().forEach(track => track.stop())
       setIsRecording(false)
       setProcessingState('transcribing')
-      // Simulate processing - replace with actual API calls later
-      setTimeout(() => {
-        setProcessingState('analyzing')
-        setTimeout(() => {
-          setProcessingState('complete')
-          setShowFeedback(true)
-        }, 3000)
-      }, 3000)
+    }
+  }
+
+  const toggleRecording = () => {
+    if (!isRecording) {
+      void startRecording()
+    } else {
+      stopRecording()
     }
   }
 
@@ -175,6 +308,7 @@ export function StudentAssignmentView({
       setProcessingState('idle')
       setTimer(0)
       setShowFeedback(false)
+      audioChunksRef.current = []
     }
   }
 
