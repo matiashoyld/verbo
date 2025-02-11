@@ -7,6 +7,14 @@ import { env } from "~/env";
 export const runtime = "nodejs";
 
 async function handler(req: Request) {
+  // Only allow POST requests
+  if (req.method !== "POST") {
+    console.error("Invalid request method:", req.method);
+    return new Response("Only POST requests are allowed", {
+      status: 405,
+    });
+  }
+
   // Get the headers
   const headerPayload = headers();
   const svix_id = headerPayload.get("svix-id");
@@ -15,13 +23,26 @@ async function handler(req: Request) {
 
   // If there are no headers, error out
   if (!svix_id || !svix_timestamp || !svix_signature) {
-    return new Response("Error occured -- no svix headers", {
+    console.error("Missing svix headers:", {
+      svix_id: !!svix_id,
+      svix_timestamp: !!svix_timestamp,
+      svix_signature: !!svix_signature,
+    });
+    return new Response("Error occurred -- missing svix headers", {
       status: 400,
     });
   }
 
   // Get the body
-  const payload = (await req.json()) as Record<string, unknown>;
+  let payload: Record<string, unknown>;
+  try {
+    payload = await req.json();
+  } catch (err) {
+    console.error("Error parsing webhook body:", err);
+    return new Response("Error parsing request body", {
+      status: 400,
+    });
+  }
   const body = JSON.stringify(payload);
 
   // Create a new Svix instance with your webhook secret
@@ -37,14 +58,22 @@ async function handler(req: Request) {
       "svix-signature": svix_signature,
     }) as WebhookEvent;
   } catch (err) {
-    console.error("Error verifying webhook:", err);
-    return new Response("Error occured", {
+    console.error("Error verifying webhook:", err, {
+      body: payload,
+      headers: {
+        "svix-id": svix_id,
+        "svix-timestamp": svix_timestamp,
+        "svix-signature": svix_signature?.substring(0, 10) + "...", // Log partial signature for debugging
+      },
+    });
+    return new Response("Error verifying webhook signature", {
       status: 400,
     });
   }
 
   // Handle the webhook
   const eventType = evt.type;
+  console.log("Processing webhook event:", eventType);
 
   if (eventType === "user.created" || eventType === "user.updated") {
     const { id, email_addresses, image_url, first_name, last_name } = evt.data;
@@ -53,7 +82,7 @@ async function handler(req: Request) {
     const name = [first_name, last_name].filter(Boolean).join(" ");
 
     try {
-      await db.user.upsert({
+      const result = await db.user.upsert({
         where: { id },
         create: {
           id,
@@ -67,17 +96,34 @@ async function handler(req: Request) {
           image: image_url,
         },
       });
-
-      return new Response("User synchronized", { status: 200 });
+      console.log("Successfully synchronized user:", { id, email });
+      return new Response(JSON.stringify({ success: true, userId: result.id }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
     } catch (error) {
-      console.error("Error syncing user:", error);
-      return new Response("Error syncing user", { status: 500 });
+      console.error("Error syncing user to database:", error, {
+        userId: id,
+        email,
+        name,
+      });
+      return new Response(JSON.stringify({ error: "Error syncing user to database" }), {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
     }
   }
 
-  return new Response("Webhook received", { status: 200 });
+  return new Response(JSON.stringify({ success: true, event: eventType }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 }
 
-export const GET = handler;
-export const POST = handler;
-export const PUT = handler; 
+export const POST = handler; 
