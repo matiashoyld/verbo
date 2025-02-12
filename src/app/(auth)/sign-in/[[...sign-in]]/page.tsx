@@ -10,7 +10,7 @@ export default function SignInPage() {
             card: "shadow-lg",
           },
         }}
-        afterSignInUrl="/select-role"
+        afterSignInUrl="/professor"
       />
     </div>
   );
