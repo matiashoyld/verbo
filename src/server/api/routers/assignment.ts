@@ -1,8 +1,12 @@
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
+import { z } from "zod";
 import { PromptStore } from "~/lib/prompts";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "~/server/api/trpc";
 
 // The API key is read from GOOGLE_GENERATIVE_AI_API_KEY environment variable by default
 const model = google("gemini-2.0-flash-lite-preview-02-05", {
@@ -67,7 +71,7 @@ export const assignmentRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       try {
         console.log("Generating questions for file type:", input.mimeType);
-        
+
         const { text } = await generateText({
           model,
           messages: [
@@ -76,7 +80,9 @@ export const assignmentRouter = createTRPCRouter({
               content: [
                 {
                   type: "text",
-                  text: PromptStore.getQuestionGenerationPrompt(input.numberOfQuestions),
+                  text: PromptStore.getQuestionGenerationPrompt(
+                    input.numberOfQuestions,
+                  ),
                 },
                 {
                   type: "file",
@@ -119,20 +125,24 @@ export const assignmentRouter = createTRPCRouter({
                 "id" in q &&
                 "text" in q &&
                 typeof q.id === "string" &&
-                typeof q.text === "string"
+                typeof q.text === "string",
             )
           );
         }
 
         if (!isQuestionResponse(parsedResponse)) {
           console.error("Invalid response structure:", parsedResponse);
-          throw new Error("Response missing questions array or has invalid format");
+          throw new Error(
+            "Response missing questions array or has invalid format",
+          );
         }
 
         const questions = parsedResponse.questions;
         if (questions.length !== input.numberOfQuestions) {
           console.error("Wrong number of questions:", questions.length);
-          throw new Error(`Expected ${input.numberOfQuestions} questions but got ${questions.length}`);
+          throw new Error(
+            `Expected ${input.numberOfQuestions} questions but got ${questions.length}`,
+          );
         }
 
         return questions;
@@ -150,10 +160,12 @@ export const assignmentRouter = createTRPCRouter({
       z.object({
         content: z.string(),
         mimeType: z.string(),
-        questions: z.array(z.object({
-          id: z.string(),
-          text: z.string(),
-        })),
+        questions: z.array(
+          z.object({
+            id: z.string(),
+            text: z.string(),
+          }),
+        ),
       }),
     )
     .mutation(async ({ input }) => {
@@ -254,12 +266,14 @@ export const assignmentRouter = createTRPCRouter({
 
       // Update existing questions and create new ones
       for (const question of input.questions) {
-        if (question.id.length > 10) { // Existing question (has a real DB id)
+        if (question.id.length > 10) {
+          // Existing question (has a real DB id)
           await ctx.db.question.update({
             where: { id: question.id },
             data: { text: question.text },
           });
-        } else { // New question (has a temporary id)
+        } else {
+          // New question (has a temporary id)
           await ctx.db.question.create({
             data: {
               text: question.text,
@@ -283,14 +297,14 @@ export const assignmentRouter = createTRPCRouter({
               user: {
                 select: {
                   name: true,
-                }
-              }
-            }
+                },
+              },
+            },
           },
           questions: true,
         },
-      })
+      });
 
-      return assignment
+      return assignment;
     }),
-}); 
+});

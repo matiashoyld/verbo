@@ -10,6 +10,7 @@ export default authMiddleware({
     "/sign-in/[[...sign-in]]",
     "/sign-up/[[...sign-up]]",
     "/api/webhooks/clerk",
+    "/assignments/:path*",
   ],
   async afterAuth(auth, req) {
     // If user is signed in and tries to access auth pages, redirect them
@@ -19,7 +20,7 @@ export default authMiddleware({
         req.nextUrl.pathname.startsWith("/sign-up"))
     ) {
       const user = await clerkClient.users.getUser(auth.userId);
-      
+
       // If no role is set, set it to professor
       if (!user.unsafeMetadata.role) {
         await clerkClient.users.updateUser(auth.userId, {
