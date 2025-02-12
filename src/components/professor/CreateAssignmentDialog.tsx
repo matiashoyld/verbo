@@ -334,7 +334,7 @@ export function CreateAssignmentDialog() {
                       </p>
                     </div>
                   ) : (
-                    courses.map((course: { id: string; name: string }) => (
+                    courses.map((course) => (
                       <SelectItem key={course.id} value={course.id}>
                         {course.name}
                       </SelectItem>

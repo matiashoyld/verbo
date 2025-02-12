@@ -215,6 +215,21 @@ export const assignmentRouter = createTRPCRouter({
       });
     }),
 
+  getPublicAssignment: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db.assignment.findUnique({
+        where: { id: input.id },
+        include: {
+          questions: {
+            include: {
+              answers: true,
+            },
+          },
+        },
+      });
+    }),
+
   getAll: protectedProcedure.query(async ({ ctx }) => {
     return ctx.db.assignment.findMany({
       where: {

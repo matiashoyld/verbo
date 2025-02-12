@@ -10,7 +10,8 @@ export default authMiddleware({
     "/sign-in/[[...sign-in]]",
     "/sign-up/[[...sign-up]]",
     "/api/webhooks/clerk",
-    "/assignments/:path*",
+    "/assignments/:id*",
+    "/api/trpc/:path*",
   ],
   async afterAuth(auth, req) {
     // If user is signed in and tries to access auth pages, redirect them

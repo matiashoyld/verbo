@@ -1,5 +1,6 @@
 "use client";
 
+import { type Question, type StudentResponse } from "@prisma/client";
 import {
   ArrowRight,
   Brain,
@@ -76,26 +77,6 @@ interface StudentAssignmentViewProps {
   courseName: string;
   questions: Question[];
 }
-
-type Question = {
-  id: string;
-  text: string;
-  assignmentId: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type StudentResponse = {
-  id: string;
-  questionId: string;
-  studentAssignmentId: string;
-  transcription: string;
-  keyTakeaway: string | null;
-  strengths: string[];
-  improvements: string[];
-  createdAt: Date;
-  updatedAt: Date;
-};
 
 interface AnalyzedResponse extends StudentResponse {
   keyTakeaway: string | null;

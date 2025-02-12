@@ -85,20 +85,12 @@ export function EditAssignmentDialog({
 
   const handleQuestionEdit = (id: string, newText: string) => {
     setQuestions(
-      questions.map(
-        (q: {
-          id: string;
-          text: string;
-          createdAt: Date;
-          updatedAt: Date;
-          assignmentId: string;
-        }) => (q.id === id ? { ...q, text: newText } : q),
-      ),
+      questions.map((q) => (q.id === id ? { ...q, text: newText } : q)),
     );
   };
 
   const handleQuestionDelete = (id: string) => {
-    setQuestions(questions.filter((q: { id: string }) => q.id !== id));
+    setQuestions(questions.filter((q) => q.id !== id));
   };
 
   const handleAddQuestion = () => {
@@ -135,10 +127,7 @@ export function EditAssignmentDialog({
       id: assignment.id,
       name,
       courseId: selectedCourseId,
-      questions: questions.map((q: { id: string; text: string }) => ({
-        id: q.id,
-        text: q.text,
-      })),
+      questions: questions.map((q) => ({ id: q.id, text: q.text })),
     });
   };
 
@@ -173,7 +162,7 @@ export function EditAssignmentDialog({
                     </p>
                   </div>
                 ) : (
-                  courses.map((course: { id: string; name: string }) => (
+                  courses.map((course) => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.name}
                     </SelectItem>
@@ -193,7 +182,7 @@ export function EditAssignmentDialog({
             />
           </div>
           <div className="space-y-4">
-            {questions.map((question: { id: string; text: string }) => (
+            {questions.map((question) => (
               <div key={question.id} className="flex items-start space-x-2">
                 <Textarea
                   value={question.text}

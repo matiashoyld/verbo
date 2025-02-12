@@ -1,20 +1,20 @@
-import { z } from "zod"
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc"
-import { TRPCError } from "@trpc/server"
-import { Prisma } from "@prisma/client"
-import OpenAI from "openai"
-import { env } from "~/env"
-import fs from "fs"
-import os from "os"
-import path from "path"
-import { google } from "@ai-sdk/google"
-import { generateText } from "ai"
-import { PromptStore } from "~/lib/prompts"
+import { google } from "@ai-sdk/google";
+import { Prisma } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
+import { generateText } from "ai";
+import fs from "fs";
+import OpenAI from "openai";
+import os from "os";
+import path from "path";
+import { z } from "zod";
+import { env } from "~/env";
+import { PromptStore } from "~/lib/prompts";
+import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
-})
+});
 
 // Initialize Gemini model
 const model = google("gemini-2.0-flash-lite-preview-02-05", {
@@ -24,39 +24,44 @@ const model = google("gemini-2.0-flash-lite-preview-02-05", {
     { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
     { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
   ],
-})
+});
 
 // Helper function to convert base64 to a buffer and determine file extension
-function processAudioData(base64String: string): { buffer: Buffer; extension: string } {
-  console.log('Processing audio data format:', base64String.substring(0, 100))
+function processAudioData(base64String: string): {
+  buffer: Buffer;
+  extension: string;
+} {
+  console.log("Processing audio data format:", base64String.substring(0, 100));
 
   // Extract MIME type and base64 data
-  const matches = base64String.match(/^data:(audio\/[^;]+);base64,(.+)$/)
+  const matches = base64String.match(/^data:(audio\/[^;]+);base64,(.+)$/);
   if (!matches?.length || !matches[1] || !matches[2]) {
-    console.error('Invalid audio data format. Expected format: data:audio/[type];base64,[data]')
-    console.error('Received format:', base64String.substring(0, 100))
-    throw new Error('Invalid audio data format')
+    console.error(
+      "Invalid audio data format. Expected format: data:audio/[type];base64,[data]",
+    );
+    console.error("Received format:", base64String.substring(0, 100));
+    throw new Error("Invalid audio data format");
   }
 
-  const mimeType = matches[1]
-  const base64Data = matches[2]
+  const mimeType = matches[1];
+  const base64Data = matches[2];
 
   // Map MIME types to file extensions
   const mimeToExtension: Record<string, string> = {
-    'audio/webm': 'webm',
-    'audio/ogg': 'ogg',
-    'audio/mp3': 'mp3',
-    'audio/mpeg': 'mp3',
-    'audio/wav': 'wav',
-  }
+    "audio/webm": "webm",
+    "audio/ogg": "ogg",
+    "audio/mp3": "mp3",
+    "audio/mpeg": "mp3",
+    "audio/wav": "wav",
+  };
 
-  const extension = mimeToExtension[mimeType] ?? 'webm'
-  console.log('Using extension:', extension, 'for MIME type:', mimeType)
+  const extension = mimeToExtension[mimeType] ?? "webm";
+  console.log("Using extension:", extension, "for MIME type:", mimeType);
 
   return {
-    buffer: Buffer.from(base64Data, 'base64'),
+    buffer: Buffer.from(base64Data, "base64"),
     extension,
-  }
+  };
 }
 
 // Helper function to transcribe audio using OpenAI Whisper
@@ -104,13 +109,13 @@ export const studentAssignmentRouter = createTRPCRouter({
       const assignment = await ctx.db.assignment.findUnique({
         where: { id: input.assignmentId },
         include: { questions: true },
-      })
+      });
 
       if (!assignment) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Assignment not found",
-        })
+        });
       }
 
       try {
@@ -128,12 +133,15 @@ export const studentAssignmentRouter = createTRPCRouter({
               },
             },
           },
-        })
+        });
 
-        return studentAssignment
+        return studentAssignment;
       } catch (error) {
         // If there's a unique constraint violation, it means the student has already started this assignment
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002"
+        ) {
           // Fetch and return the existing assignment instead
           return ctx.db.studentAssignment.findUnique({
             where: {
@@ -149,11 +157,11 @@ export const studentAssignmentRouter = createTRPCRouter({
                 },
               },
             },
-          })
+          });
         }
-        
+
         // For any other error, throw it
-        throw error
+        throw error;
       }
     }),
 
@@ -180,7 +188,7 @@ export const studentAssignmentRouter = createTRPCRouter({
           },
           responses: true,
         },
-      })
+      });
     }),
 
   createResponse: publicProcedure
@@ -192,18 +200,21 @@ export const studentAssignmentRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      let tempFilePath: string | undefined
+      let tempFilePath: string | undefined;
 
       try {
         // Process audio data
-        const { buffer, extension } = processAudioData(input.audioData)
-        tempFilePath = path.join(os.tmpdir(), `${Date.now()}-audio.${extension}`)
+        const { buffer, extension } = processAudioData(input.audioData);
+        tempFilePath = path.join(
+          os.tmpdir(),
+          `${Date.now()}-audio.${extension}`,
+        );
 
         // Write the buffer to a temporary file
-        fs.writeFileSync(tempFilePath, buffer)
+        fs.writeFileSync(tempFilePath, buffer);
 
         // Create a file object that OpenAI can handle
-        const file = fs.createReadStream(tempFilePath)
+        const file = fs.createReadStream(tempFilePath);
 
         // Transcribe with OpenAI
         const transcription = await openai.audio.transcriptions.create({
@@ -211,7 +222,7 @@ export const studentAssignmentRouter = createTRPCRouter({
           model: "whisper-1",
           response_format: "text",
           language: "en", // Specify language to improve accuracy
-        })
+        });
 
         // Create response with transcription
         const response = await ctx.db.studentResponse.create({
@@ -220,30 +231,30 @@ export const studentAssignmentRouter = createTRPCRouter({
             studentAssignmentId: input.studentAssignmentId,
             transcription: transcription,
           },
-        })
+        });
 
-        return response
+        return response;
       } catch (error) {
-        console.error("Error processing audio:", error)
+        console.error("Error processing audio:", error);
         if (error instanceof Error) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: `Failed to process audio response: ${error.message}`,
-          })
+          });
         } else {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Failed to process audio response",
-          })
+          });
         }
       } finally {
         // Clean up: delete the temporary file if it exists
         try {
           if (tempFilePath && fs.existsSync(tempFilePath)) {
-            fs.unlinkSync(tempFilePath)
+            fs.unlinkSync(tempFilePath);
           }
         } catch (error) {
-          console.error("Error cleaning up temporary file:", error)
+          console.error("Error cleaning up temporary file:", error);
         }
       }
     }),
@@ -258,27 +269,27 @@ export const studentAssignmentRouter = createTRPCRouter({
       // Fetch the response with its question and assignment
       const response = await ctx.db.studentResponse.findUnique({
         where: { id: input.responseId },
-        include: { 
+        include: {
           question: {
             include: {
-              assignment: true
-            }
-          }
+              assignment: true,
+            },
+          },
         },
-      })
+      });
 
       if (!response) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Response not found",
-        })
+        });
       }
 
       if (!response.transcription) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Response has no transcription",
-        })
+        });
       }
 
       try {
@@ -300,19 +311,19 @@ export const studentAssignmentRouter = createTRPCRouter({
               ],
             },
           ],
-        })
+        });
 
         // Parse the JSON response
-        const jsonMatch = text.match(/\{[\s\S]*\}/)
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
-          throw new Error("No JSON object found in response")
+          throw new Error("No JSON object found in response");
         }
 
         const analysis = JSON.parse(jsonMatch[0]) as {
-          keyTakeaway: string
-          strengths: string[]
-          improvements: string[]
-        }
+          keyTakeaway: string;
+          strengths: string[];
+          improvements: string[];
+        };
 
         // Update the response with the analysis
         const updatedResponse = await ctx.db.studentResponse.update({
@@ -322,15 +333,15 @@ export const studentAssignmentRouter = createTRPCRouter({
             strengths: analysis.strengths,
             improvements: analysis.improvements,
           },
-        })
+        });
 
-        return updatedResponse
+        return updatedResponse;
       } catch (error) {
-        console.error("Error analyzing response:", error)
+        console.error("Error analyzing response:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to analyze response",
-        })
+        });
       }
     }),
-}) 
+});
