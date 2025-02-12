@@ -41,8 +41,8 @@ export default function PublicAssignmentPage({
       assignmentId={assignment.id}
       assignmentName={assignment.name}
       questionCount={assignment.questions.length}
-      professorName="Professor"
-      courseName="Course"
+      professorName={assignment.course.user.name ?? "Unknown Professor"}
+      courseName={assignment.course.name}
       questions={assignment.questions}
     />
   );

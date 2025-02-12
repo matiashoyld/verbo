@@ -226,6 +226,11 @@ export const assignmentRouter = createTRPCRouter({
               answers: true,
             },
           },
+          course: {
+            include: {
+              user: true,
+            },
+          },
         },
       });
     }),
