@@ -10,19 +10,17 @@ A voice-based reading reflection platform that promotes authentic student engage
 
 ## Table of Contents
 
-- [verbo.ai](#verboai)
-  - [Table of Contents](#table-of-contents)
-  - [Introduction](#introduction)
-  - [Core Objectives](#core-objectives)
-  - [Features and Use Cases](#features-and-use-cases)
-  - [Tech Stack](#tech-stack)
-  - [Folder Structure](#folder-structure)
-  - [Prerequisites](#prerequisites)
-  - [Getting Started](#getting-started)
-  - [Usage](#usage)
-  - [Authentication](#authentication)
-  - [Deployment](#deployment)
-  - [Additional Considerations](#additional-considerations)
+- [Introduction](#introduction)
+- [Core Objectives](#core-objectives)
+- [Features and Use Cases](#features-and-use-cases)
+- [Tech Stack](#tech-stack)
+- [Folder Structure](#folder-structure)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [Authentication](#authentication)
+- [Deployment](#deployment)
+- [Additional Considerations](#additional-considerations)
 
 ---
 
@@ -70,10 +68,6 @@ verbo.ai aims to transform reading assignments into interactive, voice-based ref
 - View and provide feedback on student submissions.  
 - Identify unclear or low-confidence answers for additional review.  
 
-• **Security & Privacy**  
-
-- Securely handle sensitive data (audio files, transcripts) with encryption, authentication, and role-based permissions.
-
 ---
 
 ## Tech Stack
@@ -95,64 +89,73 @@ verbo.ai is built on the [T3 Stack](https://create.t3.gg/), which combines:
   - [Clerk](https://clerk.com) – Authentication and user management.  
   - [OpenAI Whisper](https://openai.com/research/whisper) – Speech-to-text transcription.  
   - [Vercel AI SDK](https://sdk.vercel.ai/) – Typescript toolkit for AI-based question generation, analytics, etc.  
-  - [ffmpeg](https://ffmpeg.org/) – Audio processing and conversion.  
-  - Testing with [Vitest](https://vitest.dev/), [React Testing Library](https://testing-library.com/), or [Cypress](https://www.cypress.io/) for E2E.  
   - Hosted on [Vercel](https://vercel.com).
 
 ---
 
 ## Folder Structure
 
-Below is the recommended structure (aligned with a typical T3 stack + Next.js project):
+Below is the project structure using Next.js App Router:
 
 ```
-verbo-ai/
+verbo/
 ├─ .env # Environment variables (DB connections, API keys)
-├─ .eslintrc.js # Linting configuration
-├─ .prettierrc # Prettier configuration
-├─ package.json
 ├─ prisma/
-│  ├─ schema.prisma # Prisma schema for database models
+│  ├─ schema.prisma # Database schema
+│  └─ migrations/ # Database migrations
 ├─ src/
-│  ├─ pages/ # Next.js pages
-│  │  ├─ api/
-│  │  │  └─ trpc/ # (If you're exposing tRPC through Next's API routes)
-│  │  ├─ index.tsx # Landing page
-│  │  ├─ dashboard.tsx # Professor's main dashboard
-│  │  ├─ student/
-│  │  │  ├─ index.tsx # Student landing / dashboard
-│  │  │  ├─ responses.tsx # Page for recording/listening to responses
-│  │  │  └─ ...
-│  ├─ server/
-│  │  ├─ trpc/
-│  │  │  ├─ index.ts # tRPC router entry
-│  │  │  ├─ questions.ts # tRPC router for question endpoints
-│  │  │  ├─ readings.ts # tRPC router for reading materials
-│  │  │  └─ users.ts # tRPC router for user management
-│  │  ├─ db.ts # Prisma client instance
-│  ├─ components/ # Reusable UI components
-│  │  ├─ ui/
-│  │  │  ├─ Button.tsx
-│  │  │  ├─ Input.tsx
-│  │  │  ├─ Navbar.tsx
-│  │  │  └─ ...
-│  ├─ lib/ # Utility functions, helpers
-│  │  └─ speechToText.ts # Abstraction for speech-to-text logic
-│  ├─ styles/
-│  │  └─ globals.css # Tailwind CSS imports, global styles
-├─ tsconfig.json
-└─ README.md
+│  ├─ app/ # Next.js App Router pages
+│  │  ├─ (auth)/ # Authentication-related pages
+│  │  ├─ api/ # API routes
+│  │  │  ├─ trpc/[trpc]/ # tRPC handler
+│  │  │  └─ webhooks/ # External service webhooks
+│  │  ├─ professor/ # Professor dashboard and features
+│  │  ├─ student/ # Student dashboard and features
+│  │  ├─ layout.tsx # Root layout
+│  │  └─ page.tsx # Landing page
+│  ├─ components/ # React components
+│  │  ├─ professor/ # Professor-specific components
+│  │  ├─ student/ # Student-specific components
+│  │  └─ ui/ # Shared UI components (shadcn/ui)
+│  ├─ lib/ # Utility functions and shared logic
+│  │  └─ prompts.ts # AI prompt templates
+│  ├─ server/ # Server-side code
+│  │  └─ api/ # tRPC routers and procedures
+│  ├─ styles/ # Global styles
+│  │  └─ globals.css # Tailwind imports
+│  ├─ trpc/ # tRPC configuration
+│  │  ├─ react.tsx # React hooks provider
+│  │  └─ server.ts # Server configuration
+│  ├─ types/ # TypeScript type definitions
+│  └─ utils/ # Helper functions
+├─ public/ # Static assets
+├─ tailwind.config.ts # Tailwind configuration
+├─ tsconfig.json # TypeScript configuration
+└─ package.json # Project dependencies and scripts
 ```
 
 ---
 
 ## Prerequisites
 
-- **Node.js** (v18 or above recommended)  
-- **npm** (v9 or above) or Yarn / pnpm  
-- **PostgreSQL database** set up on [Neon](https://neon.tech) or your preferred hosting provider.  
-- **Clerk** account for authentication (optional if you use a different auth provider, but this is highly recommended).  
-- **ffmpeg** installed for audio processing.
+Before you begin, ensure you have the following installed and set up:
+
+- **Node.js** (v18 or above recommended)
+  ```bash
+  node --version  # Should be v18.x.x or higher
+  ```
+- **npm** (v9 or above)
+  ```bash
+  npm --version  # Should be v9.x.x or higher
+  ```
+- **PostgreSQL database** set up on [Neon](https://neon.tech) or your preferred hosting provider
+- **Clerk Account** for authentication
+  1. Sign up at [clerk.com](https://clerk.com)
+  2. Create a new application
+  3. Get your API keys from the Clerk Dashboard
+- **OpenAI API Key** for AI features
+  1. Sign up at [platform.openai.com](https://platform.openai.com)
+  2. Create an API key in your dashboard
 
 ---
 
@@ -172,18 +175,44 @@ verbo-ai/
    ```
 
 3. **Configure Environment Variables**  
-   Create `.env` and set the necessary values:  
-   - `DATABASE_URL` – Connection string to your PostgreSQL database (e.g., from Neon)  
-   - `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` – Clerk credentials  
-   - `NEXT_PUBLIC_AI_SDK_KEY` or similar for OpenAI / Vercel AI  
+   Create a `.env` file in the root directory with the following variables:
+
+   ```env
+   # Database (Required)
+   DATABASE_URL="your-postgresql-connection-string"
+
+   # Clerk Authentication (Required)
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="your-clerk-publishable-key"
+   CLERK_SECRET_KEY="your-clerk-secret-key"
+   CLERK_WEBHOOK_SECRET="your-clerk-webhook-secret"
+
+   # OpenAI (Required for AI features)
+   OPENAI_API_KEY="your-openai-api-key"
+
+   # Google Generative AI (Required for AI features)
+   GOOGLE_GENERATIVE_AI_API_KEY="your-google-generative-ai-api-key"
+
+   # Node Environment
+   NODE_ENV="development"
+   ```
 
 4. **Set Up the Database**  
-   - Update your `.env` with the correct `DATABASE_URL`.  
-   - Run Prisma migrations:  
+   
+   a. First, make sure your PostgreSQL database is running and accessible
+   
+   b. Run Prisma migrations to set up your database schema:
+   ```bash
+   # Generate Prisma Client
+   npx prisma generate
 
-     ```bash
-     npx prisma migrate dev
-     ```
+   # Run migrations
+   npx prisma migrate dev
+   ```
+
+   c. (Optional) View your database with Prisma Studio:
+   ```bash
+   npm run db:studio
+   ```
 
 5. **Start the Development Server**  
 
@@ -191,7 +220,28 @@ verbo-ai/
    npm run dev
    ```
 
-   This will start the Next.js dev server at <http://localhost:3000>.
+   The application will be available at [http://localhost:3000](http://localhost:3000)
+
+6. **Setting Up Your First Account**
+
+   a. Visit [http://localhost:3000](http://localhost:3000)
+   
+   b. Sign up using Clerk's authentication
+
+7. **Troubleshooting Common Issues**
+
+   - If you get database connection errors:
+     - Verify your DATABASE_URL in .env
+     - Ensure your database is running
+     - Try running `npx prisma db push` to sync schema
+
+   - If you get authentication errors:
+     - Verify your Clerk API keys
+     - Ensure all required Clerk environment variables are set
+
+   - If you get TypeScript errors:
+     - Run `npm run typecheck` to see detailed errors
+     - Ensure all dependencies are installed with `npm install`
 
 ---
 
@@ -227,24 +277,14 @@ The app is deployed on [Vercel](https://vercel.com), and you can access the live
 ## Additional Considerations
 
 1. **AI Integration**  
-   - We strongly leverage the [Vercel AI SDK](https://sdk.vercel.ai/) for advanced NLP tasks (自动 question generation, analytics, etc.).  
-   - Real-time transcription uses [OpenAI Whisper](https://openai.com/research/whisper) or fallback to the Web Speech API.
+   - We strongly leverage the [Vercel AI SDK](https://sdk.vercel.ai/) for advanced NLP tasks (question generation, analytics, etc.).  
+   - Real-time transcription uses [OpenAI Whisper](https://openai.com/research/whisper) with fallback to the Web Speech API.
 
 2. **Audio Processing & Transcription**  
    - Implement `MediaRecorder` for capturing audio in the browser.  
-   - Use ffmpeg to convert recorded audio to MP3 (if needed).  
-   - Communicate with the Whisper API to transcribe student responses.
+   - Audio is captured in WebM/MP3 format (based on browser support).  
+   - Direct integration with OpenAI Whisper API for transcription.
 
 3. **Analytics & Feedback**  
    - Generate user-friendly dashboards to highlight performance, average response time, or confusion areas.  
    - Provide optional personal feedback from professors.
-
-4. **Security & Privacy**  
-   - Strict role-based access controls (professor vs. student).  
-   - Encryption of audio files and transcripts (where feasible).  
-   - Infrastructure compliance with educational data privacy regulations (e.g., FERPA).
-
-5. **Testing**  
-   - Unit and integration tests are performed with [Vitest](https://vitest.dev/).  
-   - UI tests can be written with [React Testing Library](https://testing-library.com/).  
-   - Additional E2E coverage can be added if desired.
