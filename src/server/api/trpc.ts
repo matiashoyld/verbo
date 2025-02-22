@@ -6,11 +6,17 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import { createClient } from "@supabase/supabase-js";
 import { db } from "~/server/db";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
 
 /**
  * 1. CONTEXT
@@ -24,11 +30,59 @@ import { db } from "~/server/db";
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = async (opts: { headers: Headers }) => {
+interface CreateContextOptions {
+  headers: Headers;
+}
+
+interface Session {
+  user: {
+    id: string;
+    email: string | null;
+    name?: string;
+    role: "RECRUITER" | "CANDIDATE";
+  };
+}
+
+interface Context {
+  db: typeof db;
+  session: Session | null;
+}
+
+export const createInnerTRPCContext = async (opts: CreateContextOptions): Promise<Context> => {
+  const authHeader = opts.headers.get("authorization");
+  if (!authHeader) {
+    return {
+      db,
+      session: null,
+    };
+  }
+
+  const { data: { user }, error } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+
+  if (error || !user) {
+    return {
+      db,
+      session: null,
+    };
+  }
+
   return {
     db,
-    ...opts,
+    session: {
+      user: {
+        id: user.id,
+        email: user.email ?? null,
+        name: user.user_metadata.name as string | undefined,
+        role: user.user_metadata.role as "RECRUITER" | "CANDIDATE",
+      },
+    },
   };
+};
+
+export const createTRPCContext = async (opts: { headers: Headers }) => {
+  return createInnerTRPCContext({
+    headers: opts.headers,
+  });
 };
 
 /**
@@ -104,3 +158,15 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+  if (!ctx.session?.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  return next({
+    ctx: {
+      ...ctx,
+      session: { ...ctx.session },
+    },
+  });
+});
