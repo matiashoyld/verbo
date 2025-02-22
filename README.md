@@ -102,7 +102,7 @@ verbo.ai is built on the [T3 Stack](https://create.t3.gg/), which combines:
 
 Below is the project structure using Next.js App Router:
 
-```
+```bash
 verbo/
 ├─ .env # Environment variables (DB connections, API keys)
 ├─ prisma/

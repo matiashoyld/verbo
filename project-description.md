@@ -1,11 +1,11 @@
-**Project Name:** verbo.ai  
+# verbo.ai  
 
 **High-Level Description:**  
 A skill assessment platform for modern hiring and recruitment processes. Recruiters select specific technical or soft skills they want to evaluate, and applicants are presented with an interactive case or challenge. Instead of a human interviewer, an AI agent guides the applicant, records both audio and screen activity, and at the end provides feedback to the applicant. For the recruiter, verbo.ai automatically extracts evidence of each skill from the recorded session and offers an AI-powered assessment and summary, drastically reducing the manual overhead of live interviews.
 
 ---
 
-### 1. Core Objectives
+## 1. Core Objectives
 
 1. **Accurate Skill Measurement**: Provide recruiters with an AI-driven breakdown of a candidate’s proficiency in targeted skills.  
 2. **Efficient Evaluation Process**: Automate the interview process to save time and resources while keeping the assessment consistent.  
@@ -14,7 +14,7 @@ A skill assessment platform for modern hiring and recruitment processes. Recruit
 
 ---
 
-### 2. Use Cases & User Journeys
+## 2. Use Cases & User Journeys
 
 1. **Recruiter Onboarding / Setup**  
    - The recruiter creates an account on verbo.ai.  
@@ -44,7 +44,7 @@ A skill assessment platform for modern hiring and recruitment processes. Recruit
 
 ---
 
-### 3. Key Functionalities
+## 3. Key Functionalities
 
 1. **User Management & Authentication**  
    - Account creation for recruiters and applicants via Supabase.  
@@ -99,7 +99,7 @@ A skill assessment platform for modern hiring and recruitment processes. Recruit
 
 ---
 
-### 4. Tech Stack
+## 4. Tech Stack
 
 - **Front-End:**  
   - **Next.js** – React-based framework with server-side rendering support.  
@@ -119,9 +119,9 @@ A skill assessment platform for modern hiring and recruitment processes. Recruit
 
 ---
 
-### 5. Suggested File/Folder Structure
+## 5. Suggested File/Folder Structure
 
-```
+```bash
 verbo-ai/
 ├─ .env                     # Environment variables (Supabase keys, AI keys, etc.)
 ├─ .eslintrc.js            # Linting configuration
@@ -169,7 +169,7 @@ verbo-ai/
 
 ---
 
-### 6. Additional Considerations
+## 6. Additional Considerations
 
 1. **Environment Configuration**  
    - Store Supabase keys and any AI API keys in `.env`.  
@@ -211,7 +211,7 @@ verbo-ai/
 
 ---
 
-### 7. Instructions for the AI IDE
+## 7. Instructions for the AI IDE
 
 1. **Initialize a Next.js + TypeScript project** with the recommended structure.  
 2. **Install dependencies** for Tailwind CSS, tRPC, Prisma, Supabase, shadcn/ui, and the Vercel AI SDK.  
