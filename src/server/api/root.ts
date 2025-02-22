@@ -1,11 +1,5 @@
-import {
-  createCallerFactory,
-  createTRPCRouter,
-  publicProcedure,
-} from "~/server/api/trpc";
-import { courseRouter } from "~/server/api/routers/course";
-import { assignmentRouter } from "~/server/api/routers/assignment";
-import { studentAssignmentRouter } from "~/server/api/routers/student-assignment";
+import { postRouter } from "~/server/api/routers/post";
+import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
  * This is the primary router for your server.
@@ -13,12 +7,7 @@ import { studentAssignmentRouter } from "~/server/api/routers/student-assignment
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  healthcheck: publicProcedure.query(() => {
-    return { status: "ok" };
-  }),
-  course: courseRouter,
-  assignment: assignmentRouter,
-  studentAssignment: studentAssignmentRouter,
+  post: postRouter,
 });
 
 // export type definition of API
@@ -28,5 +17,7 @@ export type AppRouter = typeof appRouter;
  * Create a server-side caller for the tRPC API.
  * @example
  * const trpc = createCaller(createContext);
+ * const res = await trpc.post.all();
+ *       ^? Post[]
  */
 export const createCaller = createCallerFactory(appRouter);

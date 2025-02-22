@@ -3,7 +3,7 @@ When working with this codebase, you should:
 
 - Use existing shadcn/ui components rather than installing new UI libraries. The correct command for installing shadcn/ui is `npx shadcn@latest add <component-name>`
 - Leverage tRPC for all API endpoints rather than REST
-- Use Clerk's built-in auth functions rather than adding alternative auth solutions
+- We are using Supabase for authentication and database
 - Work with the existing Prisma schema for database operations
 - Follow the established Tailwind CSS patterns for styling
 - Use the "~" path alias prefix for imports (e.g., "~/components/ui/button") rather than "@" as configured in the project's tsconfig.json and components.json
@@ -14,6 +14,7 @@ When working with this codebase, you should:
   - API/tRPC tests go in __tests__ directories next to their routers to co-locate tests with the code they're testing.
 
 AI Models:
+
 - The models that I use are:
   - Google Gemini 2.0 Flash (gemini-2.0-flash-lite-preview-02-05)
   - OpenAI GPT-4o-mini (gpt-4o-mini)
