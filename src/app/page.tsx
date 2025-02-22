@@ -344,22 +344,183 @@ export default function Page() {
           <h2 className="mb-12 text-center text-3xl font-bold">
             Powerful Features for Modern Hiring
           </h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <FeatureCard
-              icon={Brain}
-              title="AI-Driven Evaluation"
-              description="Leverage advanced AI to assess technical and soft skills through interactive challenges."
-            />
-            <FeatureCard
-              icon={Clock}
-              title="Time-Saving"
-              description="Reduce manual evaluation time while maintaining assessment quality."
-            />
-            <FeatureCard
-              icon={MessageSquare}
-              title="Interactive Chat"
-              description="Natural conversation flow with AI-powered interview assistance."
-            />
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* AI-Powered Assessment Card */}
+            <div className="group relative overflow-hidden rounded-xl border bg-background/60 p-6 backdrop-blur-sm transition-all hover:shadow-lg">
+              <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-2xl font-semibold">
+                  AI-Powered Assessment
+                </h3>
+                <div className="relative h-10 w-10">
+                  <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+                  <div className="relative flex h-full w-full items-center justify-center rounded-full bg-primary/20">
+                    <Brain className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+              </div>
+              <p className="mb-6 text-muted-foreground">
+                Our AI analyzes candidate responses in real-time, providing
+                comprehensive insights into their skills and capabilities.
+              </p>
+              <div className="space-y-4">
+                {["Code Quality", "Problem Solving", "Communication"].map(
+                  (skill, i) => (
+                    <div key={skill} className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>{skill}</span>
+                        <span className="text-primary">{[85, 92, 78][i]}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted">
+                        <motion.div
+                          className="h-full rounded-full bg-primary"
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${[85, 92, 78][i]}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 1, delay: i * 0.2 }}
+                        />
+                      </div>
+                    </div>
+                  ),
+                )}
+              </div>
+              <div className="mt-6 inline-flex items-center text-sm font-medium text-primary">
+                Learn more
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </div>
+            </div>
+
+            {/* Smart Analysis Card */}
+            <div className="group relative overflow-hidden rounded-xl border bg-background/60 p-6 backdrop-blur-sm transition-all hover:shadow-lg">
+              <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="mb-6">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <Brain className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="mb-2 text-xl font-semibold">Smart Analysis</h3>
+                <p className="text-muted-foreground">
+                  Advanced AI algorithms analyze responses and provide detailed
+                  skill assessments
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {["Accuracy", "Speed", "Precision", "Recall"].map(
+                  (metric, i) => (
+                    <div
+                      key={metric}
+                      className="flex flex-col items-center rounded-lg border bg-muted/50 p-3 transition-colors hover:bg-muted"
+                    >
+                      <div className="text-2xl font-bold text-primary">
+                        {[94, 89, 92, 87][i]}%
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {metric}
+                      </div>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+
+            {/* Time-Saving Card */}
+            <div className="group relative overflow-hidden rounded-xl border bg-background/60 p-6 backdrop-blur-sm transition-all hover:shadow-lg">
+              <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="mb-6">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <Clock className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="mb-2 text-xl font-semibold">Time-Saving</h3>
+                <p className="text-muted-foreground">
+                  Reduce manual overhead with automated evaluations and instant
+                  feedback
+                </p>
+              </div>
+              <div className="relative h-32">
+                <svg className="h-full w-full" viewBox="0 0 100 30">
+                  {[...Array(3)].map((_, i) => (
+                    <motion.path
+                      key={i}
+                      d={`M 0 ${20 + i * 2} C 20 ${10 + i * 2}, 40 ${25 + i * 2}, 100 ${15 + i * 2}`}
+                      className="stroke-primary"
+                      fill="none"
+                      strokeWidth="0.5"
+                      initial={{ pathLength: 0 }}
+                      whileInView={{ pathLength: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 2, delay: i * 0.5 }}
+                    />
+                  ))}
+                  <motion.circle
+                    cx="75"
+                    cy="16"
+                    r="2"
+                    className="fill-primary"
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 1.5 }}
+                  />
+                </svg>
+                <div className="absolute bottom-4 right-4 rounded-full bg-primary/10 px-3 py-1 text-sm">
+                  <span className="font-medium text-primary">-45%</span>
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    Time Saved
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Interactive Chat Card */}
+            <div className="group relative overflow-hidden rounded-xl border bg-background/60 p-6 backdrop-blur-sm transition-all hover:shadow-lg">
+              <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="mb-6">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <MessageSquare className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="mb-2 text-xl font-semibold">Interactive Chat</h3>
+                <p className="text-muted-foreground">
+                  Natural conversation flow with AI-powered interview assistance
+                </p>
+              </div>
+              <div className="space-y-3">
+                {[
+                  {
+                    text: "Tell me about your experience with React",
+                    delay: 0,
+                  },
+                  { text: "How do you handle state management?", delay: 1 },
+                  { text: "Can you explain component lifecycle?", delay: 2 },
+                ].map((message, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: message.delay * 0.5 }}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-primary/10 p-2">
+                      <Brain className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="rounded-lg rounded-tl-none border bg-muted/30 px-3 py-2">
+                      <p className="text-sm">{message.text}</p>
+                    </div>
+                  </motion.div>
+                ))}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 1.5 }}
+                  className="ml-auto flex h-8 items-center gap-2 rounded-full bg-primary/10 px-3"
+                >
+                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                  <span className="text-xs font-medium text-primary">
+                    AI is typing...
+                  </span>
+                </motion.div>
+              </div>
+            </div>
           </div>
         </section>
 
