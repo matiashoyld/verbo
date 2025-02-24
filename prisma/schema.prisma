@@ -16,8 +16,8 @@ model User {
     email         String       @unique
     name          String?
     role          UserRole     @default(CANDIDATE)
-    created_at    DateTime     @default(now()) @map("created_at")
-    updated_at    DateTime     @updatedAt @map("updated_at")
+    created_at    DateTime     @default(now())
+    updated_at    DateTime     @updatedAt
     submissions   Submission[]
     challenges    Challenge[]  @relation("CreatedChallenges")
 
@@ -30,45 +30,51 @@ enum UserRole {
 }
 
 model Category {
-    id        String   @id @default(uuid())
-    name      String   @unique
-    skills    Skill[]
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    id         String   @id @default(uuid())
+    name       String   @unique
+    skills     Skill[]
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
+
+    @@map("Category")
 }
 
 model Skill {
-    id         String     @id @default(uuid())
-    name       String
-    category   Category   @relation(fields: [categoryId], references: [id])
-    categoryId String
-    subSkills  SubSkill[]
-    challenges Challenge[]
-    createdAt  DateTime   @default(now())
-    updatedAt  DateTime   @updatedAt
+    id          String     @id @default(uuid())
+    name        String
+    category    Category   @relation(fields: [categoryId], references: [id])
+    categoryId  String     @map("category_id")
+    subSkills   SubSkill[]
+    challenges  Challenge[]
+    created_at  DateTime   @default(now())
+    updated_at  DateTime   @updatedAt
 
     @@unique([categoryId, name])
+    @@map("Skill")
 }
 
 model SubSkill {
-    id        String     @id @default(uuid())
-    name      String
-    skill     Skill      @relation(fields: [skillId], references: [id])
-    skillId   String
-    criteria  Criterion[]
-    createdAt DateTime   @default(now())
-    updatedAt DateTime   @updatedAt
+    id         String     @id @default(uuid())
+    name       String
+    skill      Skill      @relation(fields: [skillId], references: [id])
+    skillId    String     @map("skill_id")
+    criteria   Criterion[]
+    created_at DateTime   @default(now())
+    updated_at DateTime   @updatedAt
 
     @@unique([skillId, name])
+    @@map("SubSkill")
 }
 
 model Criterion {
     id          String   @id @default(uuid())
     description String
     subSkill    SubSkill @relation(fields: [subSkillId], references: [id])
-    subSkillId  String
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    subSkillId  String   @map("sub_skill_id")
+    created_at  DateTime @default(now())
+    updated_at  DateTime @updatedAt
+
+    @@map("Criterion")
 }
 
 model Challenge {
@@ -76,30 +82,34 @@ model Challenge {
     title        String
     description  String
     instructions String
-    timeLimit    Int?        // in minutes
+    timeLimit    Int?        @map("time_limit") // in minutes
     createdBy    User        @relation("CreatedChallenges", fields: [creatorId], references: [id])
-    creatorId    String
+    creatorId    String      @map("creator_id")
     skills       Skill[]
     submissions  Submission[]
-    createdAt    DateTime    @default(now())
-    updatedAt    DateTime    @updatedAt
+    created_at   DateTime    @default(now())
+    updated_at   DateTime    @updatedAt
+
+    @@map("Challenge")
 }
 
 model Submission {
-    id           String    @id @default(uuid())
-    challenge    Challenge @relation(fields: [challengeId], references: [id])
-    challengeId  String
-    candidate    User      @relation(fields: [candidateId], references: [id])
-    candidateId  String
-    audioUrl     String?   // URL to audio recording in Supabase storage
-    screenUrl    String?   // URL to screen recording in Supabase storage
-    transcript   String?   // Text transcript of the audio
-    feedback     Json?     // AI-generated feedback and assessment
+    id           String           @id @default(uuid())
+    challenge    Challenge        @relation(fields: [challengeId], references: [id])
+    challengeId  String          @map("challenge_id")
+    candidate    User            @relation(fields: [candidateId], references: [id])
+    candidateId  String          @map("candidate_id")
+    audioUrl     String?         @map("audio_url") // URL to audio recording in Supabase storage
+    screenUrl    String?         @map("screen_url") // URL to screen recording in Supabase storage
+    transcript   String?         // Text transcript of the audio
+    feedback     Json?          // AI-generated feedback and assessment
     status       SubmissionStatus @default(IN_PROGRESS)
-    startedAt    DateTime  @default(now())
-    completedAt  DateTime?
-    createdAt    DateTime  @default(now())
-    updatedAt    DateTime  @updatedAt
+    startedAt    DateTime        @default(now()) @map("started_at")
+    completedAt  DateTime?       @map("completed_at")
+    created_at   DateTime        @default(now())
+    updated_at   DateTime        @updatedAt
+
+    @@map("Submission")
 }
 
 enum SubmissionStatus {
