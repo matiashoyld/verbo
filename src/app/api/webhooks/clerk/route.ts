@@ -70,28 +70,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const now = new Date();
-    const result = await db.user.create({
+    await db.user.create({
       data: {
         id,
         email,
         name: [first_name, last_name].filter(Boolean).join(" ") || email,
-        role: "RECRUITER",
+        role: "RECRUITER", // Default to RECRUITER role
       },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-      }
     });
-    console.log("User created successfully in database:", result);
+    console.log("User created successfully in database");
     return new Response("User created", { status: 201 });
   } catch (err) {
     console.error("Error creating user in database:", err);
-    if (err instanceof Error) {
-      console.error("Error details:", err.message);
-    }
     return new Response("Error creating user", { status: 500 });
   }
 } 
