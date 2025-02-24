@@ -1,16 +1,19 @@
 import "~/styles/globals.css";
 
-import { Inter as FontSans } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
+import { GeistSans } from "geist/font/sans";
+import { Inter } from "next/font/google";
+import { Toaster } from "sonner";
 
 import { MainNav } from "~/components/ui/nav";
 import { TRPCReactProvider } from "~/trpc/react";
 
-const fontSans = FontSans({ subsets: ["latin"], variable: "--font-sans" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const fontSans = GeistSans;
 
 export const metadata = {
-  title: "verbo.ai - AI-Powered Skill Assessment Platform",
-  description:
-    "Modern hiring and recruitment processes with AI-driven skill assessments.",
+  title: "Verbo",
+  description: "Verbo - Technical Interview Platform",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
@@ -20,15 +23,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={fontSans.variable}>
-      <head />
-      <body className="min-h-screen bg-background font-sans antialiased">
-        <TRPCReactProvider>
-          <div className="relative flex min-h-screen flex-col">
+    <html lang="en">
+      <body className={`font-sans ${inter.variable} ${fontSans.variable}`}>
+        <ClerkProvider>
+          <TRPCReactProvider>
             <MainNav />
-            <div className="flex-1">{children}</div>
-          </div>
-        </TRPCReactProvider>
+            {children}
+            <Toaster richColors position="top-center" />
+          </TRPCReactProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

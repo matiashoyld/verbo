@@ -8,6 +8,7 @@ generator client {
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -26,13 +27,46 @@ enum UserRole {
     CANDIDATE
 }
 
+model Category {
+    id        String   @id @default(uuid())
+    name      String   @unique
+    skills    Skill[]
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
 model Skill {
-    id          String      @id @default(uuid())
-    name        String      @unique
-    description String?
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
-    challenges  Challenge[]
+    id         String     @id @default(uuid())
+    name       String
+    category   Category   @relation(fields: [categoryId], references: [id])
+    categoryId String
+    subSkills  SubSkill[]
+    challenges Challenge[]
+    createdAt  DateTime   @default(now())
+    updatedAt  DateTime   @updatedAt
+
+    @@unique([categoryId, name])
+}
+
+model SubSkill {
+    id        String     @id @default(uuid())
+    name      String
+    skill     Skill      @relation(fields: [skillId], references: [id])
+    skillId   String
+    criteria  Criterion[]
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
+
+    @@unique([skillId, name])
+}
+
+model Criterion {
+    id          String   @id @default(uuid())
+    description String
+    subSkill    SubSkill @relation(fields: [subSkillId], references: [id])
+    subSkillId  String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
 }
 
 model Challenge {

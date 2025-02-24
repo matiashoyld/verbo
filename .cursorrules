@@ -1,9 +1,10 @@
-This is a T3 Stack application with Clerk authentication. The stack is modern and well-integrated, focusing on type-safety and developer experience with the combination of TypeScript, tRPC, and Prisma.
+This is a T3 Stack application with Supabase authentication. The stack is modern and well-integrated, focusing on type-safety and developer experience with the combination of TypeScript, tRPC, and Prisma.
 When working with this codebase, you should:
 
 - Use existing shadcn/ui components rather than installing new UI libraries. The correct command for installing shadcn/ui is `npx shadcn@latest add <component-name>`
 - Leverage tRPC for all API endpoints rather than REST
-- We are using Supabase for authentication and database
+- We are using Clerk for authentication
+- We are using supabase for database
 - Work with the existing Prisma schema for database operations
 - Follow the established Tailwind CSS patterns for styling
 - Use the "~" path alias prefix for imports (e.g., "~/components/ui/button") rather than "@" as configured in the project's tsconfig.json and components.json
@@ -13,11 +14,6 @@ When working with this codebase, you should:
   - verbo-blue: #53a1e8 (Secondary actions, information)
   - verbo-dark: #321864 (Text, headers, primary brand color)
   These colors can be used with Tailwind classes like 'text-verbo-dark' or 'bg-verbo-purple' and support opacity modifiers
-- When creating test files, you should create it following the common T3 Stack and Next.js testing conventions, which is:
-  - Tests are co-located with the code they're testing
-  - Tests for app-wide functionality (like auth) go in src/app/__tests__/
-  - Component-specific tests go in __tests__ directories next to the components
-  - API/tRPC tests go in __tests__ directories next to their routers to co-locate tests with the code they're testing.
 
 AI Models:
 

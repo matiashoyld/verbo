@@ -22,6 +22,7 @@ export default function DashboardLayout({
             <SidebarNav
               items={[
                 { title: "Overview", href: "/dashboard" },
+                { title: "Skills", href: "/dashboard/skills" },
                 { title: "Challenges", href: "/dashboard/challenges" },
                 { title: "Submissions", href: "/dashboard/submissions" },
                 { title: "Analytics", href: "/dashboard/analytics" },

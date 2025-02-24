@@ -44,7 +44,7 @@ export const challengeRouter = createTRPCRouter({
       return ctx.db.challenge.create({
         data: {
           ...data,
-          creatorId: ctx.session.user.id,
+          creatorId: ctx.userId,
           ...(skillIds && {
             skills: {
               connect: skillIds.map((id) => ({ id })),

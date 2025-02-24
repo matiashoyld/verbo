@@ -58,7 +58,7 @@ export const submissionRouter = createTRPCRouter({
       return ctx.db.submission.create({
         data: {
           ...input,
-          candidateId: ctx.session.user.id,
+          candidateId: ctx.userId,
           status: "IN_PROGRESS",
         },
         select: defaultSubmissionSelect,
@@ -69,10 +69,10 @@ export const submissionRouter = createTRPCRouter({
     return ctx.db.submission.findMany({
       where: {
         OR: [
-          { candidateId: ctx.session.user.id },
+          { candidateId: ctx.userId },
           {
             challenge: {
-              creatorId: ctx.session.user.id,
+              creatorId: ctx.userId,
             },
           },
         ],
