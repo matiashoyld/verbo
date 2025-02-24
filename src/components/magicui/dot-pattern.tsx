@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "~/lib/utils";
 import { motion } from "motion/react";
 import React, { useEffect, useId, useRef, useState } from "react";
+import { cn } from "~/lib/utils";
 
 /**
  *  DotPattern Component Props
@@ -63,8 +63,8 @@ interface DotPatternProps extends React.SVGProps<SVGSVGElement> {
 export function DotPattern({
   width = 16,
   height = 16,
-  x = 0,
-  y = 0,
+  _x = 0,
+  _y = 0,
   cx = 1,
   cy = 1,
   cr = 1,
@@ -123,7 +123,7 @@ export function DotPattern({
           <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
         </radialGradient>
       </defs>
-      {dots.map((dot, index) => (
+      {dots.map((dot) => (
         <motion.circle
           key={`${dot.x}-${dot.y}`}
           cx={dot.x}
@@ -132,14 +132,7 @@ export function DotPattern({
           fill={glow ? `url(#${id}-gradient)` : "currentColor"}
           className="text-neutral-400/80"
           initial={glow ? { opacity: 0.4, scale: 1 } : {}}
-          animate={
-            glow
-              ? {
-                  opacity: [0.4, 1, 0.4],
-                  scale: [1, 1.5, 1],
-                }
-              : {}
-          }
+          animate={glow ? { opacity: [0.4, 1, 0.4], scale: [1, 1.5, 1] } : {}}
           transition={
             glow
               ? {

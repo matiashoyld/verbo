@@ -1,8 +1,9 @@
 "use client";
 
-import { cn } from "~/lib/utils";
-import { motion, MotionProps, type AnimationProps } from "motion/react";
+import type { AnimationProps, MotionProps } from "motion/react";
+import { motion } from "motion/react";
 import React from "react";
+import { cn } from "~/lib/utils";
 
 const animationProps = {
   initial: { "--x": "100%", scale: 0.8 },
@@ -16,12 +17,7 @@ const animationProps = {
     stiffness: 20,
     damping: 15,
     mass: 2,
-    scale: {
-      type: "spring",
-      stiffness: 200,
-      damping: 5,
-      mass: 0.5,
-    },
+    scale: { type: "spring", stiffness: 200, damping: 5, mass: 0.5 },
   },
 } as AnimationProps;
 

@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
   Brain,
-  ChevronRight,
   Clock,
   Database,
   Maximize2,
@@ -269,33 +268,6 @@ function InteractiveDemo() {
         </div>
       </div>
     </div>
-  );
-}
-
-function FeatureCard({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-}) {
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      className="group relative rounded-xl border bg-background/60 p-6 backdrop-blur-sm transition-colors hover:bg-accent"
-    >
-      <div className="mb-4 w-fit rounded-lg bg-primary/10 p-3 group-hover:bg-primary/20">
-        <Icon className="h-6 w-6 text-primary" />
-      </div>
-      <h3 className="mb-2 text-lg font-semibold">{title}</h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
-      <div className="mt-4 flex items-center text-sm text-primary">
-        <span className="font-medium">Learn more</span>
-        <ChevronRight className="ml-1 h-4 w-4" />
-      </div>
-    </motion.div>
   );
 }
 
