@@ -77,16 +77,12 @@ export async function POST(req: NextRequest) {
         email,
         name: [first_name, last_name].filter(Boolean).join(" ") || email,
         role: "RECRUITER",
-        created_at: now,
-        updated_at: now,
       },
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
-        created_at: true,
-        updated_at: true,
       }
     });
     console.log("User created successfully in database:", result);

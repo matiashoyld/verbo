@@ -13,12 +13,12 @@ model User {
   email       String       @unique
   name        String?
   role        UserRole     @default(RECRUITER)
-  created_at  DateTime     @default(now()) @db.Timestamptz(6) @map("created_at")
-  updated_at  DateTime     @updatedAt @db.Timestamptz(6) @map("updated_at")
+  created_at  DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime     @updatedAt @db.Timestamptz(6)
   challenges  Challenge[]  @relation("CreatedChallenges")
   submissions Submission[]
 
-  @@map("User")
+  @@map("user")
 }
 
 model Category {
