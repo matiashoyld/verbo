@@ -75,7 +75,10 @@ export async function POST(req: NextRequest) {
         id,
         email,
         name: [first_name, last_name].filter(Boolean).join(" ") || email,
-        role: "RECRUITER", // Default to RECRUITER role
+        role: "RECRUITER", // Default
+        // These fields will be automatically handled by Prisma's @default and @updatedAt
+        created_at: new Date(),
+        updated_at: new Date(),
       },
     });
     console.log("User created successfully in database");
