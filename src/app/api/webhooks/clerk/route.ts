@@ -14,6 +14,7 @@ type UserWebhookEvent = {
 };
 
 export async function POST(req: NextRequest) {
+  console.log("Webhook received");
   const WEBHOOK_SECRET = env.CLERK_WEBHOOK_SECRET;
 
   // Get the headers
@@ -21,8 +22,11 @@ export async function POST(req: NextRequest) {
   const svix_timestamp = req.headers.get("svix-timestamp");
   const svix_signature = req.headers.get("svix-signature");
 
+  console.log("Webhook headers:", { svix_id, svix_timestamp, svix_signature });
+
   // If there are no headers, error out
   if (!svix_id || !svix_timestamp || !svix_signature) {
+    console.error("Missing svix headers");
     return new Response("Error occured -- no svix headers", {
       status: 400,
     });
@@ -43,6 +47,7 @@ export async function POST(req: NextRequest) {
       "svix-timestamp": svix_timestamp,
       "svix-signature": svix_signature,
     }) as UserWebhookEvent;
+    console.log("Webhook verified successfully");
   } catch (err) {
     console.error("Error verifying webhook:", err);
     return new Response("Error occured", {
@@ -51,8 +56,11 @@ export async function POST(req: NextRequest) {
   }
 
   if (evt.type !== "user.created") {
+    console.log("Ignoring non-user.created event:", evt.type);
     return new Response("", { status: 200 });
   }
+
+  console.log("Processing user.created event:", evt.data);
 
   const { id, email_addresses, first_name, last_name } = evt.data;
   const email = email_addresses[0]?.email_address;
@@ -67,12 +75,13 @@ export async function POST(req: NextRequest) {
         id,
         email,
         name: [first_name, last_name].filter(Boolean).join(" ") || email,
-        role: "RECRUITER", // Set default role to RECRUITER
+        role: "RECRUITER", // Default to RECRUITER role
       },
     });
+    console.log("User created successfully in database");
     return new Response("User created", { status: 201 });
   } catch (err) {
-    console.error("Error creating user:", err);
+    console.error("Error creating user in database:", err);
     return new Response("Error creating user", { status: 500 });
   }
 } 
