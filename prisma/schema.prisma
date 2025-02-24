@@ -1,119 +1,116 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
-    directUrl = env("DIRECT_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-    id            String       @id @default(uuid()) @db.Uuid
-    email         String       @unique
-    name          String?
-    role          UserRole     @default(CANDIDATE)
-    created_at    DateTime     @default(now()) @db.Timestamptz
-    updated_at    DateTime     @updatedAt @db.Timestamptz
-    submissions   Submission[]
-    challenges    Challenge[]  @relation("CreatedChallenges")
+  id          String       @id @default(uuid()) @db.Uuid
+  email       String       @unique
+  name        String?
+  role        UserRole     @default(RECRUITER)
+  created_at  DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime     @updatedAt @db.Timestamptz(6)
+  challenges  Challenge[]  @relation("CreatedChallenges")
+  submissions Submission[]
 
-    @@map("User")
-}
-
-enum UserRole {
-    RECRUITER
-    CANDIDATE
+  @@map("User")
 }
 
 model Category {
-    id         String   @id @default(uuid()) @db.Uuid
-    name       String   @unique
-    skills     Skill[]
-    created_at DateTime @default(now()) @db.Timestamptz
-    updated_at DateTime @updatedAt @db.Timestamptz
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @unique
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+  skills     Skill[]
 
-    @@map("Category")
+  @@map("Category")
 }
 
 model Skill {
-    id          String     @id @default(uuid()) @db.Uuid
-    name        String
-    category    Category   @relation(fields: [categoryId], references: [id])
-    categoryId  String     @map("category_id") @db.Uuid
-    subSkills   SubSkill[]
-    challenges  Challenge[]
-    created_at  DateTime   @default(now()) @db.Timestamptz
-    updated_at  DateTime   @updatedAt @db.Timestamptz
+  id         String      @id @default(uuid()) @db.Uuid
+  name       String
+  categoryId String      @map("category_id") @db.Uuid
+  created_at DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at DateTime    @updatedAt @db.Timestamptz(6)
+  category   Category    @relation(fields: [categoryId], references: [id])
+  subSkills  SubSkill[]
+  challenges Challenge[] @relation("ChallengeToSkill")
 
-    @@unique([categoryId, name])
-    @@map("Skill")
+  @@unique([categoryId, name])
+  @@map("Skill")
 }
 
 model SubSkill {
-    id         String     @id @default(uuid()) @db.Uuid
-    name       String
-    skill      Skill      @relation(fields: [skillId], references: [id])
-    skillId    String     @map("skill_id") @db.Uuid
-    criteria   Criterion[]
-    created_at DateTime   @default(now()) @db.Timestamptz
-    updated_at DateTime   @updatedAt @db.Timestamptz
+  id         String      @id @default(uuid()) @db.Uuid
+  name       String
+  skillId    String      @map("skill_id") @db.Uuid
+  created_at DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at DateTime    @updatedAt @db.Timestamptz(6)
+  criteria   Criterion[]
+  skill      Skill       @relation(fields: [skillId], references: [id])
 
-    @@unique([skillId, name])
-    @@map("SubSkill")
+  @@unique([skillId, name])
+  @@map("SubSkill")
 }
 
 model Criterion {
-    id          String   @id @default(uuid()) @db.Uuid
-    description String
-    subSkill    SubSkill @relation(fields: [subSkillId], references: [id])
-    subSkillId  String   @map("sub_skill_id") @db.Uuid
-    created_at  DateTime @default(now()) @db.Timestamptz
-    updated_at  DateTime @updatedAt @db.Timestamptz
+  id          String   @id @default(uuid()) @db.Uuid
+  description String
+  subSkillId  String   @map("sub_skill_id") @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @updatedAt @db.Timestamptz(6)
+  subSkill    SubSkill @relation(fields: [subSkillId], references: [id])
 
-    @@map("Criterion")
+  @@map("Criterion")
 }
 
 model Challenge {
-    id           String       @id @default(uuid()) @db.Uuid
-    title        String
-    description  String
-    instructions String
-    timeLimit    Int?        @map("time_limit")
-    createdBy    User        @relation("CreatedChallenges", fields: [creatorId], references: [id])
-    creatorId    String      @map("creator_id") @db.Uuid
-    skills       Skill[]
-    submissions  Submission[]
-    created_at   DateTime    @default(now()) @db.Timestamptz
-    updated_at   DateTime    @updatedAt @db.Timestamptz
+  id           String       @id @default(uuid()) @db.Uuid
+  title        String
+  description  String
+  instructions String
+  timeLimit    Int?         @map("time_limit")
+  creatorId    String       @map("creator_id") @db.Uuid
+  created_at   DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime     @updatedAt @db.Timestamptz(6)
+  createdBy    User         @relation("CreatedChallenges", fields: [creatorId], references: [id])
+  submissions  Submission[]
+  skills       Skill[]      @relation("ChallengeToSkill")
 
-    @@map("Challenge")
+  @@map("Challenge")
 }
 
 model Submission {
-    id           String           @id @default(uuid()) @db.Uuid
-    challenge    Challenge        @relation(fields: [challengeId], references: [id])
-    challengeId  String          @map("challenge_id") @db.Uuid
-    candidate    User            @relation(fields: [candidateId], references: [id])
-    candidateId  String          @map("candidate_id") @db.Uuid
-    audioUrl     String?         @map("audio_url")
-    screenUrl    String?         @map("screen_url")
-    transcript   String?
-    feedback     Json?
-    status       SubmissionStatus @default(IN_PROGRESS)
-    startedAt    DateTime        @default(now()) @map("started_at") @db.Timestamptz
-    completedAt  DateTime?       @map("completed_at") @db.Timestamptz
-    created_at   DateTime        @default(now()) @db.Timestamptz
-    updated_at   DateTime        @updatedAt @db.Timestamptz
+  id          String           @id @default(uuid()) @db.Uuid
+  challengeId String           @map("challenge_id") @db.Uuid
+  candidateId String           @map("candidate_id") @db.Uuid
+  audioUrl    String?          @map("audio_url")
+  screenUrl   String?          @map("screen_url")
+  transcript  String?
+  feedback    Json?
+  status      SubmissionStatus @default(IN_PROGRESS)
+  startedAt   DateTime         @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt DateTime?        @map("completed_at") @db.Timestamptz(6)
+  created_at  DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime         @updatedAt @db.Timestamptz(6)
+  candidate   User             @relation(fields: [candidateId], references: [id])
+  challenge   Challenge        @relation(fields: [challengeId], references: [id])
 
-    @@map("Submission")
+  @@map("Submission")
+}
+
+enum UserRole {
+  RECRUITER
+  CANDIDATE
 }
 
 enum SubmissionStatus {
-    IN_PROGRESS
-    COMPLETED
-    FAILED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
 }
