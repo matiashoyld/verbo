@@ -16,10 +16,12 @@ model User {
     email         String       @unique
     name          String?
     role          UserRole     @default(CANDIDATE)
-    createdAt     DateTime     @default(now())
-    updatedAt     DateTime     @updatedAt
+    created_at    DateTime     @default(now()) @map("created_at")
+    updated_at    DateTime     @updatedAt @map("updated_at")
     submissions   Submission[]
     challenges    Challenge[]  @relation("CreatedChallenges")
+
+    @@map("User")
 }
 
 enum UserRole {
