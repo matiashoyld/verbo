@@ -98,16 +98,13 @@ export async function POST(req: NextRequest) {
         name: [first_name, last_name].filter(Boolean).join(" ") || email,
       });
       
-      const newUser = await db.user.create({
-        data: {
-          id: userId,
-          email,
-          name: [first_name, last_name].filter(Boolean).join(" ") || email,
-          role: "RECRUITER", // Default to RECRUITER role
-        },
-      });
+      // Use raw SQL to insert the user directly, bypassing Prisma's type validation
+      await db.$executeRaw`
+        INSERT INTO "User" (id, email, name, role)
+        VALUES (${userId}::uuid, ${email}, ${[first_name, last_name].filter(Boolean).join(" ") || email}, 'RECRUITER')
+      `;
       
-      console.log("User created successfully in database:", JSON.stringify(newUser));
+      console.log("User created successfully in database using raw SQL");
       return new Response("User created", { status: 201 });
     } catch (err) {
       console.error("Error creating user in database:", err);
