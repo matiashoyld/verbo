@@ -96,6 +96,7 @@ export async function POST(req: NextRequest) {
         id: userId,
         email,
         name: [first_name, last_name].filter(Boolean).join(" ") || email,
+        imageUrl: evt.data.image_url ?? evt.data.profile_image_url,
       });
       
       // Check if user already exists
@@ -109,7 +110,8 @@ export async function POST(req: NextRequest) {
         const updatedUser = await db.user.update({
           where: { email },
           data: { 
-            name: [first_name, last_name].filter(Boolean).join(" ") || email
+            name: [first_name, last_name].filter(Boolean).join(" ") || email,
+            imageUrl: evt.data.image_url ?? evt.data.profile_image_url,
           }
         });
         console.log("User updated successfully:", JSON.stringify(updatedUser));
@@ -120,6 +122,7 @@ export async function POST(req: NextRequest) {
             id: userId,
             email,
             name: [first_name, last_name].filter(Boolean).join(" ") || email,
+            imageUrl: evt.data.image_url ?? evt.data.profile_image_url,
             role: "RECRUITER"
           }
         });
