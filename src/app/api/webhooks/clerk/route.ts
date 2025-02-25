@@ -98,23 +98,52 @@ export async function POST(req: NextRequest) {
         name: [first_name, last_name].filter(Boolean).join(" ") || email,
       });
       
-      // Use raw SQL to insert the user directly, bypassing Prisma's type validation
-      await db.$executeRaw`
-        INSERT INTO "User" (id, email, name, role)
-        VALUES (${userId}::uuid, ${email}, ${[first_name, last_name].filter(Boolean).join(" ") || email}, 'RECRUITER')
+      // First check if user already exists
+      const existingUser = await db.$queryRaw`
+        SELECT id, email, name, role FROM "User" WHERE email = ${email}
       `;
       
-      console.log("User created successfully in database using raw SQL");
-      return new Response("User created", { status: 201 });
+      if (Array.isArray(existingUser) && existingUser.length > 0) {
+        console.log("User with this email already exists:", JSON.stringify(existingUser));
+        // Update the existing user
+        await db.$executeRaw`
+          UPDATE "User" 
+          SET name = ${[first_name, last_name].filter(Boolean).join(" ") || email}
+          WHERE email = ${email}
+        `;
+        console.log("User updated successfully");
+      } else {
+        // Create a new user
+        await db.$executeRaw`
+          INSERT INTO "User" (id, email, name, role)
+          VALUES (${userId}::uuid, ${email}, ${[first_name, last_name].filter(Boolean).join(" ") || email}, 'RECRUITER')
+        `;
+        console.log("New user created successfully");
+      }
+      
+      // Verify the user exists after operation
+      const verifyUser = await db.$queryRaw`
+        SELECT id, email, name, role FROM "User" WHERE email = ${email}
+      `;
+      console.log("User in database after operation:", JSON.stringify(verifyUser));
+      
+      // List all users in the database to diagnose visibility issues
+      console.log("Checking all users in database...");
+      const allUsers = await db.$queryRaw`
+        SELECT id, email, name, role FROM "User" LIMIT 10
+      `;
+      console.log("All users in database (up to 10):", JSON.stringify(allUsers));
+      
+      return new Response("User created or updated", { status: 201 });
     } catch (err) {
-      console.error("Error creating user in database:", err);
+      console.error("Error creating/updating user in database:", err);
       // Log specific error details if available
       if (err instanceof Error) {
         console.error("Error name:", err.name);
         console.error("Error message:", err.message);
         console.error("Error stack:", err.stack);
       }
-      return new Response(`Error creating user: ${err instanceof Error ? err.message : 'Unknown error'}`, { status: 500 });
+      return new Response(`Error creating/updating user: ${err instanceof Error ? err.message : 'Unknown error'}`, { status: 500 });
     }
   } catch (uncaughtErr) {
     console.error("Uncaught error in webhook handler:", uncaughtErr);
