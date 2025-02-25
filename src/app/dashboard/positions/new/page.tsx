@@ -81,11 +81,11 @@ export default function NewPositionPage() {
           } else {
             // If no skills were extracted, use the fallback
             console.warn("No skills were extracted, using fallback");
-            useFallbackSkills();
+            applyFallbackSkills();
           }
         } catch (error) {
           console.error("Error extracting skills:", error);
-          useFallbackSkills();
+          applyFallbackSkills();
         }
       } else if (step === 2) {
         setAssessment((prev) => ({
@@ -109,7 +109,7 @@ The candidate should demonstrate their ability to create a well-structured, scal
     } catch (error) {
       console.error("Error in step transition:", error);
       if (step === 1) {
-        useFallbackSkills();
+        applyFallbackSkills();
       }
     } finally {
       setLoading(false);
@@ -118,8 +118,7 @@ The candidate should demonstrate their ability to create a well-structured, scal
   };
 
   // Helper function to use fallback skills when the API fails
-  // This should eventually be updated to fetch default skills from the database as well
-  const useFallbackSkills = () => {
+  const applyFallbackSkills = () => {
     setSkills([
       {
         category: "Programming",

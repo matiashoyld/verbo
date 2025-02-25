@@ -108,7 +108,7 @@ export const positionsRouter = createTRPCRouter({
           dbData.categories.reduce(
             (count: number, cat: StructuredCategory) => 
               count + cat.skills.reduce(
-                (sCount: number, skill: { competencies: any[] }) => 
+                (sCount: number, skill: { competencies: Array<{ name: string }> }) => 
                   sCount + skill.competencies.length, 
                 0
               ), 
