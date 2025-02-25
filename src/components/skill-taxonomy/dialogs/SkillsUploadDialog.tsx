@@ -2,9 +2,9 @@ import { Upload } from "lucide-react";
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
+import { Button } from "~/components/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
 import { api } from "~/trpc/react";
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 
 export function SkillsUploadDialog() {
   const [uploading, setUploading] = useState(false);

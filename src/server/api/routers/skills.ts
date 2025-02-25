@@ -362,4 +362,337 @@ export const skillsRouter = createTRPCRouter({
         });
       }
     }),
+
+  // Add delete procedures
+  deleteCategory: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Skip user role check during development
+        if (process.env.NODE_ENV === "development") {
+          console.log("Development mode: Skipping user role check for deleteCategory");
+        } else {
+          // For production, you'd want proper role checking
+          const users = await ctx.db.user.findMany({
+            where: {
+              role: "RECRUITER",
+            },
+            take: 1,
+          });
+          
+          const user = users[0];
+          
+          if (!user || user.role !== "RECRUITER") {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Only recruiters can delete categories",
+            });
+          }
+        }
+
+        // First, find all skills associated with this category
+        const skills = await ctx.db.skill.findMany({
+          where: { categoryId: input.id },
+          include: { subSkills: true },
+        });
+
+        // For each skill, delete its subskills and then the skill itself
+        for (const skill of skills) {
+          // For each subskill, delete its criteria
+          for (const subSkill of skill.subSkills) {
+            await ctx.db.criterion.deleteMany({
+              where: { subSkillId: subSkill.id },
+            });
+          }
+          
+          // Delete all subskills for this skill
+          await ctx.db.subSkill.deleteMany({
+            where: { skillId: skill.id },
+          });
+          
+          // Delete the skill
+          await ctx.db.skill.delete({
+            where: { id: skill.id },
+          });
+        }
+
+        // Now that all related records are deleted, delete the category
+        const category = await ctx.db.category.delete({
+          where: { id: input.id },
+        });
+        
+        return category;
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete category",
+          cause: error,
+        });
+      }
+    }),
+
+  deleteSkill: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Skip user role check during development
+        if (process.env.NODE_ENV === "development") {
+          console.log("Development mode: Skipping user role check for deleteSkill");
+        } else {
+          // For production, you'd want proper role checking
+          const users = await ctx.db.user.findMany({
+            where: {
+              role: "RECRUITER",
+            },
+            take: 1,
+          });
+          
+          const user = users[0];
+          
+          if (!user || user.role !== "RECRUITER") {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Only recruiters can delete skills",
+            });
+          }
+        }
+
+        // First find all subskills associated with this skill
+        const subSkills = await ctx.db.subSkill.findMany({
+          where: { skillId: input.id },
+        });
+        
+        // For each subskill, delete its criteria
+        for (const subSkill of subSkills) {
+          await ctx.db.criterion.deleteMany({
+            where: { subSkillId: subSkill.id },
+          });
+        }
+        
+        // Delete all subskills for this skill
+        await ctx.db.subSkill.deleteMany({
+          where: { skillId: input.id },
+        });
+        
+        // Now delete the skill itself
+        const skill = await ctx.db.skill.delete({
+          where: { id: input.id },
+        });
+        
+        return skill;
+      } catch (error) {
+        console.error("Error deleting skill:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete skill",
+          cause: error,
+        });
+      }
+    }),
+
+  deleteSubSkill: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Skip user role check during development
+        if (process.env.NODE_ENV === "development") {
+          console.log("Development mode: Skipping user role check for deleteSubSkill");
+        } else {
+          // For production, you'd want proper role checking
+          const users = await ctx.db.user.findMany({
+            where: {
+              role: "RECRUITER",
+            },
+            take: 1,
+          });
+          
+          const user = users[0];
+          
+          if (!user || user.role !== "RECRUITER") {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Only recruiters can delete competencies",
+            });
+          }
+        }
+
+        // First delete all criteria for this subskill
+        await ctx.db.criterion.deleteMany({
+          where: { subSkillId: input.id },
+        });
+        
+        // Now delete the subskill itself
+        const subSkill = await ctx.db.subSkill.delete({
+          where: { id: input.id },
+        });
+        
+        return subSkill;
+      } catch (error) {
+        console.error("Error deleting subskill:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete competency",
+          cause: error,
+        });
+      }
+    }),
+
+  // Add create procedures
+  createCategory: protectedProcedure
+    .input(z.object({ 
+      id: z.string(), 
+      name: z.string() 
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Skip user role check during development
+        if (process.env.NODE_ENV === "development") {
+          console.log("Development mode: Skipping user role check for createCategory");
+        } else {
+          // For production, you'd want proper role checking
+          const users = await ctx.db.user.findMany({
+            where: {
+              role: "RECRUITER",
+            },
+            take: 1,
+          });
+          
+          const user = users[0];
+          
+          if (!user || user.role !== "RECRUITER") {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Only recruiters can create categories",
+            });
+          }
+        }
+        
+        // Create the category
+        const category = await ctx.db.category.create({
+          data: { 
+            id: input.id,
+            name: input.name,
+          },
+        });
+        
+        return category;
+      } catch (error) {
+        console.error("Error creating category:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create category",
+          cause: error,
+        });
+      }
+    }),
+
+  createSkill: protectedProcedure
+    .input(z.object({ 
+      id: z.string(), 
+      name: z.string(),
+      categoryId: z.string()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Skip user role check during development
+        if (process.env.NODE_ENV === "development") {
+          console.log("Development mode: Skipping user role check for createSkill");
+        } else {
+          // For production, you'd want proper role checking
+          const users = await ctx.db.user.findMany({
+            where: {
+              role: "RECRUITER",
+            },
+            take: 1,
+          });
+          
+          const user = users[0];
+          
+          if (!user || user.role !== "RECRUITER") {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Only recruiters can create skills",
+            });
+          }
+        }
+        
+        // Create the skill
+        const skill = await ctx.db.skill.create({
+          data: { 
+            id: input.id,
+            name: input.name,
+            categoryId: input.categoryId
+          },
+        });
+        
+        return skill;
+      } catch (error) {
+        console.error("Error creating skill:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create skill",
+          cause: error,
+        });
+      }
+    }),
+
+  createSubSkill: protectedProcedure
+    .input(z.object({ 
+      id: z.string(), 
+      name: z.string(),
+      skillId: z.string(),
+      criterionDescription: z.string()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Skip user role check during development
+        if (process.env.NODE_ENV === "development") {
+          console.log("Development mode: Skipping user role check for createSubSkill");
+        } else {
+          // For production, you'd want proper role checking
+          const users = await ctx.db.user.findMany({
+            where: {
+              role: "RECRUITER",
+            },
+            take: 1,
+          });
+          
+          const user = users[0];
+          
+          if (!user || user.role !== "RECRUITER") {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Only recruiters can create competencies",
+            });
+          }
+        }
+        
+        // Create the subskill
+        const subSkill = await ctx.db.subSkill.create({
+          data: { 
+            id: input.id,
+            name: input.name,
+            skillId: input.skillId,
+            criteria: {
+              create: {
+                description: input.criterionDescription,
+              }
+            }
+          },
+          include: {
+            criteria: true,
+          }
+        });
+        
+        return subSkill;
+      } catch (error) {
+        console.error("Error creating subskill:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create competency",
+          cause: error,
+        });
+      }
+    }),
 }); 

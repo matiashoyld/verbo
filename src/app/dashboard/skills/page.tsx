@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { SkillTaxonomy } from "~/components/SkillTaxonomy";
+import { SkillTaxonomy } from "~/components/skill-taxonomy/SkillTaxonomy";
 import { api } from "~/trpc/react";
 
 export default function SkillsPage() {
