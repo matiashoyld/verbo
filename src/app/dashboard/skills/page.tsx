@@ -10,7 +10,7 @@ export default function SkillsPage() {
   if (isLoading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <Loader2 className="text-verbo-purple h-8 w-8 animate-spin" />
+        <Loader2 className="h-8 w-8 animate-spin text-verbo-purple" />
       </div>
     );
   }
@@ -24,9 +24,9 @@ export default function SkillsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6">
+    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-verbo-dark text-3xl font-bold tracking-tight">
+        <h2 className="text-3xl font-bold tracking-tight text-verbo-dark">
           Skills
         </h2>
       </div>

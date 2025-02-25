@@ -118,7 +118,7 @@ Testing,Test Types,Unit Testing,"Verifies individual components or functions in 
 Testing,Test Types,Integration Testing,"Ensures multiple components interact correctly in a cohesive system"
 Testing,Test Types,End-to-End Testing,"Simulates user workflows to validate the entire product flow"
 Testing,Performance Testing,Load & Stress,"Measures application throughput and behavior under high concurrency"
-Testing,TDD & BDD,"Writes tests before code (TDD) or uses user stories (BDD) to guide development"
+Testing,TDD & BDD,Test-Driven Development,"Writes tests before code (TDD) or uses user stories (BDD) to guide development"
 Architecture & Patterns,SOLID Principles,Single Responsibility,"Ensures each module/class has a single, clear purpose"
 Architecture & Patterns,SOLID Principles,Open/Closed & Liskov,"Understands extension without modification and proper subclassing behavior"
 Architecture & Patterns,Design Patterns,Creational & Structural,"Knows patterns like Factory, Builder, Adapter, and Proxy for reuse and flexibility"
