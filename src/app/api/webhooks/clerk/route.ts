@@ -19,77 +19,108 @@ type UserWebhookEvent = {
 };
 
 export async function POST(req: NextRequest) {
-  console.log("Webhook received");
+  console.log("Webhook received", new Date().toISOString());
   const WEBHOOK_SECRET = env.CLERK_WEBHOOK_SECRET;
 
-  // Get the headers
-  const svix_id = req.headers.get("svix-id");
-  const svix_timestamp = req.headers.get("svix-timestamp");
-  const svix_signature = req.headers.get("svix-signature");
-
-  console.log("Webhook headers:", { svix_id, svix_timestamp, svix_signature });
-
-  // If there are no headers, error out
-  if (!svix_id || !svix_timestamp || !svix_signature) {
-    console.error("Missing svix headers");
-    return new Response("Error occured -- no svix headers", {
-      status: 400,
-    });
-  }
-
-  // Get the body
-  const rawBody = await req.text();
-
-  // Create a new Svix instance with your webhook secret
-  const wh = new Webhook(WEBHOOK_SECRET);
-
-  let evt: UserWebhookEvent;
-
-  // Verify the webhook payload
   try {
-    evt = wh.verify(rawBody, {
-      "svix-id": svix_id,
-      "svix-timestamp": svix_timestamp,
-      "svix-signature": svix_signature,
-    }) as UserWebhookEvent;
-    console.log("Webhook verified successfully");
-  } catch (err) {
-    console.error("Error verifying webhook:", err);
-    return new Response("Error occured", {
-      status: 400,
-    });
-  }
+    // Get the headers
+    const svix_id = req.headers.get("svix-id");
+    const svix_timestamp = req.headers.get("svix-timestamp");
+    const svix_signature = req.headers.get("svix-signature");
 
-  if (evt.type !== "user.created") {
-    console.log("Ignoring non-user.created event:", evt.type);
-    return new Response("", { status: 200 });
-  }
+    console.log("Webhook headers:", { svix_id, svix_timestamp, svix_signature });
 
-  console.log("Processing user.created event:", evt.data);
+    // If there are no headers, error out
+    if (!svix_id || !svix_timestamp || !svix_signature) {
+      console.error("Missing svix headers");
+      return new Response("Error occured -- no svix headers", {
+        status: 400,
+      });
+    }
 
-  const { email_addresses, first_name, last_name } = evt.data;
-  const email = email_addresses[0]?.email_address;
+    // Get the body
+    const rawBody = await req.text();
+    console.log("Raw webhook body:", rawBody.substring(0, 200) + "...");
 
-  if (!email) {
-    return new Response("No email found", { status: 400 });
-  }
+    // Create a new Svix instance with your webhook secret
+    const wh = new Webhook(WEBHOOK_SECRET);
 
-  try {
-    const newUser = await db.user.create({
-      data: {
-        id: randomUUID(),
+    let evt: UserWebhookEvent;
+
+    // Verify the webhook payload
+    try {
+      evt = wh.verify(rawBody, {
+        "svix-id": svix_id,
+        "svix-timestamp": svix_timestamp,
+        "svix-signature": svix_signature,
+      }) as UserWebhookEvent;
+      console.log("Webhook verified successfully");
+    } catch (err) {
+      console.error("Error verifying webhook:", err);
+      return new Response("Error occured verifying webhook", {
+        status: 400,
+      });
+    }
+
+    if (evt.type !== "user.created") {
+      console.log("Ignoring non-user.created event:", evt.type);
+      return new Response("", { status: 200 });
+    }
+
+    console.log("Processing user.created event:", JSON.stringify(evt.data));
+
+    const { email_addresses, first_name, last_name } = evt.data;
+    const email = email_addresses[0]?.email_address;
+
+    if (!email) {
+      console.error("No email found in webhook data");
+      return new Response("No email found", { status: 400 });
+    }
+
+    console.log("Connecting to database...");
+    
+    // Test database connection
+    try {
+      const testConnection = await db.$queryRaw`SELECT 1 as test`;
+      console.log("Database connection test:", testConnection);
+    } catch (dbConnErr) {
+      console.error("Database connection test failed:", dbConnErr);
+    }
+
+    // Generate a UUID
+    const userId = randomUUID();
+    console.log("Generated UUID:", userId);
+
+    try {
+      console.log("Creating user with data:", {
+        id: userId,
         email,
         name: [first_name, last_name].filter(Boolean).join(" ") || email,
-        role: "RECRUITER", // Default to RECRUITER role
-        created_at: new Date(),
-        updated_at: new Date()
-      },
-    });
-    
-    console.log("User created successfully in database:", newUser);
-    return new Response("User created", { status: 201 });
-  } catch (err) {
-    console.error("Error creating user in database:", err);
-    return new Response("Error creating user", { status: 500 });
+      });
+      
+      const newUser = await db.user.create({
+        data: {
+          id: userId,
+          email,
+          name: [first_name, last_name].filter(Boolean).join(" ") || email,
+          role: "RECRUITER", // Default to RECRUITER role
+        },
+      });
+      
+      console.log("User created successfully in database:", JSON.stringify(newUser));
+      return new Response("User created", { status: 201 });
+    } catch (err) {
+      console.error("Error creating user in database:", err);
+      // Log specific error details if available
+      if (err instanceof Error) {
+        console.error("Error name:", err.name);
+        console.error("Error message:", err.message);
+        console.error("Error stack:", err.stack);
+      }
+      return new Response(`Error creating user: ${err instanceof Error ? err.message : 'Unknown error'}`, { status: 500 });
+    }
+  } catch (uncaughtErr) {
+    console.error("Uncaught error in webhook handler:", uncaughtErr);
+    return new Response("Internal server error", { status: 500 });
   }
 } 
