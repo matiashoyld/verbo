@@ -67,9 +67,8 @@ export async function POST(req: NextRequest) {
 
   console.log("Processing user.created event:", evt.data);
 
-  const { email_addresses, first_name, last_name, image_url, profile_image_url } = evt.data;
+  const { email_addresses, first_name, last_name } = evt.data;
   const email = email_addresses[0]?.email_address;
-  const profileImageUrl = profile_image_url || image_url;
 
   if (!email) {
     return new Response("No email found", { status: 400 });
