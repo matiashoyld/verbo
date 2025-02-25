@@ -9,66 +9,62 @@ datasource db {
 }
 
 model User {
-  id            String       @id
-  email         String      @unique
-  firstName     String?
-  lastName      String?
-  imageUrl      String?
-  role          UserRole     @default(RECRUITER)
-  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  challenges    Challenge[]  @relation("CreatedChallenges")
-  submissions   Submission[]
+  id          String       @id @default(uuid()) @db.Uuid
+  email       String       @unique
+  name        String?
+  role        UserRole     @default(RECRUITER)
+  challenges  Challenge[]  @relation("CreatedChallenges")
+  submissions Submission[]
 
-  @@map("users")
+  @@map("User")
 }
 
 model Category {
   id         String   @id @default(uuid()) @db.Uuid
   name       String   @unique
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
   skills     Skill[]
 
-  @@map("categories")
+  @@map("Category")
 }
 
 model Skill {
   id         String      @id @default(uuid()) @db.Uuid
   name       String
   categoryId String      @map("category_id") @db.Uuid
-  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  created_at DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at DateTime    @updatedAt @db.Timestamptz(6)
   category   Category    @relation(fields: [categoryId], references: [id])
   subSkills  SubSkill[]
   challenges Challenge[] @relation("ChallengeToSkill")
 
   @@unique([categoryId, name])
-  @@map("skills")
+  @@map("Skill")
 }
 
 model SubSkill {
   id         String      @id @default(uuid()) @db.Uuid
   name       String
   skillId    String      @map("skill_id") @db.Uuid
-  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  created_at DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at DateTime    @updatedAt @db.Timestamptz(6)
   criteria   Criterion[]
   skill      Skill       @relation(fields: [skillId], references: [id])
 
   @@unique([skillId, name])
-  @@map("sub_skills")
+  @@map("SubSkill")
 }
 
 model Criterion {
   id          String   @id @default(uuid()) @db.Uuid
   description String
   subSkillId  String   @map("sub_skill_id") @db.Uuid
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @updatedAt @db.Timestamptz(6)
   subSkill    SubSkill @relation(fields: [subSkillId], references: [id])
 
-  @@map("criteria")
+  @@map("Criterion")
 }
 
 model Challenge {
@@ -76,34 +72,34 @@ model Challenge {
   title        String
   description  String
   instructions String
-  timeLimit    Int?        @map("time_limit")
-  creatorId    String      @map("creator_id")
-  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdBy    User        @relation("CreatedChallenges", fields: [creatorId], references: [id])
+  timeLimit    Int?         @map("time_limit")
+  creatorId    String       @map("creator_id") @db.Uuid
+  created_at   DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime     @updatedAt @db.Timestamptz(6)
+  createdBy    User         @relation("CreatedChallenges", fields: [creatorId], references: [id])
   submissions  Submission[]
-  skills       Skill[]     @relation("ChallengeToSkill")
+  skills       Skill[]      @relation("ChallengeToSkill")
 
-  @@map("challenges")
+  @@map("Challenge")
 }
 
 model Submission {
   id          String           @id @default(uuid()) @db.Uuid
   challengeId String           @map("challenge_id") @db.Uuid
-  candidateId String           @map("candidate_id")
-  audioUrl    String?         @map("audio_url")
-  screenUrl   String?         @map("screen_url")
+  candidateId String           @map("candidate_id") @db.Uuid
+  audioUrl    String?          @map("audio_url")
+  screenUrl   String?          @map("screen_url")
   transcript  String?
   feedback    Json?
   status      SubmissionStatus @default(IN_PROGRESS)
   startedAt   DateTime         @default(now()) @map("started_at") @db.Timestamptz(6)
   completedAt DateTime?        @map("completed_at") @db.Timestamptz(6)
-  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  created_at  DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime         @updatedAt @db.Timestamptz(6)
   candidate   User             @relation(fields: [candidateId], references: [id])
   challenge   Challenge        @relation(fields: [challengeId], references: [id])
 
-  @@map("submissions")
+  @@map("Submission")
 }
 
 enum UserRole {
