@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { type NextRequest } from "next/server";
 import { Webhook } from "svix";
 import { env } from "~/env.mjs";
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
   try {
     await db.user.create({
       data: {
-        id,
+        id: randomUUID(),
         email,
         name: [first_name, last_name].filter(Boolean).join(" ") || email,
         role: "RECRUITER", // Default to RECRUITER role
