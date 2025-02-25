@@ -1,3 +1,5 @@
+import * as LucideIcons from "lucide-react";
+import { HelpCircle, LucideIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -9,7 +11,7 @@ import {
 import { Separator } from "~/components/ui/separator";
 import { Textarea } from "~/components/ui/textarea";
 import { api } from "~/trpc/react";
-import { CommonPosition, iconMap } from "./data";
+import { CommonPosition } from "~/types/skills";
 
 interface JobDescriptionStepProps {
   jobDescription: string;
@@ -22,6 +24,14 @@ export function JobDescriptionStep({
 }: JobDescriptionStepProps) {
   const { data: commonPositions = [], isLoading: isLoadingPositions } =
     api.positions.getCommonPositions.useQuery();
+
+  // Helper function to safely get an icon component
+  const getIconComponent = (iconName: string): LucideIcon => {
+    const IconComponent = LucideIcons[
+      iconName as keyof typeof LucideIcons
+    ] as LucideIcon;
+    return IconComponent || HelpCircle;
+  };
 
   return (
     <Card>
@@ -42,10 +52,15 @@ export function JobDescriptionStep({
             <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/50 hover:scrollbar-thumb-muted-foreground overflow-x-auto overflow-y-hidden pb-2">
               <div className="space-y-2">
                 <div className="flex gap-2">
-                  {commonPositions
-                    .slice(0, Math.ceil(commonPositions.length / 2))
+                  {(commonPositions as CommonPosition[])
+                    .slice(
+                      0,
+                      Math.ceil(
+                        (commonPositions as CommonPosition[]).length / 2,
+                      ),
+                    )
                     .map((position: CommonPosition) => {
-                      const Icon = iconMap[position.icon];
+                      const Icon = getIconComponent(position.icon);
                       return (
                         <Button
                           key={position.title}
@@ -62,10 +77,14 @@ export function JobDescriptionStep({
                     })}
                 </div>
                 <div className="flex gap-2">
-                  {commonPositions
-                    .slice(Math.ceil(commonPositions.length / 2))
+                  {(commonPositions as CommonPosition[])
+                    .slice(
+                      Math.ceil(
+                        (commonPositions as CommonPosition[]).length / 2,
+                      ),
+                    )
                     .map((position: CommonPosition) => {
-                      const Icon = iconMap[position.icon];
+                      const Icon = getIconComponent(position.icon);
                       return (
                         <Button
                           key={position.title}
@@ -86,21 +105,14 @@ export function JobDescriptionStep({
           )}
         </div>
 
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <Separator className="w-full" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Or</span>
-          </div>
-        </div>
+        <Separator />
 
-        <div className="grid gap-2">
+        <div className="space-y-2">
           <Textarea
+            placeholder="Enter job description here..."
             value={jobDescription}
             onChange={(e) => onJobDescriptionChange(e.target.value)}
-            placeholder="Paste your job description here..."
-            className="min-h-[200px]"
+            className="min-h-[300px]"
           />
         </div>
       </CardContent>

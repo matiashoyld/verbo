@@ -4,12 +4,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import * as React from "react";
 import { Button } from "~/components/ui/button";
 import { api } from "~/trpc/react";
+import type { CategoryGroup, CategoryName, SkillName } from "~/types/skills";
 import { AssessmentStep } from "./components/AssessmentStep";
 import { JobDescriptionStep } from "./components/JobDescriptionStep";
 import { LoadingIndicator } from "./components/LoadingIndicator";
 import { SkillsStep } from "./components/SkillsStep";
 import { Stepper } from "./components/Stepper";
-import type { CategoryGroup, CategoryName, SkillName } from "./components/data";
 
 export default function NewPositionPage() {
   const [step, setStep] = React.useState(1);

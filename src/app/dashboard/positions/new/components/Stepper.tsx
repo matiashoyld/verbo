@@ -6,13 +6,25 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
-import { steps } from "./data";
 
 interface StepperProps {
   currentStep: number;
 }
 
 export function Stepper({ currentStep }: StepperProps) {
+  // Steps for the multi-step form defined within the component
+  const steps = [
+    {
+      title: "Job Description",
+      description: "Enter or upload the job description",
+    },
+    { title: "Skills", description: "Review and edit required skills" },
+    {
+      title: "Assessment",
+      description: "Review and customize the technical case",
+    },
+  ];
+
   return (
     <div className="mb-8">
       <Breadcrumb>

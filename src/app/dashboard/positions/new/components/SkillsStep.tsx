@@ -30,7 +30,12 @@ import {
 } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
-import { CategoryGroup, CategoryName, Competency, SkillName } from "./data";
+import {
+  CategoryGroup,
+  CategoryName,
+  Competency,
+  SkillName,
+} from "~/types/skills";
 
 // Type definition for database skills data
 interface DBSkillData {
