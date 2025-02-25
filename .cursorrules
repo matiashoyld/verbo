@@ -1,3 +1,5 @@
+# Rules for AI
+
 This is a T3 Stack application with Supabase authentication. The stack is modern and well-integrated, focusing on type-safety and developer experience with the combination of TypeScript, tRPC, and Prisma.
 When working with this codebase, you should:
 
