@@ -98,41 +98,44 @@ export async function POST(req: NextRequest) {
         name: [first_name, last_name].filter(Boolean).join(" ") || email,
       });
       
-      // First check if user already exists
-      const existingUser = await db.$queryRaw`
-        SELECT id, email, name, role FROM "User" WHERE email = ${email}
-      `;
+      // Check if user already exists
+      const existingUser = await db.user.findUnique({
+        where: { email }
+      });
       
-      if (Array.isArray(existingUser) && existingUser.length > 0) {
+      if (existingUser) {
         console.log("User with this email already exists:", JSON.stringify(existingUser));
         // Update the existing user
-        await db.$executeRaw`
-          UPDATE "User" 
-          SET name = ${[first_name, last_name].filter(Boolean).join(" ") || email}
-          WHERE email = ${email}
-        `;
-        console.log("User updated successfully");
+        const updatedUser = await db.user.update({
+          where: { email },
+          data: { 
+            name: [first_name, last_name].filter(Boolean).join(" ") || email
+          }
+        });
+        console.log("User updated successfully:", JSON.stringify(updatedUser));
       } else {
         // Create a new user
-        await db.$executeRaw`
-          INSERT INTO "User" (id, email, name, role)
-          VALUES (${userId}::uuid, ${email}, ${[first_name, last_name].filter(Boolean).join(" ") || email}, 'RECRUITER')
-        `;
-        console.log("New user created successfully");
+        const newUser = await db.user.create({
+          data: {
+            id: userId,
+            email,
+            name: [first_name, last_name].filter(Boolean).join(" ") || email,
+            role: "RECRUITER"
+          }
+        });
+        console.log("New user created successfully:", JSON.stringify(newUser));
       }
       
-      // Verify the user exists after operation
-      const verifyUser = await db.$queryRaw`
-        SELECT id, email, name, role FROM "User" WHERE email = ${email}
-      `;
-      console.log("User in database after operation:", JSON.stringify(verifyUser));
-      
-      // List all users in the database to diagnose visibility issues
+      // List all users in the database for verification
       console.log("Checking all users in database...");
-      const allUsers = await db.$queryRaw`
-        SELECT id, email, name, role FROM "User" LIMIT 10
-      `;
-      console.log("All users in database (up to 10):", JSON.stringify(allUsers));
+      try {
+        const allUsers = await db.user.findMany({
+          take: 10
+        });
+        console.log("All users in database (up to 10):", JSON.stringify(allUsers));
+      } catch (err) {
+        console.error("Error listing users:", err);
+      }
       
       return new Response("User created or updated", { status: 201 });
     } catch (err) {
