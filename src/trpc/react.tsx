@@ -46,7 +46,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
         unstable_httpBatchStreamLink({
           url: "/api/trpc",
           transformer: SuperJSON,
-          headers() {
+          async headers() {
             return {
               "x-trpc-source": "react",
             };

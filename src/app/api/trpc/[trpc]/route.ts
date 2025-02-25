@@ -16,8 +16,11 @@ const handler = async (req: NextRequest) => {
       router: appRouter,
       createContext: async () => {
         try {
+          // Get headers and properly handle them
+          const headers = req.headers;
+          
           return await createTRPCContext({
-            headers: req.headers,
+            headers,
           });
         } catch (ctxError) {
           console.error("Error creating TRPC context:", ctxError);
