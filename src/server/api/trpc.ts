@@ -6,7 +6,7 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { TRPCError, initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -33,12 +33,12 @@ interface CreateContextOptions {
  * - testing, so we don't have to mock Next.js' req/res
  * - tRPC's `createSSGHelpers`, where we don't have req/res
  */
-export const createInnerTRPCContext = (opts: CreateContextOptions) => {
-  const session = auth();
+export const createInnerTRPCContext = async (opts: CreateContextOptions) => {
+  const user = await currentUser();
   
   return {
     db,
-    userId: session.userId,
+    userId: user?.id,
     ...opts,
   };
 };
@@ -49,12 +49,12 @@ export const createInnerTRPCContext = (opts: CreateContextOptions) => {
  *
  * @see https://trpc.io/docs/context
  */
-export const createTRPCContext = (opts: { headers: Headers }) => {
-  const session = auth();
+export const createTRPCContext = async (opts: { headers: Headers }) => {
+  const user = await currentUser();
   
   return {
     db,
-    userId: session.userId,
+    userId: user?.id,
     ...opts,
   };
 };

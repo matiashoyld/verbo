@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { type NextRequest } from "next/server";
 import { Webhook } from "svix";
 import { env } from "~/env.mjs";
@@ -69,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     console.log("Processing user.created event:", JSON.stringify(evt.data));
 
-    const { email_addresses, first_name, last_name } = evt.data;
+    const { id: clerkUserId, email_addresses, first_name, last_name } = evt.data;
     const email = email_addresses[0]?.email_address;
 
     if (!email) {
@@ -87,13 +86,12 @@ export async function POST(req: NextRequest) {
       console.error("Database connection test failed:", dbConnErr);
     }
 
-    // Generate a UUID
-    const userId = randomUUID();
-    console.log("Generated UUID:", userId);
+    // Use Clerk's user ID directly
+    console.log("Using Clerk user ID:", clerkUserId);
 
     try {
       console.log("Creating user with data:", {
-        id: userId,
+        id: clerkUserId, // Use Clerk's user ID instead of generating a new UUID
         email,
         name: [first_name, last_name].filter(Boolean).join(" ") || email,
         imageUrl: evt.data.image_url ?? evt.data.profile_image_url,
@@ -110,6 +108,7 @@ export async function POST(req: NextRequest) {
         const updatedUser = await db.user.update({
           where: { email },
           data: { 
+            id: clerkUserId, // Update the ID to match Clerk's user ID
             name: [first_name, last_name].filter(Boolean).join(" ") || email,
             imageUrl: evt.data.image_url ?? evt.data.profile_image_url,
           }
@@ -119,7 +118,7 @@ export async function POST(req: NextRequest) {
         // Create a new user
         const newUser = await db.user.create({
           data: {
-            id: userId,
+            id: clerkUserId, // Use Clerk's user ID
             email,
             name: [first_name, last_name].filter(Boolean).join(" ") || email,
             imageUrl: evt.data.image_url ?? evt.data.profile_image_url,

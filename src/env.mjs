@@ -14,6 +14,13 @@ export const env = createEnv({
         (str) => !str.includes("YOUR_MYSQL_URL_HERE"),
         "You forgot to change the default URL",
       ),
+    DIRECT_URL: z
+      .string()
+      .url()
+      .refine(
+        (str) => !str.includes("YOUR_POSTGRES_URL_HERE"),
+        "You forgot to change the default direct URL",
+      ),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -37,6 +44,7 @@ export const env = createEnv({
    */
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
+    DIRECT_URL: process.env.DIRECT_URL,
     NODE_ENV: process.env.NODE_ENV,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
