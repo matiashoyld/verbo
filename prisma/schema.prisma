@@ -113,3 +113,14 @@ enum SubmissionStatus {
   COMPLETED
   FAILED
 }
+
+model CommonPosition {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String   @unique
+  icon        String
+  description String   @db.Text
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("CommonPosition")
+}

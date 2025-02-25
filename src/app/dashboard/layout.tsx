@@ -23,6 +23,7 @@ export default function DashboardLayout({
               items={[
                 { title: "Overview", href: "/dashboard" },
                 { title: "Skills", href: "/dashboard/skills" },
+                { title: "Positions", href: "/dashboard/positions" },
                 { title: "Challenges", href: "/dashboard/challenges" },
                 { title: "Submissions", href: "/dashboard/submissions" },
                 { title: "Analytics", href: "/dashboard/analytics" },
