@@ -9,7 +9,7 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(uuid()) @db.Uuid
+  id          String       @id @default(cuid())
   email       String       @unique
   name        String?
   role        UserRole     @default(RECRUITER)
@@ -74,7 +74,7 @@ model Challenge {
   description  String
   instructions String
   timeLimit    Int?         @map("time_limit")
-  creatorId    String       @map("creator_id") @db.Uuid
+  creatorId    String       @map("creator_id")
   created_at   DateTime     @default(now()) @db.Timestamptz(6)
   updated_at   DateTime     @updatedAt @db.Timestamptz(6)
   createdBy    User         @relation("CreatedChallenges", fields: [creatorId], references: [id])
@@ -87,7 +87,7 @@ model Challenge {
 model Submission {
   id          String           @id @default(uuid()) @db.Uuid
   challengeId String           @map("challenge_id") @db.Uuid
-  candidateId String           @map("candidate_id") @db.Uuid
+  candidateId String           @map("candidate_id")
   audioUrl    String?          @map("audio_url")
   screenUrl   String?          @map("screen_url")
   transcript  String?
