@@ -10,6 +10,10 @@ type UserWebhookEvent = {
     email_addresses: { email_address: string }[];
     first_name: string | null;
     last_name: string | null;
+    image_url: string | null;
+    profile_image_url: string | null;
+    has_image: boolean;
+    // Include all other fields from Clerk user data
   };
   type: string;
 };
@@ -63,15 +67,16 @@ export async function POST(req: NextRequest) {
 
   console.log("Processing user.created event:", evt.data);
 
-  const { id, email_addresses, first_name, last_name } = evt.data;
+  const { email_addresses, first_name, last_name, image_url, profile_image_url } = evt.data;
   const email = email_addresses[0]?.email_address;
+  const profileImageUrl = profile_image_url || image_url;
 
   if (!email) {
     return new Response("No email found", { status: 400 });
   }
 
   try {
-    await db.user.create({
+    const newUser = await db.user.create({
       data: {
         id: randomUUID(),
         email,
@@ -81,7 +86,8 @@ export async function POST(req: NextRequest) {
         updated_at: new Date()
       },
     });
-    console.log("User created successfully in database");
+    
+    console.log("User created successfully in database:", newUser);
     return new Response("User created", { status: 201 });
   } catch (err) {
     console.error("Error creating user in database:", err);
