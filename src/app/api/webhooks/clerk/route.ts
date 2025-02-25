@@ -9,7 +9,6 @@ type UserWebhookEvent = {
     email_addresses: { email_address: string }[];
     first_name: string | null;
     last_name: string | null;
-    image_url: string | null;
   };
   type: string;
 };
@@ -63,7 +62,7 @@ export async function POST(req: NextRequest) {
 
   console.log("Processing user.created event:", evt.data);
 
-  const { id, email_addresses, first_name, last_name, image_url } = evt.data;
+  const { id, email_addresses, first_name, last_name } = evt.data;
   const email = email_addresses[0]?.email_address;
 
   if (!email) {
@@ -75,10 +74,10 @@ export async function POST(req: NextRequest) {
       data: {
         id,
         email,
-        firstName: first_name,
-        lastName: last_name,
-        imageUrl: image_url,
+        name: [first_name, last_name].filter(Boolean).join(" ") || email,
         role: "RECRUITER", // Default to RECRUITER role
+        created_at: new Date(),
+        updated_at: new Date()
       },
     });
     console.log("User created successfully in database");
