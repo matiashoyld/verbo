@@ -1,19 +1,17 @@
 import "server-only";
 
 import { createTRPCReact } from "@trpc/react-query";
-import { headers } from "next/headers";
-import { cache } from "react";
 
 import { type AppRouter } from "~/server/api/root";
-import { createTRPCContext } from "~/server/api/trpc";
-import { createQueryClient } from "./query-client";
 
 const api = createTRPCReact<AppRouter>();
 
 /**
- * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API when
- * handling a tRPC call from a React Server Component.
+ * NOTE: These functions are currently not being used but are kept for future use
+ * when we need to make tRPC calls directly from React Server Components.
+ * Commenting them out to avoid lint warnings.
  */
+/*
 const createContext = cache(async () => {
   const heads = new Headers(await headers());
   heads.set("x-trpc-source", "rsc");
@@ -24,5 +22,6 @@ const createContext = cache(async () => {
 });
 
 const getQueryClient = cache(createQueryClient);
+*/
 
 export { api };

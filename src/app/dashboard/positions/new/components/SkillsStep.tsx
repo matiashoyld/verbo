@@ -30,12 +30,7 @@ import {
 } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
-import {
-  CategoryGroup,
-  CategoryName,
-  Competency,
-  SkillName,
-} from "~/types/skills";
+import { CategoryGroup, CategoryName, SkillName } from "~/types/skills";
 
 // Type definition for database skills data
 interface DBSkillData {
@@ -176,10 +171,6 @@ export function SkillsStep({ skills, onSkillsChange }: SkillsStepProps) {
       }
       return newSkills;
     });
-  };
-
-  const getSelectedCompetenciesCount = (competencies: Competency[]) => {
-    return competencies.filter((c) => c.selected).length;
   };
 
   return (

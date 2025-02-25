@@ -24,6 +24,7 @@ export function useTaxonomyActions({
   setEditName,
   previousName,
   setPreviousName,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   deleteDialogOpen,
   setDeleteDialogOpen,
   itemToDelete,
@@ -41,9 +42,6 @@ export function useTaxonomyActions({
     createSkill,
     createSubSkill,
   } = useTaxonomyAPI();
-
-  // We don't use deleteDialogOpen in this function, but it's part of the props
-  const _unused = deleteDialogOpen;
 
   // Handlers for selection
   const handleCategorySelect = (category: Category) => {

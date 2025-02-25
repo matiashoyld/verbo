@@ -16,7 +16,7 @@ import { useTaxonomyState } from "./hooks/useTaxonomyState";
 
 export default function SkillsPage() {
   // All hooks must be at the top level before any conditional returns
-  const { data: categories, isLoading, error } = api.skills.getAll.useQuery();
+  const { data: categories, isLoading } = api.skills.getAll.useQuery();
 
   // Refs
   const editInputRef = useRef<HTMLInputElement>(null);

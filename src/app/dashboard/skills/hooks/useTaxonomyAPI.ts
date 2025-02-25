@@ -8,7 +8,7 @@ export function useTaxonomyAPI() {
 
   // TRPC mutations
   const updateCategory = api.skills.updateCategory.useMutation({
-    onSuccess: (_updatedCategory) => {
+    onSuccess: (/* _updatedCategory */) => {
       savingRef.current = false;
     },
     onError: () => {
@@ -21,7 +21,7 @@ export function useTaxonomyAPI() {
   });
 
   const updateSkill = api.skills.updateSkill.useMutation({
-    onSuccess: (_updatedSkill) => {
+    onSuccess: (/* _updatedSkill */) => {
       savingRef.current = false;
     },
     onError: () => {
@@ -34,7 +34,7 @@ export function useTaxonomyAPI() {
   });
 
   const updateSubSkill = api.skills.updateSubSkill.useMutation({
-    onSuccess: (_updatedSubSkill) => {
+    onSuccess: (/* _updatedSubSkill */) => {
       savingRef.current = false;
     },
     onError: () => {

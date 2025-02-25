@@ -171,14 +171,6 @@ export const positionsRouter = createTRPCRouter({
   getAllSkillsAndCategories: publicProcedure
     .query(async ({ ctx }) => {
       try {
-        // Get all categories
-        const categories = await ctx.db.category.findMany({
-          select: {
-            id: true,
-            name: true,
-          },
-        });
-
         // Get all skills with their categories
         const skills = await ctx.db.skill.findMany({
           select: {
