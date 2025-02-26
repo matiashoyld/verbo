@@ -1,0 +1,1028 @@
+[
+  {
+    "category": "Programming",
+    "skill": "Python",
+    "competency": "Data Manipulation",
+    "criteria": "Can efficiently manipulate large datasets using pandas (groupby, merge, pivot) and other Python data libraries"
+  },
+  {
+    "category": "Programming",
+    "skill": "Python",
+    "competency": "Object-Oriented & Design Patterns",
+    "criteria": "Can design and implement classes in Python using OOP principles and apply common design patterns (Factory, Singleton, etc.)"
+  },
+  {
+    "category": "Programming",
+    "skill": "Python",
+    "competency": "Asynchronous Programming",
+    "criteria": "Can create and manage asynchronous tasks using asyncio and async/await for high-concurrency applications"
+  },
+  {
+    "category": "Programming",
+    "skill": "Python",
+    "competency": "Functional Programming",
+    "criteria": "Can leverage built-in functions (map, filter, reduce) and comprehensions for cleaner, more efficient code"
+  },
+  {
+    "category": "Programming",
+    "skill": "Python",
+    "competency": "Error Handling & Debugging",
+    "criteria": "Can implement robust exception handling and use Python debugging tools (pdb, logging) effectively"
+  },
+  {
+    "category": "Programming",
+    "skill": "Python",
+    "competency": "Performance Optimization",
+    "criteria": "Can profile Python code (using cProfile, line_profiler) and optimize bottlenecks for better performance"
+  },
+  {
+    "category": "Programming",
+    "skill": "Python",
+    "competency": "Package & Dependency Management",
+    "criteria": "Can manage environments and dependencies with pip, conda, or Poetry"
+  },
+  {
+    "category": "Programming",
+    "skill": "Python",
+    "competency": "Testing",
+    "criteria": "Can write unit and integration tests using pytest or unittest, including mocking and coverage"
+  },
+  {
+    "category": "Programming",
+    "skill": "Python",
+    "competency": "Documentation & Type Hints",
+    "criteria": "Can write clear docstrings (Google or NumPy style), generate Sphinx docs, and use type hints for maintainability"
+  },
+  {
+    "category": "Programming",
+    "skill": "R",
+    "competency": "Data Manipulation",
+    "criteria": "Can use dplyr, tidyr, and other tidyverse tools for efficient data wrangling"
+  },
+  {
+    "category": "Programming",
+    "skill": "R",
+    "competency": "Statistical Analysis",
+    "criteria": "Can perform descriptive and inferential statistics using base R, stats, and other packages"
+  },
+  {
+    "category": "Programming",
+    "skill": "R",
+    "competency": "ggplot2 & Visualization",
+    "criteria": "Can create sophisticated plots with ggplot2 using the grammar of graphics"
+  },
+  {
+    "category": "Programming",
+    "skill": "R",
+    "competency": "R Markdown & Reporting",
+    "criteria": "Can produce reproducible reports, dashboards, and presentations with R Markdown and Shiny"
+  },
+  {
+    "category": "Programming",
+    "skill": "R",
+    "competency": "Performance & Parallelization",
+    "criteria": "Understands strategies for parallel computing (e.g., parallel, foreach) to speed up R workflows"
+  },
+  {
+    "category": "Programming",
+    "skill": "Java",
+    "competency": "Core Libraries",
+    "criteria": "Understands Java collections, concurrency utilities, and I/O classes for building robust applications"
+  },
+  {
+    "category": "Programming",
+    "skill": "Java",
+    "competency": "Generics",
+    "criteria": "Can design and use generic classes and methods for type-safe reusable components"
+  },
+  {
+    "category": "Programming",
+    "skill": "Java",
+    "competency": "Concurrency",
+    "criteria": "Can write thread-safe code using synchronized blocks, locks, and concurrent data structures"
+  },
+  {
+    "category": "Programming",
+    "skill": "Java",
+    "competency": "Build & Dependency Management",
+    "criteria": "Can manage project builds and dependencies with Maven or Gradle"
+  },
+  {
+    "category": "Programming",
+    "skill": "Java",
+    "competency": "Unit Testing",
+    "criteria": "Writes comprehensive tests using JUnit or TestNG, including parameterized tests and coverage analysis"
+  },
+  {
+    "category": "Programming",
+    "skill": "Java",
+    "competency": "Spring Framework",
+    "criteria": "Understands Spring Boot for building RESTful services and dependency injection mechanisms"
+  },
+  {
+    "category": "Programming",
+    "skill": "JavaScript",
+    "competency": "DOM Manipulation",
+    "criteria": "Can efficiently select and manipulate DOM elements using vanilla JavaScript or frameworks"
+  },
+  {
+    "category": "Programming",
+    "skill": "JavaScript",
+    "competency": "ES6+ Features",
+    "criteria": "Understands modern JavaScript syntax (arrow functions, destructuring, modules) and applies best practices"
+  },
+  {
+    "category": "Programming",
+    "skill": "JavaScript",
+    "competency": "Asynchronous Patterns",
+    "criteria": "Uses callbacks, Promises, and async/await for non-blocking operations"
+  },
+  {
+    "category": "Programming",
+    "skill": "JavaScript",
+    "competency": "Node.js",
+    "criteria": "Builds server-side applications, handles routing, and manages packages via npm or Yarn"
+  },
+  {
+    "category": "Data Visualization",
+    "skill": "Design Principles",
+    "competency": "Layout",
+    "criteria": "Arranges charts, legends, and text for optimal information hierarchy"
+  },
+  {
+    "category": "Data Visualization",
+    "skill": "Design Principles",
+    "competency": "Accessibility",
+    "criteria": "Ensures colorblind-friendly palettes and adequate text readability"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Probability",
+    "competency": "Distributions",
+    "criteria": "Can identify, visualize, and apply appropriate probability distributions"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Probability",
+    "competency": "Bayesian Analysis",
+    "criteria": "Understands Bayesian inference, prior/posterior distributions, and can perform Bayesian updating"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Probability",
+    "competency": "Monte Carlo Simulation",
+    "criteria": "Implements random sampling to simulate complex systems and estimate probabilities"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Hypothesis Testing",
+    "competency": "Parametric Tests",
+    "criteria": "Performs t-tests, ANOVA, and regression-based hypothesis tests"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Hypothesis Testing",
+    "competency": "Non-parametric Tests",
+    "criteria": "Applies rank-based and other non-parametric methods when assumptions are violated"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Hypothesis Testing",
+    "competency": "Multiple Testing",
+    "criteria": "Adjusts for multiple comparisons (Bonferroni, FDR) in large-scale experiments"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Experimental Design",
+    "competency": "A/B Testing",
+    "criteria": "Designs experiments with control/treatment groups and adequate power analysis"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Experimental Design",
+    "competency": "Factorial Design",
+    "criteria": "Plans factorial or fractional factorial experiments to assess interactions"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Regression",
+    "competency": "Linear Regression",
+    "criteria": "Builds and interprets linear models, checking assumptions and diagnostic plots"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Regression",
+    "competency": "Logistic Regression",
+    "criteria": "Models binary outcomes and interprets odds ratios and classification metrics"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Regression",
+    "competency": "Mixed Models",
+    "criteria": "Handles hierarchical data with random effects to account for nested structures"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Time Series Analysis",
+    "competency": "ARIMA Models",
+    "criteria": "Can identify ARIMA orders, fit models, and evaluate forecast accuracy"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Time Series Analysis",
+    "competency": "Seasonality",
+    "criteria": "Detects and models seasonal patterns with appropriate decomposition methods"
+  },
+  {
+    "category": "Statistics",
+    "skill": "Time Series Analysis",
+    "competency": "Stationarity",
+    "criteria": "Tests for stationarity (ADF/KPSS) and applies transformations (differencing) if needed"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Supervised Learning",
+    "competency": "Classification",
+    "criteria": "Implements and evaluates classifiers (Logistic Regression, Decision Trees, SVM, etc.)"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Supervised Learning",
+    "competency": "Regression",
+    "criteria": "Builds and tunes regression models (Linear, Ridge, Lasso, etc.)"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Supervised Learning",
+    "competency": "Feature Engineering & Selection",
+    "criteria": "Creates domain-relevant features and applies selection or dimensionality reduction"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Supervised Learning",
+    "competency": "Cross Validation",
+    "criteria": "Uses k-fold, stratified, or nested CV to optimize and compare models"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Supervised Learning",
+    "competency": "Ensemble Methods",
+    "criteria": "Implements random forests, gradient boosting, or stacking for improved accuracy"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Unsupervised Learning",
+    "competency": "Clustering",
+    "criteria": "Applies K-means, Hierarchical, DBSCAN, or similar methods to discover patterns"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Unsupervised Learning",
+    "competency": "Dimensionality Reduction",
+    "criteria": "Uses PCA, t-SNE, or UMAP to visualize or reduce high-dimensional data"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Unsupervised Learning",
+    "competency": "Anomaly Detection",
+    "criteria": "Detects outliers using isolation forests, local outlier factor, or robust statistics"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Model Evaluation",
+    "competency": "Metrics",
+    "criteria": "Selects and interprets metrics (precision, recall, RMSE, MAE, AUC, etc.)"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Model Evaluation",
+    "competency": "Validation Strategy",
+    "criteria": "Chooses appropriate train/test splits, time-based splits, or nested CV for robust evaluation"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Model Evaluation",
+    "competency": "Error Analysis",
+    "criteria": "Investigates misclassifications or residuals to refine data features or modeling approach"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "MLOps",
+    "competency": "Model Deployment",
+    "criteria": "Packages and serves models via REST APIs, containers, or serverless functions"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "MLOps",
+    "competency": "Monitoring & Maintenance",
+    "criteria": "Implements model drift detection, data quality checks, and automated retraining"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "MLOps",
+    "competency": "Version Control",
+    "criteria": "Maintains code, data, and model versioning (Git, DVC, MLflow) for reproducibility"
+  },
+  {
+    "category": "Deep Learning",
+    "skill": "Neural Networks",
+    "competency": "Architecture",
+    "criteria": "Designs feed-forward networks, autoencoders, or specialized architectures"
+  },
+  {
+    "category": "Deep Learning",
+    "skill": "Neural Networks",
+    "competency": "Convolutional Neural Networks",
+    "criteria": "Builds CNNs for image recognition, segmentation, or object detection"
+  },
+  {
+    "category": "Deep Learning",
+    "skill": "Neural Networks",
+    "competency": "Recurrent Neural Networks",
+    "criteria": "Implements RNNs, LSTM, or GRU for sequence data"
+  },
+  {
+    "category": "Deep Learning",
+    "skill": "Neural Networks",
+    "competency": "Transformers",
+    "criteria": "Works with attention mechanisms for NLP or vision tasks (BERT, GPT, Vision Transformers)"
+  },
+  {
+    "category": "Deep Learning",
+    "skill": "Frameworks",
+    "competency": "PyTorch",
+    "criteria": "Writes custom training loops or uses high-level APIs for building and tuning models"
+  },
+  {
+    "category": "Deep Learning",
+    "skill": "Frameworks",
+    "competency": "TensorFlow",
+    "criteria": "Builds computation graphs or uses Keras to prototype and deploy deep learning models"
+  },
+  {
+    "category": "Deep Learning",
+    "skill": "Training Techniques",
+    "competency": "GPU Training",
+    "criteria": "Utilizes GPU acceleration and memory optimization for large-scale training"
+  },
+  {
+    "category": "Deep Learning",
+    "skill": "Training Techniques",
+    "competency": "Hyperparameter Tuning",
+    "criteria": "Leverages grid/random search or Bayesian optimization for model improvement"
+  },
+  {
+    "category": "Deep Learning",
+    "skill": "Training Techniques",
+    "competency": "Transfer Learning",
+    "criteria": "Adapts pre-trained models to new tasks for faster convergence and reduced data needs"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "SQL Fundamentals",
+    "competency": "SELECT Queries",
+    "criteria": "Writes SELECT statements with proper aliases, filtering (WHERE), and ordering (ORDER BY)"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "SQL Fundamentals",
+    "competency": "CASE/IF",
+    "criteria": "Incorporates conditional logic in queries to handle complex data transformations"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "SQL Fundamentals",
+    "competency": "GROUP BY & HAVING",
+    "criteria": "Aggregates data with GROUP BY and filters groups using HAVING clauses"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "SQL Fundamentals",
+    "competency": "JOINs",
+    "criteria": "Performs INNER, LEFT, RIGHT, FULL joins to combine tables accurately"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "SQL Fundamentals",
+    "competency": "Window Functions",
+    "criteria": "Utilizes functions like RANK(), ROW_NUMBER(), LAG/LEAD for advanced analytical queries"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "SQL Fundamentals",
+    "competency": "Indexes & Optimization",
+    "criteria": "Creates and manages indexes to improve query performance; understands query plans"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "Database Design",
+    "competency": "Normalization",
+    "criteria": "Can design normalized schemas (1NF, 2NF, 3NF) to avoid data anomalies and redundancies"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "Database Design",
+    "competency": "Transaction Management",
+    "criteria": "Understands ACID properties, locking mechanisms, and isolation levels"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "NoSQL",
+    "competency": "MongoDB",
+    "criteria": "Works with document-based data, designs schemas, and uses aggregation pipelines"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "NoSQL",
+    "competency": "Cassandra",
+    "criteria": "Understands wide-column storage, partition keys, and efficient data modeling"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "Data Warehousing",
+    "competency": "Snowflake",
+    "criteria": "Can load, transform, and query massive datasets efficiently in Snowflake"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "Data Warehousing",
+    "competency": "BigQuery",
+    "criteria": "Builds scalable analytics queries in GCP's serverless data warehouse"
+  },
+  {
+    "category": "Big Data",
+    "skill": "Processing",
+    "competency": "Spark",
+    "criteria": "Writes PySpark or Scala code to process large datasets in a distributed manner"
+  },
+  {
+    "category": "Big Data",
+    "skill": "Processing",
+    "competency": "Hadoop",
+    "criteria": "Understands HDFS, MapReduce, and the broader Hadoop ecosystem (Hive, Pig)"
+  },
+  {
+    "category": "Big Data",
+    "skill": "Processing",
+    "competency": "Streaming",
+    "criteria": "Implements data pipelines with real-time frameworks (Kafka, Flink, Spark Streaming)"
+  },
+  {
+    "category": "Big Data",
+    "skill": "Cloud Services",
+    "competency": "AWS Data Tools",
+    "criteria": "Uses AWS EMR, Glue, or Kinesis for big data and analytics workflows"
+  },
+  {
+    "category": "Big Data",
+    "skill": "Cloud Services",
+    "competency": "GCP Data Tools",
+    "criteria": "Leverages Dataflow, Pub/Sub, or Dataproc for scalable data processing"
+  },
+  {
+    "category": "Big Data",
+    "skill": "Cloud Services",
+    "competency": "Azure Data Tools",
+    "criteria": "Implements big data solutions with Azure HDInsight, Data Factory, or Synapse"
+  },
+  {
+    "category": "System Design",
+    "skill": "Architecture Patterns",
+    "competency": "Microservices & Monoliths",
+    "criteria": "Understands trade-offs between service decomposition and monolithic architectures"
+  },
+  {
+    "category": "System Design",
+    "skill": "Architecture Patterns",
+    "competency": "Event-Driven",
+    "criteria": "Designs decoupled systems with queues, pub/sub mechanisms, and asynchronous flows"
+  },
+  {
+    "category": "System Design",
+    "skill": "API Design",
+    "competency": "RESTful & GraphQL",
+    "criteria": "Creates well-versioned, documented APIs with clean resource structures"
+  },
+  {
+    "category": "System Design",
+    "skill": "Scalability",
+    "competency": "Load Handling",
+    "criteria": "Identifies potential bottlenecks and applies horizontal/vertical scaling strategies"
+  },
+  {
+    "category": "System Design",
+    "skill": "High Availability",
+    "competency": "Fault Tolerance",
+    "criteria": "Implements replication, failover, and redundancy to ensure minimal downtime"
+  },
+  {
+    "category": "DevOps",
+    "skill": "CI/CD",
+    "competency": "Automation Pipelines",
+    "criteria": "Sets up automated builds, tests, and deployments using Jenkins, GitHub Actions, or GitLab CI"
+  },
+  {
+    "category": "DevOps",
+    "skill": "Containerization",
+    "competency": "Docker",
+    "criteria": "Builds and manages Docker images, understands multi-stage builds, and container security"
+  },
+  {
+    "category": "DevOps",
+    "skill": "Containerization",
+    "competency": "Kubernetes",
+    "criteria": "Deploys and scales microservices on Kubernetes, configures pods, services, and ingresses"
+  },
+  {
+    "category": "DevOps",
+    "skill": "Infrastructure as Code",
+    "competency": "Terraform",
+    "criteria": "Defines and provisions infrastructure across cloud providers with Terraform modules"
+  },
+  {
+    "category": "DevOps",
+    "skill": "Monitoring & Observability",
+    "competency": "Metrics & Logging",
+    "criteria": "Uses Prometheus, Grafana, or ELK stack to track performance and troubleshoot issues"
+  },
+  {
+    "category": "Testing",
+    "skill": "Test Types",
+    "competency": "Unit Testing",
+    "criteria": "Verifies individual components or functions in isolation"
+  },
+  {
+    "category": "Testing",
+    "skill": "Test Types",
+    "competency": "Integration Testing",
+    "criteria": "Ensures multiple components interact correctly in a cohesive system"
+  },
+  {
+    "category": "Testing",
+    "skill": "Test Types",
+    "competency": "End-to-End Testing",
+    "criteria": "Simulates user workflows to validate the entire product flow"
+  },
+  {
+    "category": "Testing",
+    "skill": "Performance Testing",
+    "competency": "Load & Stress",
+    "criteria": "Measures application throughput and behavior under high concurrency"
+  },
+  {
+    "category": "Testing",
+    "skill": "TDD & BDD",
+    "competency": "Test-Driven Development",
+    "criteria": "Writes tests before code (TDD) or uses user stories (BDD) to guide development"
+  },
+  {
+    "category": "Architecture & Patterns",
+    "skill": "SOLID Principles",
+    "competency": "Single Responsibility",
+    "criteria": "Ensures each module/class has a single, clear purpose"
+  },
+  {
+    "category": "Architecture & Patterns",
+    "skill": "SOLID Principles",
+    "competency": "Open/Closed & Liskov",
+    "criteria": "Understands extension without modification and proper subclassing behavior"
+  },
+  {
+    "category": "Architecture & Patterns",
+    "skill": "Design Patterns",
+    "competency": "Creational & Structural",
+    "criteria": "Knows patterns like Factory, Builder, Adapter, and Proxy for reuse and flexibility"
+  },
+  {
+    "category": "Architecture & Patterns",
+    "skill": "Refactoring",
+    "competency": "Legacy Code",
+    "criteria": "Can clean up and restructure outdated codebases for better maintainability"
+  },
+  {
+    "category": "Cloud",
+    "skill": "General Services",
+    "competency": "AWS",
+    "criteria": "Understands core AWS offerings (EC2, S3, RDS, Lambda) and security best practices"
+  },
+  {
+    "category": "Cloud",
+    "skill": "General Services",
+    "competency": "Azure",
+    "criteria": "Familiar with Azure VMs, App Services, Azure DevOps, and monitoring tools"
+  },
+  {
+    "category": "Cloud",
+    "skill": "General Services",
+    "competency": "GCP",
+    "criteria": "Uses Google Compute Engine, Cloud Run, Cloud Storage, and IAM for secure deployments"
+  },
+  {
+    "category": "Security",
+    "skill": "Fundamentals",
+    "competency": "OWASP Top 10",
+    "criteria": "Knows common web vulnerabilities and how to mitigate them (SQL Injection, XSS, CSRF)"
+  },
+  {
+    "category": "Security",
+    "skill": "Authentication & Authorization",
+    "competency": "OAuth/JWT",
+    "criteria": "Implements secure token-based authentication and role-based access control"
+  },
+  {
+    "category": "Security",
+    "skill": "Encryption",
+    "competency": "Data in Transit & At Rest",
+    "criteria": "Applies SSL/TLS for network security and uses encryption libraries or services for stored data"
+  },
+  {
+    "category": "Communication & Collaboration",
+    "skill": "Written Communication",
+    "competency": "Technical Writing",
+    "criteria": "Produces clear documentation, specs, and knowledge base articles"
+  },
+  {
+    "category": "Communication & Collaboration",
+    "skill": "Written Communication",
+    "competency": "Reports",
+    "criteria": "Summarizes findings or project updates in concise, data-driven reports"
+  },
+  {
+    "category": "Communication & Collaboration",
+    "skill": "Verbal Communication",
+    "competency": "Presentations",
+    "criteria": "Delivers engaging presentations with clear objectives and audience focus"
+  },
+  {
+    "category": "Communication & Collaboration",
+    "skill": "Verbal Communication",
+    "competency": "Stakeholder Management",
+    "criteria": "Communicates timelines, risks, and resource needs with business or client stakeholders"
+  },
+  {
+    "category": "Communication & Collaboration",
+    "skill": "Team Collaboration",
+    "competency": "Code Reviews",
+    "criteria": "Provides constructive feedback, adheres to coding standards, and fosters collective ownership"
+  },
+  {
+    "category": "Communication & Collaboration",
+    "skill": "Team Collaboration",
+    "competency": "Pair Programming",
+    "criteria": "Collaborates in real-time to share expertise and maintain code quality"
+  },
+  {
+    "category": "Communication & Collaboration",
+    "skill": "Team Collaboration",
+    "competency": "Agile/Scrum",
+    "criteria": "Understands sprint planning, daily stand-ups, backlog grooming, and retrospectives"
+  },
+  {
+    "category": "Performance Optimization",
+    "skill": "Profiling & Benchmarking",
+    "competency": "Application Profiling",
+    "criteria": "Uses tools (e.g., JMeter, cProfile, New Relic) to identify performance bottlenecks"
+  },
+  {
+    "category": "Performance Optimization",
+    "skill": "Caching & CDNs",
+    "competency": "Server/Client Caching",
+    "criteria": "Implements in-memory caches (Redis) or edge caching (Cloudflare) to reduce latency"
+  },
+  {
+    "category": "Performance Optimization",
+    "skill": "Load Testing",
+    "competency": "Scalability Check",
+    "criteria": "Conducts load/stress tests to ensure the system meets performance SLAs"
+  },
+  {
+    "category": "Product Strategy",
+    "skill": "Vision & Roadmapping",
+    "competency": "Strategic Alignment",
+    "criteria": "Defines a clear product vision aligned with business objectives and user needs"
+  },
+  {
+    "category": "Product Strategy",
+    "skill": "Market & Competitive Research",
+    "competency": "Opportunity Analysis",
+    "criteria": "Evaluates market trends, competitor offerings, and potential gaps for product growth"
+  },
+  {
+    "category": "Product Strategy",
+    "skill": "Pricing & Monetization",
+    "competency": "Revenue Models",
+    "criteria": "Investigates pricing strategies (subscription, freemium) and tests monetization hypotheses"
+  },
+  {
+    "category": "User Research",
+    "skill": "Surveys & Interviews",
+    "competency": "User Insights",
+    "criteria": "Designs unbiased surveys and conducts interviews to gather user pain points and desires"
+  },
+  {
+    "category": "User Research",
+    "skill": "Usability Testing",
+    "competency": "Prototype Validation",
+    "criteria": "Sets up user testing sessions and iterates designs based on feedback"
+  },
+  {
+    "category": "User Research",
+    "skill": "Persona Development",
+    "competency": "Target Audience",
+    "criteria": "Creates detailed personas to guide feature prioritization and communication"
+  },
+  {
+    "category": "Product Analytics",
+    "skill": "Metrics & KPIs",
+    "competency": "Goal Setting",
+    "criteria": "Defines KPIs (e.g., MAU, churn, LTV) and monitors them for continuous product improvement"
+  },
+  {
+    "category": "Product Analytics",
+    "skill": "Experimentation",
+    "competency": "A/B Testing",
+    "criteria": "Formulates hypotheses, sets up experiments, and interprets statistical significance"
+  },
+  {
+    "category": "Product Analytics",
+    "skill": "Cohort Analysis",
+    "competency": "Behavioral Patterns",
+    "criteria": "Segments users by cohort to uncover usage patterns and product adoption trends"
+  },
+  {
+    "category": "Leadership & Management",
+    "skill": "Team Motivation",
+    "competency": "Culture & Morale",
+    "criteria": "Inspires teams, fosters psychological safety, and drives engagement"
+  },
+  {
+    "category": "Leadership & Management",
+    "skill": "Conflict Resolution",
+    "competency": "Mediation",
+    "criteria": "Navigates disagreements and finds common ground to keep teams productive"
+  },
+  {
+    "category": "Leadership & Management",
+    "skill": "Decision-Making",
+    "competency": "Data-Informed",
+    "criteria": "Balances data, intuition, and stakeholder input to make timely, effective decisions"
+  },
+  {
+    "category": "Market Analysis",
+    "skill": "Strategy & Positioning",
+    "competency": "TAM/SAM/SOM",
+    "criteria": "Estimates market size and identifies viable segments for product expansion"
+  },
+  {
+    "category": "Market Analysis",
+    "skill": "Pricing Strategy",
+    "competency": "Value-Based Pricing",
+    "criteria": "Researches willingness-to-pay and competitive pricing to optimize revenue"
+  },
+  {
+    "category": "Market Analysis",
+    "skill": "Go-to-Market",
+    "competency": "Launch Planning",
+    "criteria": "Coordinates cross-functional launch activities, ensuring product readiness and marketing alignment"
+  },
+  {
+    "category": "Product Execution",
+    "skill": "Backlog Management",
+    "competency": "Requirement Prioritization",
+    "criteria": "Maintains a backlog reflecting business impact, user value, and technical feasibility"
+  },
+  {
+    "category": "Product Execution",
+    "skill": "User Story Writing",
+    "competency": "Acceptance Criteria",
+    "criteria": "Documents user stories with clear, testable acceptance criteria"
+  },
+  {
+    "category": "Product Execution",
+    "skill": "Release Planning",
+    "competency": "Versioning & Rollouts",
+    "criteria": "Schedules releases with clear scope, dependencies, and communication plans"
+  },
+  {
+    "category": "UX Design",
+    "skill": "Wireframing & Prototyping",
+    "competency": "Low/High Fidelity",
+    "criteria": "Uses tools (Figma, Sketch) to create and iterate on interface concepts"
+  },
+  {
+    "category": "UX Design",
+    "skill": "Accessibility & Inclusivity",
+    "competency": "WCAG Standards",
+    "criteria": "Ensures compliance with accessibility guidelines for all users"
+  },
+  {
+    "category": "UX Design",
+    "skill": "Information Architecture",
+    "competency": "Site/App Structure",
+    "criteria": "Organizes content and navigation flows for intuitive user experiences"
+  },
+  {
+    "category": "Business & Domain Knowledge",
+    "skill": "Problem Framing",
+    "competency": "Translating Business to Data",
+    "criteria": "Identifies core business challenges and reframes them into clear technical or data questions"
+  },
+  {
+    "category": "Business & Domain Knowledge",
+    "skill": "Industry Knowledge",
+    "competency": "Competitive Landscape",
+    "criteria": "Keeps updated on industry trends, emerging technologies, and competitor offerings"
+  },
+  {
+    "category": "Business & Domain Knowledge",
+    "skill": "Business Metrics",
+    "competency": "ROI & Impact",
+    "criteria": "Defines success criteria, tracks ROI, and correlates product outcomes to business goals"
+  },
+  {
+    "category": "Business & Domain Knowledge",
+    "skill": "Stakeholder Communication",
+    "competency": "Reporting & Alignment",
+    "criteria": "Facilitates regular updates to executive teams, ensuring transparency and alignment"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "MLOps",
+    "competency": "Experiment Tracking",
+    "criteria": "Uses MLflow or Weights & Biases to log parameters, metrics, and artifacts for reproducible experiments"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Deep Learning",
+    "competency": "Model Quantization",
+    "criteria": "Optimizes neural networks for edge or low-resource environments through quantization and pruning"
+  },
+  {
+    "category": "Big Data",
+    "skill": "Processing",
+    "competency": "Delta Lake",
+    "criteria": "Implements ACID transactions on data lakes, enabling reliable data pipelines at scale"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "MLOps",
+    "competency": "Feature Store Management",
+    "criteria": "Maintains consistent training/serving features with tools like Feast or Tecton"
+  },
+  {
+    "category": "Cloud",
+    "skill": "Serverless Architectures",
+    "competency": "Function Orchestration",
+    "criteria": "Builds event-driven ML or data pipelines using AWS Lambda, Google Cloud Functions, or Azure Functions"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "Data Transformation",
+    "competency": "dbt (Data Build Tool)",
+    "criteria": "Uses dbt for modular SQL transformations, version control, and testing within analytics workflows"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "MLOps",
+    "competency": "Collaborative Modeling",
+    "criteria": "Uses Neptune.ai or Comet.ml for shared experiment dashboards and artifact versioning"
+  },
+  {
+    "category": "Machine Learning",
+    "skill": "Documentation",
+    "competency": "Model Cards",
+    "criteria": "Creates standardized model documentation outlining performance, limitations, and ethical considerations"
+  },
+  {
+    "category": "Programming",
+    "skill": "JavaScript",
+    "competency": "Micro-Frontends",
+    "criteria": "Implements micro-frontend architectures using Module Federation or single-spa for large-scale web apps"
+  },
+  {
+    "category": "Programming",
+    "skill": "JavaScript",
+    "competency": "WebAssembly Integration",
+    "criteria": "Leverages WebAssembly for performance-critical modules within browser environments"
+  },
+  {
+    "category": "Security",
+    "skill": "Secure Coding",
+    "competency": "SAST/DAST Tools",
+    "criteria": "Configures SonarQube, Checkmarx, or similar solutions in CI/CD for static/dynamic security testing"
+  },
+  {
+    "category": "Security",
+    "skill": "Secrets Management",
+    "competency": "HashiCorp Vault or AWS Secrets Manager",
+    "criteria": "Safely stores and rotates credentials, API keys, and database passwords"
+  },
+  {
+    "category": "DevOps",
+    "skill": "Infrastructure as Code",
+    "competency": "Policy as Code",
+    "criteria": "Uses Open Policy Agent (OPA) or similar to enforce security and compliance policies in IaC pipelines"
+  },
+  {
+    "category": "DevOps",
+    "skill": "Containerization",
+    "competency": "Sidecar Pattern",
+    "criteria": "Implements sidecars in Kubernetes for service mesh, logging, or security proxies (e.g., Istio)"
+  },
+  {
+    "category": "Performance Optimization",
+    "skill": "Observability",
+    "competency": "Distributed Tracing",
+    "criteria": "Uses Jaeger or OpenTelemetry to trace requests across microservices for root cause analysis"
+  },
+  {
+    "category": "Databases & SQL",
+    "skill": "Performance",
+    "competency": "Connection Pooling & Caching",
+    "criteria": "Optimizes database performance with proper pooling configurations and cache invalidation strategies"
+  },
+  {
+    "category": "Communication & Collaboration",
+    "skill": "Incident Management",
+    "competency": "Blameless Postmortems",
+    "criteria": "Facilitates post-incident reviews focusing on systemic improvements rather than individual blame"
+  },
+  {
+    "category": "Performance Optimization",
+    "skill": "Resilience",
+    "competency": "Chaos Engineering",
+    "criteria": "Uses tools like Gremlin or Chaos Monkey to inject failures and improve system robustness"
+  },
+  {
+    "category": "Communication & Collaboration",
+    "skill": "AI-Assisted Development",
+    "competency": "LLM Pair Programming",
+    "criteria": "Effectively uses GitHub Copilot or CodeWhisperer while verifying AI-suggested code for correctness"
+  },
+  {
+    "category": "Ethical AI",
+    "skill": "Fairness & Bias",
+    "competency": "Model Fairness Audits",
+    "criteria": "Applies toolkits like AI Fairness 360 to detect and mitigate algorithmic bias"
+  },
+  {
+    "category": "Product Strategy",
+    "skill": "Technical Literacy",
+    "competency": "API Contract Comprehension",
+    "criteria": "Understands OpenAPI/Swagger specs and collaborates on clear, stable API contracts"
+  },
+  {
+    "category": "Product Strategy",
+    "skill": "Technical Literacy",
+    "competency": "Architecture Decision Records",
+    "criteria": "Authors ADRs to capture context and trade-offs behind significant technical decisions"
+  },
+  {
+    "category": "Product Analytics",
+    "skill": "Experimentation Tools",
+    "competency": "A/B Testing Platforms",
+    "criteria": "Configures and manages Optimizely, LaunchDarkly, or Statsig for controlled experiments"
+  },
+  {
+    "category": "Product Strategy",
+    "skill": "Metrics Frameworks",
+    "competency": "OKR/KPI Tree Development",
+    "criteria": "Aligns product initiatives with overarching objectives and key results"
+  },
+  {
+    "category": "Product Strategy",
+    "skill": "Pricing & Monetization",
+    "competency": "Usage-Based Pricing",
+    "criteria": "Analyzes usage patterns to design scalable pay-as-you-go or consumption-based models"
+  },
+  {
+    "category": "Product Strategy",
+    "skill": "Regulatory Compliance",
+    "competency": "GDPR/CCPA",
+    "criteria": "Ensures data handling, consent, and privacy features align with global regulations"
+  },
+  {
+    "category": "User Research",
+    "skill": "Methodologies",
+    "competency": "Jobs-to-be-Done (JTBD)",
+    "criteria": "Conducts JTBD interviews to pinpoint core user needs and motivations"
+  },
+  {
+    "category": "User Research",
+    "skill": "Methodologies",
+    "competency": "Conjoint Analysis",
+    "criteria": "Designs conjoint studies to measure feature trade-offs and pricing sensitivity"
+  },
+  {
+    "category": "UX Design",
+    "skill": "Accessibility & Inclusivity",
+    "competency": "WCAG 2.2",
+    "criteria": "Adheres to latest accessibility guidelines, ensuring inclusive design for diverse user needs"
+  },
+  {
+    "category": "Product Analytics",
+    "skill": "Metrics & KPIs",
+    "competency": "Amplitude/Mixpanel",
+    "criteria": "Uses product analytics platforms for funnel analysis, retention tracking, and user segmentation"
+  }
+]
