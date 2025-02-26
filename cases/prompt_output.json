@@ -1,0 +1,137 @@
+{
+  "context": "You are working as a Data Scientist at Meta. You're analyzing one of the platform's core features - the **one-on-one video calling** system that connects billions of users worldwide through Facebook Messenger. The feature has been a cornerstone of Meta's communication tools for years, enabling friends and family to have face-to-face conversations regardless of physical distance. To help inform strategic decisions about the feature's evolution, you have access to two comprehensive datasets:\n\n### Table: `video_calls`\n\n| Column           | Description                         |\n|-----------------|-------------------------------------|\n| caller          | User ID initiating the call         |\n| recipient       | User ID receiving the call          |\n| ds              | Date of the call                    |\n| call_id         | Unique call identifier              |\n| duration_seconds| Length of the call in seconds       |\n\nHere is some example data:\n\n| caller | recipient | ds         | call_id | duration_seconds |\n|--------|-----------|------------|---------|------------------|\n| 458921 | 672104    | 2023-01-01 | v8k2p9  | 183             |\n| 458921 | 891345    | 2023-01-01 | m4n7v2  | 472             |\n| 672104 | 234567    | 2023-01-02 | x9h5j4  | 256             |\n| 891345 | 345678    | 2023-01-02 | q2w3e4  | 67              |\n| 345678 | 891345    | 2023-01-03 | t7y8u9  | 124             |\n| 234567 | 458921    | 2023-01-03 | p3l5k8  | 538             |\n\n### Table: `daily_active_users`\n\n| Column           | Description                               |\n|-----------------|-------------------------------------------|\n| user_id         | Unique identifier for the user            |\n| ds              | Date the user was active/logged in        |\n| country         | User's country                            |\n| daily_active_flag| Indicates if user was active that day (1) |\n\nBelow you can see an example data:\n\n| user_id | ds         | country | daily_active_flag |\n|---------|-----------|---------|-----------------|\n| 458921  | 2023-01-01| France  | 1                 |\n| 672104  | 2023-01-01| France  | 1                 |\n| 891345  | 2023-01-01| Spain   | 1                 |\n| 234567  | 2023-01-02| France  | 1                 |\n| 345678  | 2023-01-02| France  | 1                 |\n| 458921  | 2023-01-03| France  | 1                 |\n\nThe company is considering launching a **group video chat** feature. You'll be using these tables for analysis on user behavior, potential demand, and how to measure success.",
+  "questions": [
+    {
+      "context": "Using the `video_calls` table.",
+      "question": "Write a SQL query to calculate how many users started a call with more than three different people in the last 7 days. Explain how you would optimize this query if it needed to run against a massive dataset.",
+      "skills_assessed": [
+        {
+          "id": 0,
+          "name": "SQL Fundamentals"
+        },
+        {
+          "id": 1,
+          "name": "Database Optimization"
+        }
+      ]
+    },
+    {
+      "context": "Using both the `video_calls` and `daily_active_users` tables.",
+      "question": "Write a SQL query to determine what percentage of daily active users from France participated in a video call yesterday (either as caller or recipient). Then suggest how this metric could be tracked over time as a KPI for regional engagement.",
+      "skills_assessed": [
+        {
+          "id": 0,
+          "name": "SQL Fundamentals"
+        },
+        {
+          "id": 2,
+          "name": "Metrics & KPIs"
+        },
+        {
+          "id": 3,
+          "name": "Business Metrics"
+        }
+      ]
+    },
+    {
+      "context": "Meta is considering launching a group video chat feature.",
+      "question": "Using the provided datasets, outline your approach to identify users who would be most interested in a group video chat feature. Include what behavioral patterns you would look for and how you would segment users into cohorts based on their potential interest.",
+      "skills_assessed": [
+        {
+          "id": 4,
+          "name": "Cohort Analysis"
+        },
+        {
+          "id": 5,
+          "name": "Problem Framing"
+        },
+        {
+          "id": 6,
+          "name": "Decision-Making"
+        }
+      ]
+    },
+    {
+      "context": "The product team wants to run an A/B test before fully launching the group video chat feature.",
+      "question": "Design an experiment to test the effectiveness of the group video chat feature.",
+      "skills_assessed": [
+        {
+          "id": 7,
+          "name": "Experimental Design"
+        },
+        {
+          "id": 8,
+          "name": "Hypothesis Testing"
+        },
+        {
+          "id": 2,
+          "name": "Metrics & KPIs"
+        }
+      ]
+    },
+    {
+      "context": "Initial data shows that after introducing group video calls, one-on-one calls decrease by 15%, while overall time spent in video calls increases by 20%.",
+      "question": "Conduct a trade-off analysis of this scenario. How would you determine if this is a positive or negative outcome for the platform? What additional metrics would you consider to evaluate the full business impact?",
+      "skills_assessed": [
+        {
+          "id": 3,
+          "name": "Business Metrics"
+        },
+        {
+          "id": 6,
+          "name": "Decision-Making"
+        },
+        {
+          "id": 5,
+          "name": "Problem Framing"
+        }
+      ]
+    },
+    {
+      "context": "The engineering team needs guidance on how many participants to support in the group video chat feature.",
+      "question": "Using the existing data, propose a data-informed approach to determine the optimal maximum number of participants to support in group video calls. Include how you would balance user needs with technical constraints.",
+      "skills_assessed": [
+        {
+          "id": 6,
+          "name": "Decision-Making"
+        },
+        {
+          "id": 5,
+          "name": "Problem Framing"
+        }
+      ]
+    },
+    {
+      "context": "The group video chat feature development is being managed using Agile/Scrum methodology.",
+      "question": "As the data scientist on this project, describe how you would collaborate with the Agile team throughout the sprint cycle and ensure data-driven decision making.",
+      "skills_assessed": [
+        {
+          "id": 9,
+          "name": "Team Collaboration"
+        },
+        {
+          "id": 10,
+          "name": "Stakeholder Communication"
+        }
+      ]
+    },
+    {
+      "context": "The VP of Product has asked you to develop success metrics for the next year of the video calling features.",
+      "question": "How would you measure the success of the group video chat feature?",
+      "skills_assessed": [
+        {
+          "id": 2,
+          "name": "Metrics & KPIs"
+        },
+        {
+          "id": 3,
+          "name": "Business Metrics"
+        },
+        {
+          "id": 5,
+          "name": "Problem Framing"
+        }
+      ]
+    }
+  ]
+}
