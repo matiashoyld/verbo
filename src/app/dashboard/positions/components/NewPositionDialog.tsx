@@ -368,7 +368,7 @@ The candidate should demonstrate their ability to create a well-structured, scal
         <Separator className="shrink-0" />
 
         {/* Scrollable Dialog Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto p-4">
           <AnimatePresence mode="wait">
             {step === 1 && !loading && (
               <motion.div
@@ -445,7 +445,7 @@ The candidate should demonstrate their ability to create a well-structured, scal
         <Separator className="shrink-0" />
 
         {/* Fixed Dialog Footer */}
-        <div className="flex flex-col-reverse items-center border-t p-4 sm:flex-row sm:justify-between sm:space-x-2">
+        <div className="flex flex-col-reverse items-center p-4 sm:flex-row sm:justify-between sm:space-x-2">
           {/* Stepper in bottom left */}
           <div className="mt-3 sm:mt-0">
             <Stepper />

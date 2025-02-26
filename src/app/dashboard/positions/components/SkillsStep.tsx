@@ -1,13 +1,6 @@
 import { X } from "lucide-react";
 import * as React from "react";
 import { Badge } from "~/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
   Popover,
@@ -171,16 +164,19 @@ export function SkillsStep({
   };
 
   return (
-    <Card>
+    <div className="space-y-6">
       {!hideHeader && (
-        <CardHeader>
-          <CardTitle>Skills</CardTitle>
-          <CardDescription>
+        <div className="space-y-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight">
+            Skills
+          </h3>
+          <p className="text-sm text-muted-foreground">
             Select the skills and competencies required for this position.
-          </CardDescription>
-        </CardHeader>
+          </p>
+        </div>
       )}
-      <CardContent className="space-y-6">
+
+      <div className="space-y-6">
         <div className="space-y-4">
           {skills.map((category, categoryIndex) => (
             <div key={category.category} className="space-y-2">
@@ -268,7 +264,7 @@ export function SkillsStep({
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

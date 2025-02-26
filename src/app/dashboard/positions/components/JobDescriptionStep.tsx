@@ -1,13 +1,6 @@
 import * as LucideIcons from "lucide-react";
 import { HelpCircle, LucideIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import { Textarea } from "~/components/ui/textarea";
 import { api } from "~/trpc/react";
@@ -36,17 +29,20 @@ export function JobDescriptionStep({
   };
 
   return (
-    <Card>
+    <div className="space-y-6">
       {!hideHeader && (
-        <CardHeader>
-          <CardTitle>Job Description</CardTitle>
-          <CardDescription>
+        <div className="space-y-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight">
+            Job Description
+          </h3>
+          <p className="text-sm text-muted-foreground">
             Select from our list of common positions or write your own job
             description.
-          </CardDescription>
-        </CardHeader>
+          </p>
+        </div>
       )}
-      <CardContent className="space-y-6">
+
+      <div className="space-y-6">
         <div className="relative">
           {isLoadingPositions ? (
             <div className="flex items-center justify-center py-4">
@@ -119,7 +115,7 @@ export function JobDescriptionStep({
             className="min-h-[300px]"
           />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
