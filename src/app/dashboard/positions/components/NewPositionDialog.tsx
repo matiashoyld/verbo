@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, RefreshCcw } from "lucide-react";
 import * as React from "react";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -235,6 +236,7 @@ export function NewPositionDialog({
   const extractSkillsMutation = api.positions.extractSkills.useMutation();
   const generateAssessmentMutation =
     api.positions.generateAssessment.useMutation();
+  const createPositionMutation = api.positions.createPosition.useMutation();
 
   const handleNext = async () => {
     setLoading(true);
@@ -381,17 +383,40 @@ export function NewPositionDialog({
     setAssessment(updatedAssessment);
   };
 
-  const handleCreate = () => {
-    // Save position to the database (to be implemented)
-    console.log("Creating position with:", {
-      jobDescription,
-      skills,
-      assessment,
-    });
+  const handleCreate = async () => {
+    try {
+      setLoading(true);
 
-    // Close the dialog and reset the form
-    onOpenChange(false);
-    setStep(1);
+      // Call the createPosition mutation
+      const result = await createPositionMutation.mutateAsync({
+        title: assessment.title,
+        department: "Engineering", // Default department for now - could be a form field later
+        jobDescription: jobDescription,
+        skills: skills,
+        assessment: assessment,
+      });
+
+      if (result.success) {
+        toast.success("Position created successfully", {
+          description: "Your new position has been created and saved.",
+        });
+
+        // Close the dialog and reset the form
+        onOpenChange(false);
+        setStep(1);
+
+        // Force a refresh of the positions list
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Failed to create position:", error);
+      toast.error("Failed to create position", {
+        description:
+          "There was an error creating your position. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

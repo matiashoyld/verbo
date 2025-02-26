@@ -12,28 +12,24 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { api } from "~/trpc/react";
 import { NewPositionDialog } from "./components/NewPositionDialog";
 
+// Define the type for the position data returned from the API
+interface Position {
+  id: string;
+  title: string;
+  department: string;
+  openings: number;
+  status: "DRAFT" | "ACTIVE" | "ARCHIVED";
+  created: string;
+  questionCount: number;
+}
+
 export default function PositionsPage() {
-  // Mock positions data - will be replaced with actual data from API
-  const [positions] = useState([
-    {
-      id: "1",
-      title: "Full Stack Developer",
-      department: "Engineering",
-      openings: 3,
-      status: "Active",
-      created: "2 days ago",
-    },
-    {
-      id: "2",
-      title: "Product Manager",
-      department: "Product",
-      openings: 1,
-      status: "Draft",
-      created: "1 week ago",
-    },
-  ]);
+  // Fetch positions from the API
+  const { data: positions, isLoading } =
+    api.positions.getPositions.useQuery<Position[]>();
 
   // State for controlling the dialog
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -59,54 +55,71 @@ export default function PositionsPage() {
           <CardTitle>All Positions</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Position</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Openings</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {positions.map((position) => (
-                <TableRow key={position.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center">
-                      <Briefcase className="mr-2 h-4 w-4 text-verbo-dark" />
-                      {position.title}
-                    </div>
-                  </TableCell>
-                  <TableCell>{position.department}</TableCell>
-                  <TableCell>{position.openings}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        position.status === "Active"
-                          ? "bg-verbo-green/20 text-verbo-green"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {position.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>{position.created}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Edit
-                      </Button>
-                    </div>
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex h-40 items-center justify-center">
+              <div className="text-muted-foreground">Loading positions...</div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Position</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Openings</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {positions && positions.length > 0 ? (
+                  positions.map((position: Position) => (
+                    <TableRow key={position.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center">
+                          <Briefcase className="mr-2 h-4 w-4 text-verbo-dark" />
+                          {position.title}
+                        </div>
+                      </TableCell>
+                      <TableCell>{position.department}</TableCell>
+                      <TableCell>{position.openings}</TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            position.status === "ACTIVE"
+                              ? "bg-verbo-green/20 text-verbo-green"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {position.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>{position.created}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">
+                            View
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            Edit
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      <div className="text-muted-foreground">
+                        No positions found. Create your first position to get
+                        started.
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -118,7 +131,7 @@ export default function PositionsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2</div>
+            <div className="text-2xl font-bold">{positions?.length || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -126,7 +139,10 @@ export default function PositionsPage() {
             <CardTitle className="text-sm font-medium">Active</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
+            <div className="text-2xl font-bold">
+              {positions?.filter((p: Position) => p.status === "ACTIVE")
+                .length || 0}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -134,7 +150,10 @@ export default function PositionsPage() {
             <CardTitle className="text-sm font-medium">Draft</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
+            <div className="text-2xl font-bold">
+              {positions?.filter((p: Position) => p.status === "DRAFT")
+                .length || 0}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -144,7 +163,12 @@ export default function PositionsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4</div>
+            <div className="text-2xl font-bold">
+              {positions?.reduce(
+                (sum: number, p: Position) => sum + p.openings,
+                0,
+              ) || 0}
+            </div>
           </CardContent>
         </Card>
       </div>

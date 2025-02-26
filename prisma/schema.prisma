@@ -16,6 +16,7 @@ model User {
   imageUrl    String?      @map("image_url")
   challenges  Challenge[]  @relation("CreatedChallenges")
   submissions Submission[]
+  positions   Position[]
 
   @@map("User")
 }
@@ -123,4 +124,54 @@ model CommonPosition {
   updated_at  DateTime @updatedAt @db.Timestamptz(6)
 
   @@map("CommonPosition")
+}
+
+model Position {
+  id             String            @id @default(uuid()) @db.Uuid
+  title          String
+  department     String
+  jobDescription String            @db.Text
+  context        String?           @db.Text
+  status         PositionStatus    @default(DRAFT)
+  openings       Int               @default(1)
+  creatorId      String            @map("creator_id")
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  creator        User              @relation(fields: [creatorId], references: [id])
+  skills         PositionSkill[]
+  questions      PositionQuestion[]
+
+  @@map("Position")
+}
+
+model PositionSkill {
+  id           String   @id @default(uuid()) @db.Uuid
+  positionId   String   @map("position_id") @db.Uuid
+  categoryName String   @map("category_name")
+  skillName    String   @map("skill_name")
+  competencies String[] 
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  position     Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  @@map("PositionSkill")
+}
+
+model PositionQuestion {
+  id             String   @id @default(uuid()) @db.Uuid
+  positionId     String   @map("position_id") @db.Uuid
+  question       String   @db.Text
+  context        String?  @db.Text
+  skillsAssessed Json     @map("skills_assessed")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  position       Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  @@map("PositionQuestion")
+}
+
+enum PositionStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
 }
