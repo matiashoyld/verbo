@@ -1,5 +1,14 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { createAssessmentGenerationPrompt, createSkillExtractionPrompt } from "~/lib/prompts";
+import {
+  createAssessmentGenerationPrompt,
+  createSkillExtractionPrompt
+} from "~/lib/prompts";
+import {
+  AISkillsResult,
+  GeneratedAssessment,
+  IndexedAIResponse,
+  IndexedSkillsData
+} from "~/types/prompts";
 
 // Initialize the Google Generative AI with API key
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
@@ -7,61 +16,7 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
 // Create a model instance with the appropriate model name
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-thinking-exp-01-21" });
 
-// Types for indexed database structure
-export interface IndexedSkillsData {
-  categories: Array<{
-    id: number;
-    name: string;
-    skills: Array<{
-      id: number;
-      name: string;
-      competencies: Array<{
-        id: number;
-        name: string;
-      }>;
-    }>;
-  }>;
-}
-
-// Type for the AI response with indices
-export interface IndexedAIResponse {
-  selected_competencies: Array<{
-    category_id: number;
-    skill_id: number;
-    competency_ids: number[];
-  }>;
-}
-
-// Original output structure (what frontend expects)
-export type AISkillCategory = {
-  name: string;
-  skills: Array<{
-    name: string;
-    competencies: Array<{
-      name: string;
-      selected: boolean;
-    }>;
-  }>;
-};
-
-export type AISkillsResult = {
-  categories: AISkillCategory[];
-};
-
-// Types for the assessment generator
-export interface AssessmentQuestion {
-  context: string;
-  question: string;
-  skills_assessed: Array<{
-    id: number;
-    name: string;
-  }>;
-}
-
-export interface GeneratedAssessment {
-  context: string;
-  questions: AssessmentQuestion[];
-}
+// Types for indexed database structure have been moved to src/types/prompts.ts
 
 /**
  * Extracts skills from job description using Gemini AI
