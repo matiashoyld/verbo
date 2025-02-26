@@ -16,11 +16,13 @@ import { CommonPosition } from "~/types/skills";
 interface JobDescriptionStepProps {
   jobDescription: string;
   onJobDescriptionChange: (description: string) => void;
+  hideHeader?: boolean;
 }
 
 export function JobDescriptionStep({
   jobDescription,
   onJobDescriptionChange,
+  hideHeader = false,
 }: JobDescriptionStepProps) {
   const { data: commonPositions = [], isLoading: isLoadingPositions } =
     api.positions.getCommonPositions.useQuery();
@@ -35,13 +37,15 @@ export function JobDescriptionStep({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Job Description</CardTitle>
-        <CardDescription>
-          Select from our list of common positions or write your own job
-          description.
-        </CardDescription>
-      </CardHeader>
+      {!hideHeader && (
+        <CardHeader>
+          <CardTitle>Job Description</CardTitle>
+          <CardDescription>
+            Select from our list of common positions or write your own job
+            description.
+          </CardDescription>
+        </CardHeader>
+      )}
       <CardContent className="space-y-6">
         <div className="relative">
           {isLoadingPositions ? (

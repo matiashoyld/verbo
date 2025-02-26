@@ -1,7 +1,6 @@
 "use client";
 
 import { Briefcase, Plus } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -13,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { NewPositionDialog } from "./components/NewPositionDialog";
 
 export default function PositionsPage() {
   // Mock positions data - will be replaced with actual data from API
@@ -35,17 +35,24 @@ export default function PositionsPage() {
     },
   ]);
 
+  // State for controlling the dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Positions</h2>
-        <Link href="/dashboard/positions/new">
-          <Button className="bg-verbo-purple hover:bg-verbo-purple/90">
-            <Plus className="mr-2 h-4 w-4" />
-            New Position
-          </Button>
-        </Link>
+        <Button
+          className="bg-verbo-purple hover:bg-verbo-purple/90"
+          onClick={() => setDialogOpen(true)}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          New Position
+        </Button>
       </div>
+
+      {/* New Position Dialog */}
+      <NewPositionDialog open={dialogOpen} onOpenChange={setDialogOpen} />
 
       <Card>
         <CardHeader>

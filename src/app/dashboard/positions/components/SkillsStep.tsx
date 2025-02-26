@@ -1,7 +1,6 @@
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import * as React from "react";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,13 +9,6 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
-import {
-  Command,
-  CommandEmpty,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "~/components/ui/command";
 import {
   Popover,
   PopoverContent,
@@ -44,9 +36,14 @@ interface SkillsStepProps {
   onSkillsChange: (
     updater: (currentSkills: CategoryGroup[]) => CategoryGroup[],
   ) => void;
+  hideHeader?: boolean;
 }
 
-export function SkillsStep({ skills, onSkillsChange }: SkillsStepProps) {
+export function SkillsStep({
+  skills,
+  onSkillsChange,
+  hideHeader = false,
+}: SkillsStepProps) {
   // Use our new database endpoint to fetch skills and categories
   const { data: dbSkillsData, isLoading } =
     api.positions.getAllSkillsAndCategories.useQuery();
@@ -175,46 +172,14 @@ export function SkillsStep({ skills, onSkillsChange }: SkillsStepProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between">
-        <div>
-          <CardTitle>Required Skills</CardTitle>
+      {!hideHeader && (
+        <CardHeader>
+          <CardTitle>Skills</CardTitle>
           <CardDescription>
-            Review and edit the skills required for this position.
+            Select the skills and competencies required for this position.
           </CardDescription>
-        </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Skill
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="p-0" align="end">
-            <Command>
-              <CommandInput placeholder="Search skills..." />
-              <CommandList>
-                <CommandEmpty>No skills found.</CommandEmpty>
-                {isLoading ? (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    Loading skills...
-                  </div>
-                ) : (
-                  dbSkillsData?.map((item: DBSkillData) => (
-                    <CommandItem
-                      key={item.skillName}
-                      onSelect={() => {
-                        addSkill(item.skillName);
-                      }}
-                    >
-                      {item.skillName}
-                    </CommandItem>
-                  )) || []
-                )}
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </CardHeader>
+        </CardHeader>
+      )}
       <CardContent className="space-y-6">
         <div className="space-y-4">
           {skills.map((category, categoryIndex) => (

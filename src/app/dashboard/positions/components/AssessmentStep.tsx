@@ -44,6 +44,7 @@ interface AssessmentStepProps {
   onAssessmentChange: (assessment: Assessment) => void;
   onRegenerateCase: () => void;
   loading?: boolean;
+  hideHeader?: boolean;
 }
 
 export function AssessmentStep({
@@ -51,6 +52,7 @@ export function AssessmentStep({
   onAssessmentChange,
   onRegenerateCase,
   loading = false,
+  hideHeader = false,
 }: AssessmentStepProps) {
   // Function to replace \n with actual newlines for markdown rendering
   const formatMarkdown = (text: string) => {
