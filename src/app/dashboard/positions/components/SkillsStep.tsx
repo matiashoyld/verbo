@@ -1,12 +1,15 @@
 import { X } from "lucide-react";
 import * as React from "react";
 import { Badge } from "~/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
+import { ScrollArea } from "~/components/ui/scroll-area";
+import { Separator } from "~/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -163,108 +166,147 @@ export function SkillsStep({
     });
   };
 
-  return (
-    <div className="space-y-6">
-      {!hideHeader && (
-        <div className="space-y-1.5">
-          <h3 className="text-lg font-semibold leading-none tracking-tight">
-            Skills
-          </h3>
+  // Use the Card layout only when not hiding the header (when used standalone)
+  if (!hideHeader) {
+    return (
+      <Card className="w-full">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xl font-semibold">Skills</CardTitle>
           <p className="text-sm text-muted-foreground">
             Select the skills and competencies required for this position.
           </p>
-        </div>
-      )}
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[350px] pr-4">
+            <SkillsContent
+              skills={skills}
+              removeSkill={removeSkill}
+              toggleCompetency={toggleCompetency}
+            />
+          </ScrollArea>
+        </CardContent>
+      </Card>
+    );
+  }
 
-      <div className="space-y-6">
-        <div className="space-y-4">
-          {skills.map((category, categoryIndex) => (
-            <div key={category.category} className="space-y-2">
-              <h3 className="text-sm font-medium">{category.category}</h3>
-              <div className="flex flex-wrap gap-2">
-                {category.skills.map((skill, skillIndex) => (
-                  <Popover key={skill.name}>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <PopoverTrigger asChild>
-                            <Badge
-                              variant="secondary"
-                              className="cursor-pointer text-sm"
+  // When used within the dialog (hideHeader=true), don't use the Card wrapper
+  return (
+    <ScrollArea className="">
+      <SkillsContent
+        skills={skills}
+        removeSkill={removeSkill}
+        toggleCompetency={toggleCompetency}
+      />
+    </ScrollArea>
+  );
+}
+
+// Extract skills content to avoid duplication
+function SkillsContent({
+  skills,
+  removeSkill,
+  toggleCompetency,
+}: {
+  skills: CategoryGroup[];
+  removeSkill: (category: CategoryName, skillName: SkillName) => void;
+  toggleCompetency: (
+    categoryIndex: number,
+    skillIndex: number,
+    competencyIndex: number,
+  ) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {skills.map((category, categoryIndex) => (
+        <div key={category.category}>
+          {categoryIndex > 0 && <Separator className="my-4" />}
+          <div className="space-y-2">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {category.category}
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {category.skills.map((skill, skillIndex) => (
+                <Popover key={skill.name}>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <PopoverTrigger asChild>
+                          <Badge
+                            variant="secondary"
+                            className="flex cursor-pointer items-center gap-1 rounded-md py-0.5 pl-2 pr-1 text-xs font-medium hover:bg-secondary/80"
+                          >
+                            {skill.name}
+                            <span className="inline-flex items-center justify-center rounded-md bg-verbo-purple/10 px-1 py-0.5 text-xs font-medium text-verbo-purple">
+                              {skill.competencies.length}
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeSkill(category.category, skill.name);
+                              }}
+                              className="text-muted-foreground hover:text-foreground"
                             >
-                              {skill.name}
-                              <span className="ml-1.5 rounded-full bg-black/10 px-1.5 py-0.5 text-xs font-medium dark:bg-white/10">
-                                {skill.competencies.length}
-                              </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeSkill(category.category, skill.name);
-                                }}
-                                className="ml-1.5 hover:text-destructive"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          </PopoverTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Click to view and select competencies</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <PopoverContent className="w-[320px] p-3">
-                      <div className="space-y-3">
-                        <div>
-                          <h4 className="font-medium text-verbo-dark">
-                            {skill.name} Competencies
-                          </h4>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            Select the specific competencies required for this
-                            position.
-                          </p>
-                        </div>
-                        <div className="space-y-1.5">
-                          {skill.competencies.map(
-                            (competency, competencyIndex) => (
-                              <div
-                                key={competency.name}
-                                className="flex items-center space-x-2"
-                              >
-                                <Checkbox
-                                  id={`competency-${categoryIndex}-${skillIndex}-${competencyIndex}`}
-                                  checked={competency.selected}
-                                  onCheckedChange={() =>
-                                    toggleCompetency(
-                                      categoryIndex,
-                                      skillIndex,
-                                      competencyIndex,
-                                    )
-                                  }
-                                />
-                                <label
-                                  htmlFor={`competency-${categoryIndex}-${skillIndex}-${competencyIndex}`}
-                                  className={cn(
-                                    "flex-1 cursor-pointer text-sm",
-                                    !competency.selected &&
-                                      "text-muted-foreground",
-                                  )}
-                                >
-                                  {competency.name}
-                                </label>
-                              </div>
-                            ),
-                          )}
-                        </div>
+                              <X className="h-2.5 w-2.5" />
+                            </button>
+                          </Badge>
+                        </PopoverTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Click to view and select competencies</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <PopoverContent className="w-[320px] p-3">
+                    <div className="space-y-2">
+                      <div>
+                        <h4 className="font-medium text-verbo-dark">
+                          {skill.name} Competencies
+                        </h4>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Select the specific competencies required for this
+                          position.
+                        </p>
                       </div>
-                    </PopoverContent>
-                  </Popover>
-                ))}
-              </div>
+                      <div className="space-y-1">
+                        {skill.competencies.map(
+                          (competency, competencyIndex) => (
+                            <div
+                              key={competency.name}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                id={`competency-${categoryIndex}-${skillIndex}-${competencyIndex}`}
+                                checked={competency.selected}
+                                onCheckedChange={() =>
+                                  toggleCompetency(
+                                    categoryIndex,
+                                    skillIndex,
+                                    competencyIndex,
+                                  )
+                                }
+                              />
+                              <label
+                                htmlFor={`competency-${categoryIndex}-${skillIndex}-${competencyIndex}`}
+                                className={cn(
+                                  "flex-1 cursor-pointer text-sm",
+                                  !competency.selected &&
+                                    "text-muted-foreground",
+                                )}
+                              >
+                                {competency.name}
+                              </label>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }

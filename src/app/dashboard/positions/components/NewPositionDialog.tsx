@@ -1,27 +1,41 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { Plus, RefreshCcw } from "lucide-react";
 import * as React from "react";
 import { Button } from "~/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "~/components/ui/command";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { Separator } from "~/components/ui/separator";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
+import { Separator } from "~/components/ui/separator";
 import { api } from "~/trpc/react";
 import type { CategoryGroup, CategoryName, SkillName } from "~/types/skills";
 import { AssessmentStep } from "./AssessmentStep";
 import { JobDescriptionStep } from "./JobDescriptionStep";
 import { LoadingIndicator } from "./LoadingIndicator";
 import { SkillsStep } from "./SkillsStep";
+
+// Type definition for database skills data
+interface DBSkillData {
+  skillName: string;
+  categoryName: string;
+  competencies?: Array<{ name: string }>;
+}
 
 interface NewPositionDialogProps {
   open: boolean;
@@ -46,6 +60,60 @@ const stepHeaders = [
   },
 ];
 
+// Define assessment type to match what AssessmentStep expects
+interface Assessment {
+  title: string;
+  difficulty: string;
+  estimatedTime: string;
+  objectives: string[];
+  evaluationCriteria: string[];
+  description: string;
+  context: string;
+  questions: Array<{
+    context: string;
+    question: string;
+    skills_assessed: Array<{
+      id: number;
+      name: string;
+    }>;
+  }>;
+}
+
+// Default assessment state (moved out of component to avoid recreation on each render)
+const defaultAssessment: Assessment = {
+  title: "",
+  difficulty: "medium",
+  estimatedTime: "2 hours",
+  objectives: [],
+  evaluationCriteria: [],
+  description: "",
+  context: "",
+  questions: [],
+};
+
+// Fallback data for when API responses fail
+const fallbackAssessmentData = {
+  title: "Technical Assessment Case",
+  context:
+    "Build a task management application that allows users to create, update, and manage their daily tasks.",
+  description: `Build a task management application that allows users to create, update, and manage their daily tasks.
+    
+Key Requirements:
+- Implement user authentication and authorization
+- Create a RESTful API with proper endpoint structure
+- Develop a responsive React frontend with modern state management
+- Include proper error handling and input validation
+- Write comprehensive tests
+- Use TypeScript for type safety
+- Include documentation`,
+};
+
+// Define the header type
+type StepHeader = {
+  title: string;
+  description: string;
+};
+
 export function NewPositionDialog({
   open,
   onOpenChange,
@@ -54,49 +122,103 @@ export function NewPositionDialog({
   const [loading, setLoading] = React.useState(false);
   const [jobDescription, setJobDescription] = React.useState("");
   const [skills, setSkills] = React.useState<CategoryGroup[]>([]);
-  const [assessment, setAssessment] = React.useState({
-    title: "",
-    difficulty: "medium",
-    estimatedTime: "2 hours",
-    objectives: [
-      "Implement a RESTful API using Node.js and Express",
-      "Create a React frontend with proper state management",
-      "Implement proper error handling and input validation",
-      "Write unit tests for critical components",
-    ],
-    evaluationCriteria: [
-      "Code organization and architecture",
-      "Error handling and edge cases",
-      "Testing coverage and quality",
-      "Documentation and code comments",
-    ],
-    description: "",
-    context: "",
-    questions: [] as Array<{
-      context: string;
-      question: string;
-      skills_assessed: Array<{
-        id: number;
-        name: string;
-      }>;
-    }>,
-  });
+  const [assessment, setAssessment] =
+    React.useState<Assessment>(defaultAssessment);
 
-  // Get current step header content (with safety check)
-  const getHeaderContent = () => {
-    const defaultHeader = {
-      title: "Create Position",
-      description: "Fill out the details for your new position.",
-    };
+  // State for the add skill popover
+  const [addSkillOpen, setAddSkillOpen] = React.useState(false);
 
-    if (step < 1 || step > stepHeaders.length) {
-      return defaultHeader;
-    }
+  // Query for available skills
+  const { data: dbSkillsData } =
+    api.positions.getAllSkillsAndCategories.useQuery();
 
-    return stepHeaders[step - 1];
+  // Calculate step index with safety bounds
+  const headerIndex = Math.max(0, Math.min(step - 1, stepHeaders.length - 1));
+  // Provide fallback values in case stepHeaders[headerIndex] is undefined
+  const currentTitle = stepHeaders[headerIndex]?.title || "Create Position";
+  const currentDescription =
+    stepHeaders[headerIndex]?.description ||
+    "Fill out the details for your new position.";
+
+  // Function to add a skill directly
+  const addSkill = (skillName: SkillName) => {
+    if (!dbSkillsData) return;
+
+    // Find the skill in the data
+    const skillData = dbSkillsData.find(
+      (item: DBSkillData) => item.skillName === skillName,
+    );
+    if (!skillData) return;
+
+    // Get the category
+    const category = (skillData.categoryName as CategoryName) || "Other";
+
+    // Get competencies
+    const defaultCompetencies = (
+      skillData.competencies?.map((c) => c.name) || ["General Knowledge"]
+    ).map((name) => ({
+      name,
+      selected: true,
+    }));
+
+    // Update skills
+    setSkills((currentSkills: CategoryGroup[]) => {
+      const categoryIndex = currentSkills.findIndex(
+        (c: CategoryGroup) => c.category === category,
+      );
+      if (categoryIndex >= 0) {
+        const newSkills = [...currentSkills];
+        if (
+          !newSkills[categoryIndex]?.skills.some((s) => s.name === skillName)
+        ) {
+          newSkills[categoryIndex] = {
+            category,
+            skills: [
+              ...(newSkills[categoryIndex]?.skills || []),
+              {
+                name: skillName,
+                competencies: defaultCompetencies,
+              },
+            ],
+          };
+          return newSkills;
+        }
+        return currentSkills;
+      }
+      return [
+        ...currentSkills,
+        {
+          category,
+          skills: [
+            {
+              name: skillName,
+              competencies: defaultCompetencies,
+            },
+          ],
+        },
+      ];
+    });
+
+    // Close the popover
+    setAddSkillOpen(false);
   };
 
-  const currentHeader = getHeaderContent();
+  // Function to get available skills
+  const getAvailableSkills = React.useCallback(() => {
+    if (!dbSkillsData) return [];
+
+    // Get all skills that are already selected
+    const selectedSkillNames = skills.flatMap((category) =>
+      category.skills.map((skill) => skill.name),
+    );
+
+    // Return skills that aren't already selected
+    return dbSkillsData
+      .filter(
+        (item: DBSkillData) => !selectedSkillNames.includes(item.skillName),
+      )
+      .map((item: DBSkillData) => item.skillName);
+  }, [dbSkillsData, skills]);
 
   // Reset form state when dialog is opened
   React.useEffect(() => {
@@ -104,14 +226,13 @@ export function NewPositionDialog({
       setStep(1);
       setLoading(false);
       setJobDescription("");
-      // Only reset skills and assessment if needed
+      setSkills([]);
+      setAssessment(defaultAssessment);
     }
   }, [open]);
 
-  // Set up the tRPC mutation
+  // Set up the tRPC mutations
   const extractSkillsMutation = api.positions.extractSkills.useMutation();
-
-  // Set up the tRPC mutation for generating the assessment
   const generateAssessmentMutation =
     api.positions.generateAssessment.useMutation();
 
@@ -120,43 +241,31 @@ export function NewPositionDialog({
 
     try {
       if (step === 1) {
-        // Use the tRPC mutation to extract skills from the job description
+        // Extract skills from job description
         try {
           const result = await extractSkillsMutation.mutateAsync({
             jobDescription,
           });
 
-          // If we got a valid result, use it to set the skills
+          // Process valid result or use fallback
           if (result?.categories && result.categories.length > 0) {
-            // Transform the result into the expected format (ensuring proper types)
-            // Without hardcoded validation against predefined lists
             const transformedSkills: CategoryGroup[] = result.categories
-              .map((category) => {
-                return {
-                  // Accept any category name from the database
-                  category: category.name as CategoryName,
-                  skills: category.skills
-                    .map((skill) => {
-                      return {
-                        // Accept any skill name from the database
-                        name: skill.name as SkillName,
-                        competencies: skill.competencies.map((comp) => ({
-                          name: comp.name,
-                          selected: comp.selected,
-                        })),
-                      };
-                    })
-                    // Only filter out skills with no competencies
-                    .filter((skill) => skill.competencies.length > 0),
-                };
-              })
-              // Only filter out categories with no skills
+              .map((category) => ({
+                category: category.name as CategoryName,
+                skills: category.skills
+                  .map((skill) => ({
+                    name: skill.name as SkillName,
+                    competencies: skill.competencies.map((comp) => ({
+                      name: comp.name,
+                      selected: comp.selected,
+                    })),
+                  }))
+                  .filter((skill) => skill.competencies.length > 0),
+              }))
               .filter((category) => category.skills.length > 0);
 
-            console.log("Transformed skills from database:", transformedSkills);
             setSkills(transformedSkills);
           } else {
-            // If no skills were extracted, use the fallback
             console.warn("No skills were extracted, using fallback");
             applyFallbackSkills();
           }
@@ -166,64 +275,34 @@ export function NewPositionDialog({
         }
       } else if (step === 2) {
         try {
-          // Use the generateAssessment mutation to get an assessment case
+          // Generate assessment based on job description and skills
           const result = await generateAssessmentMutation.mutateAsync({
             jobDescription,
             skills,
           });
 
           if (result && result.context && result.questions) {
-            // Update the assessment state with the generated content
+            // Update with generated content
             setAssessment((prev) => ({
               ...prev,
               title: "Technical Assessment Case",
-              difficulty: "medium",
-              estimatedTime: "2 hours",
               context: result.context,
               questions: result.questions,
             }));
           } else {
-            // Fall back to a default assessment if the result is invalid
+            // Use fallback if result is invalid
             console.warn("Invalid assessment result, using fallback");
             setAssessment((prev) => ({
               ...prev,
-              title: "Full-Stack Web Application Development Case",
-              context: `Build a task management application that allows users to create, update, and manage their daily tasks.`,
-              description: `Build a task management application that allows users to create, update, and manage their daily tasks. 
-              
-Key Requirements:
-- Implement user authentication and authorization
-- Create a RESTful API with proper endpoint structure
-- Develop a responsive React frontend with modern state management
-- Implement real-time updates using WebSocket
-- Include proper error handling and input validation
-- Write comprehensive tests for both frontend and backend
-- Use TypeScript for type safety
-- Include proper documentation
-
-The candidate should demonstrate their ability to create a well-structured, scalable application while following best practices in both frontend and backend development.`,
+              ...fallbackAssessmentData,
             }));
           }
         } catch (error) {
           console.error("Error generating assessment:", error);
-          // Use fallback if the API call fails
+          // Use fallback on error
           setAssessment((prev) => ({
             ...prev,
-            title: "Full-Stack Web Application Development Case",
-            context: `Build a task management application that allows users to create, update, and manage their daily tasks.`,
-            description: `Build a task management application that allows users to create, update, and manage their daily tasks. 
-            
-Key Requirements:
-- Implement user authentication and authorization
-- Create a RESTful API with proper endpoint structure
-- Develop a responsive React frontend with modern state management
-- Implement real-time updates using WebSocket
-- Include proper error handling and input validation
-- Write comprehensive tests for both frontend and backend
-- Use TypeScript for type safety
-- Include proper documentation
-
-The candidate should demonstrate their ability to create a well-structured, scalable application while following best practices in both frontend and backend development.`,
+            ...fallbackAssessmentData,
           }));
         }
       }
@@ -238,7 +317,7 @@ The candidate should demonstrate their ability to create a well-structured, scal
     }
   };
 
-  // Helper function to use fallback skills when the API fails
+  // Helper function for fallback skills
   const applyFallbackSkills = () => {
     setSkills([
       {
@@ -247,17 +326,13 @@ The candidate should demonstrate their ability to create a well-structured, scal
           {
             name: "JavaScript",
             competencies: [
-              { name: "DOM Manipulation", selected: true },
               { name: "ES6+ Features", selected: true },
               { name: "Asynchronous Patterns", selected: true },
             ],
           },
           {
             name: "TypeScript",
-            competencies: [
-              { name: "Type Definitions", selected: true },
-              { name: "Advanced Types", selected: true },
-            ],
+            competencies: [{ name: "Type Definitions", selected: true }],
           },
         ],
       },
@@ -268,7 +343,6 @@ The candidate should demonstrate their ability to create a well-structured, scal
             name: "React",
             competencies: [
               { name: "Hooks", selected: true },
-              { name: "Context API", selected: true },
               { name: "State Management", selected: true },
             ],
           },
@@ -281,21 +355,18 @@ The candidate should demonstrate their ability to create a well-structured, scal
     setLoading(true);
 
     try {
-      // Use the generateAssessment mutation to regenerate the case
       const result = await generateAssessmentMutation.mutateAsync({
         jobDescription,
         skills,
       });
 
       if (result && result.context && result.questions) {
-        // Update the assessment state with the new generated content
         setAssessment((prev) => ({
           ...prev,
           context: result.context,
           questions: result.questions,
         }));
       } else {
-        // If we got an invalid result, show an error
         console.warn("Invalid assessment regeneration result");
       }
     } catch (error) {
@@ -305,8 +376,13 @@ The candidate should demonstrate their ability to create a well-structured, scal
     }
   };
 
+  // Function to handle assessment changes from the step component
+  const handleAssessmentChange = (updatedAssessment: Assessment) => {
+    setAssessment(updatedAssessment);
+  };
+
   const handleCreate = () => {
-    // Here you would save the position to the database
+    // Save position to the database (to be implemented)
     console.log("Creating position with:", {
       jobDescription,
       skills,
@@ -318,49 +394,17 @@ The candidate should demonstrate their ability to create a well-structured, scal
     setStep(1);
   };
 
-  // Step names for tooltips
-  const stepNames = ["Job Description", "Skills", "Assessment"];
-
-  // Stepper component extracted for reuse
-  const Stepper = () => (
-    <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-2 py-1 text-xs font-medium shadow-sm">
-      <span className="text-muted-foreground">Step</span>
-      <div className="flex">
-        {[1, 2, 3].map((stepNumber) => (
-          <TooltipProvider key={stepNumber} delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className={`relative flex h-5 w-5 cursor-default select-none items-center justify-center rounded-full transition-colors ${
-                    step === stepNumber
-                      ? "bg-verbo-purple text-white"
-                      : "text-muted-foreground hover:text-verbo-dark"
-                  }`}
-                >
-                  {stepNumber}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                {stepNames[stepNumber - 1]}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col p-0">
         {/* Fixed Dialog Header with Dynamic Content */}
-        <div className="px-4 pb-4 pt-5">
+        <div className="p-5">
           <DialogHeader className="text-center sm:text-left">
             <DialogTitle className="text-lg font-semibold leading-none tracking-tight">
-              {currentHeader!.title}
+              {currentTitle}
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
-              {currentHeader!.description}
+              {currentDescription}
             </p>
           </DialogHeader>
         </div>
@@ -368,7 +412,7 @@ The candidate should demonstrate their ability to create a well-structured, scal
         <Separator className="shrink-0" />
 
         {/* Scrollable Dialog Body */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-5">
           <AnimatePresence mode="wait">
             {step === 1 && !loading && (
               <motion.div
@@ -377,7 +421,7 @@ The candidate should demonstrate their ability to create a well-structured, scal
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-6"
+                className="min-h-[400px] space-y-6"
               >
                 <JobDescriptionStep
                   jobDescription={jobDescription}
@@ -394,6 +438,7 @@ The candidate should demonstrate their ability to create a well-structured, scal
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
+                className="flex min-h-[400px] items-center justify-center"
               >
                 <LoadingIndicator
                   step={step}
@@ -413,6 +458,7 @@ The candidate should demonstrate their ability to create a well-structured, scal
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
+                className="min-h-[400px]"
               >
                 <SkillsStep
                   skills={skills}
@@ -429,10 +475,11 @@ The candidate should demonstrate their ability to create a well-structured, scal
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
+                className="min-h-[400px]"
               >
                 <AssessmentStep
                   assessment={assessment}
-                  onAssessmentChange={setAssessment}
+                  onAssessmentChange={handleAssessmentChange}
                   onRegenerateCase={regenerateCase}
                   loading={loading}
                   hideHeader={true}
@@ -445,14 +492,76 @@ The candidate should demonstrate their ability to create a well-structured, scal
         <Separator className="shrink-0" />
 
         {/* Fixed Dialog Footer */}
-        <div className="flex flex-col-reverse items-center p-4 sm:flex-row sm:justify-between sm:space-x-2">
-          {/* Stepper in bottom left */}
-          <div className="mt-3 sm:mt-0">
-            <Stepper />
+        <div className="relative flex flex-row items-center justify-between p-4">
+          {/* Action buttons on the left */}
+          <div className="z-10 flex">
+            {step === 2 && !loading && (
+              <Popover open={addSkillOpen} onOpenChange={setAddSkillOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-1 px-4"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Add Skill</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-[300px] p-0"
+                  align="start"
+                  side="top"
+                  sideOffset={5}
+                  alignOffset={0}
+                  avoidCollisions
+                >
+                  <Command className="overflow-hidden">
+                    <CommandList className="max-h-[300px]">
+                      <CommandEmpty>No skills found.</CommandEmpty>
+                      {getAvailableSkills().map((skillName) => (
+                        <CommandItem
+                          key={skillName}
+                          value={skillName}
+                          onSelect={() => addSkill(skillName)}
+                          className="text-sm"
+                        >
+                          {skillName}
+                        </CommandItem>
+                      ))}
+                    </CommandList>
+                    <div className="border-t border-border p-0">
+                      <CommandInput
+                        placeholder="Search skills..."
+                        className="h-9"
+                      />
+                    </div>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
+            {step === 3 && !loading && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 px-4"
+                onClick={regenerateCase}
+                disabled={loading}
+              >
+                <RefreshCcw className="mr-2 h-3.5 w-3.5" />
+                Regenerate Case
+              </Button>
+            )}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex w-full gap-2 sm:w-auto">
+          {/* Simplified step indicator in center */}
+          <div className="absolute left-0 right-0 z-0 mx-auto w-fit">
+            <div className="rounded-full border border-border bg-background/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
+              Step {step} of 3
+            </div>
+          </div>
+
+          {/* Navigation buttons on the right */}
+          <div className="z-10 flex gap-2">
             {step > 1 && (
               <Button
                 variant="outline"
@@ -465,7 +574,7 @@ The candidate should demonstrate their ability to create a well-structured, scal
             )}
             {step < 3 ? (
               <Button
-                className="h-9 w-full bg-verbo-purple px-4 hover:bg-verbo-purple/90 sm:w-auto"
+                className="h-9 bg-verbo-purple px-4 hover:bg-verbo-purple/90"
                 onClick={handleNext}
                 disabled={loading || (step === 1 && !jobDescription.trim())}
               >
@@ -473,7 +582,7 @@ The candidate should demonstrate their ability to create a well-structured, scal
               </Button>
             ) : (
               <Button
-                className="h-9 w-full bg-verbo-green px-4 hover:bg-verbo-green/90 sm:w-auto"
+                className="h-9 bg-verbo-purple px-4 hover:bg-verbo-purple/90"
                 onClick={handleCreate}
                 disabled={loading}
               >

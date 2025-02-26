@@ -1,9 +1,7 @@
-import { RefreshCcw } from "lucide-react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
 import { ScrollArea } from "~/components/ui/scroll-area";
 
 // Define type for code component props
@@ -274,26 +272,21 @@ export function AssessmentStep({
   return (
     <div className="space-y-4">
       {!hideHeader && (
-        <div className="flex flex-row items-start justify-between">
-          <div>
-            <h3 className="text-lg font-semibold leading-none tracking-tight">
-              {assessment.title || "Technical Assessment Case"}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Review the assessment case and questions.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={onRegenerateCase}
-            disabled={loading}
-            className="h-8 text-xs"
-          >
-            <RefreshCcw className="mr-2 h-4 w-4" />
-            Regenerate Case
-          </Button>
+        <div className="space-y-1.5">
+          <h3 className="text-lg font-semibold leading-none tracking-tight">
+            {assessment.title || "Technical Assessment Case"}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Review the assessment case and questions.
+          </p>
         </div>
       )}
+
+      <div>
+        <h3 className="text-sm font-medium text-verbo-dark">
+          Assessment Content
+        </h3>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Left Column: Case Context */}
