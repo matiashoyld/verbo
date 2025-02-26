@@ -34,8 +34,10 @@ import { SkillsStep } from "./SkillsStep";
 // Type definition for database skills data
 interface DBSkillData {
   skillName: string;
+  skillNumId: number | null;
   categoryName: string;
-  competencies?: Array<{ name: string }>;
+  categoryNumId: number | null;
+  competencies?: Array<{ name: string; numId: number | null }>;
 }
 
 interface NewPositionDialogProps {
@@ -62,6 +64,15 @@ const stepHeaders = [
 ];
 
 // Define assessment type to match what AssessmentStep expects
+interface AssessmentQuestion {
+  context: string;
+  question: string;
+  skills_assessed: Array<{
+    numId: number | null;
+    name: string;
+  }>;
+}
+
 interface Assessment {
   title: string;
   difficulty: string;
@@ -70,14 +81,7 @@ interface Assessment {
   evaluationCriteria: string[];
   description: string;
   context: string;
-  questions: Array<{
-    context: string;
-    question: string;
-    skills_assessed: Array<{
-      id: number;
-      name: string;
-    }>;
-  }>;
+  questions: AssessmentQuestion[];
 }
 
 // Default assessment state (moved out of component to avoid recreation on each render)
@@ -107,12 +111,6 @@ Key Requirements:
 - Write comprehensive tests
 - Use TypeScript for type safety
 - Include documentation`,
-};
-
-// Define the header type
-type StepHeader = {
-  title: string;
-  description: string;
 };
 
 export function NewPositionDialog({
@@ -153,14 +151,14 @@ export function NewPositionDialog({
 
     // Get the category
     const category = (skillData.categoryName as CategoryName) || "Other";
+    const categoryNumId = skillData.categoryNumId;
 
     // Get competencies
-    const defaultCompetencies = (
-      skillData.competencies?.map((c) => c.name) || ["General Knowledge"]
-    ).map((name) => ({
-      name,
+    const defaultCompetencies = skillData.competencies?.map((c) => ({
+      name: c.name,
+      numId: c.numId,
       selected: true,
-    }));
+    })) || [{ name: "General Knowledge", numId: null, selected: true }];
 
     // Update skills
     setSkills((currentSkills: CategoryGroup[]) => {
@@ -174,10 +172,12 @@ export function NewPositionDialog({
         ) {
           newSkills[categoryIndex] = {
             category,
+            categoryNumId,
             skills: [
               ...(newSkills[categoryIndex]?.skills || []),
               {
                 name: skillName,
+                numId: skillData.skillNumId,
                 competencies: defaultCompetencies,
               },
             ],
@@ -190,9 +190,11 @@ export function NewPositionDialog({
         ...currentSkills,
         {
           category,
+          categoryNumId,
           skills: [
             {
               name: skillName,
+              numId: skillData.skillNumId,
               competencies: defaultCompetencies,
             },
           ],
@@ -254,11 +256,14 @@ export function NewPositionDialog({
             const transformedSkills: CategoryGroup[] = result.categories
               .map((category) => ({
                 category: category.name as CategoryName,
+                categoryNumId: category.numId,
                 skills: category.skills
                   .map((skill) => ({
                     name: skill.name as SkillName,
+                    numId: skill.numId,
                     competencies: skill.competencies.map((comp) => ({
                       name: comp.name,
+                      numId: comp.numId,
                       selected: comp.selected,
                     })),
                   }))
@@ -289,7 +294,11 @@ export function NewPositionDialog({
               ...prev,
               title: "Technical Assessment Case",
               context: result.context,
-              questions: result.questions,
+              questions: result.questions.map((q) => ({
+                context: q.context,
+                question: q.question,
+                skills_assessed: q.skills_assessed || [],
+              })),
             }));
           } else {
             // Use fallback if result is invalid
@@ -324,28 +333,35 @@ export function NewPositionDialog({
     setSkills([
       {
         category: "Programming",
+        categoryNumId: 1,
         skills: [
           {
             name: "JavaScript",
+            numId: 1,
             competencies: [
-              { name: "ES6+ Features", selected: true },
-              { name: "Asynchronous Patterns", selected: true },
+              { name: "ES6+ Features", numId: 2, selected: true },
+              { name: "Asynchronous Patterns", numId: 3, selected: true },
             ],
           },
           {
             name: "TypeScript",
-            competencies: [{ name: "Type Definitions", selected: true }],
+            numId: 2,
+            competencies: [
+              { name: "Type Definitions", numId: 4, selected: true },
+            ],
           },
         ],
       },
       {
         category: "Frontend",
+        categoryNumId: 2,
         skills: [
           {
             name: "React",
+            numId: 3,
             competencies: [
-              { name: "Hooks", selected: true },
-              { name: "State Management", selected: true },
+              { name: "Hooks", numId: 6, selected: true },
+              { name: "State Management", numId: 8, selected: true },
             ],
           },
         ],
@@ -366,7 +382,11 @@ export function NewPositionDialog({
         setAssessment((prev) => ({
           ...prev,
           context: result.context,
-          questions: result.questions,
+          questions: result.questions.map((q) => ({
+            context: q.context,
+            question: q.question,
+            skills_assessed: q.skills_assessed || [],
+          })),
         }));
       } else {
         console.warn("Invalid assessment regeneration result");
@@ -387,13 +407,26 @@ export function NewPositionDialog({
     try {
       setLoading(true);
 
+      // Process assessment data to ensure it matches the API expectations
+      const processedQuestions = assessment.questions.map((q) => ({
+        context: q.context,
+        question: q.question,
+        skills_assessed: q.skills_assessed.map((skill) => ({
+          name: skill.name,
+          numId: skill.numId === null ? undefined : skill.numId,
+        })),
+      }));
+
       // Call the createPosition mutation
       const result = await createPositionMutation.mutateAsync({
         title: assessment.title,
-        department: "Engineering", // Default department for now - could be a form field later
         jobDescription: jobDescription,
         skills: skills,
-        assessment: assessment,
+        assessment: {
+          title: assessment.title,
+          context: assessment.context,
+          questions: processedQuestions,
+        },
       });
 
       if (result.success) {
@@ -505,8 +538,6 @@ export function NewPositionDialog({
                 <AssessmentStep
                   assessment={assessment}
                   onAssessmentChange={handleAssessmentChange}
-                  onRegenerateCase={regenerateCase}
-                  loading={loading}
                   hideHeader={true}
                 />
               </motion.div>

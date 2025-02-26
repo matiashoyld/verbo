@@ -52,6 +52,8 @@ export const createInnerTRPCContext = async (opts: CreateContextOptions) => {
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   // Make sure we await the headers before using them
   const headersObject = Object.fromEntries(opts.headers);
+  
+  // Get the current user after we've handled the headers
   const user = await currentUser();
   
   return {

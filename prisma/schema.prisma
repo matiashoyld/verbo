@@ -15,8 +15,8 @@ model User {
   role        UserRole     @default(RECRUITER)
   imageUrl    String?      @map("image_url")
   challenges  Challenge[]  @relation("CreatedChallenges")
-  submissions Submission[]
   positions   Position[]
+  submissions Submission[]
 
   @@map("User")
 }
@@ -26,6 +26,7 @@ model Category {
   name       String   @unique
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
+  numId      Int?     @unique @map("num_id")
   skills     Skill[]
 
   @@map("Category")
@@ -37,6 +38,7 @@ model Skill {
   categoryId String      @map("category_id") @db.Uuid
   created_at DateTime    @default(now()) @db.Timestamptz(6)
   updated_at DateTime    @updatedAt @db.Timestamptz(6)
+  numId      Int?        @unique @map("num_id")
   category   Category    @relation(fields: [categoryId], references: [id])
   subSkills  SubSkill[]
   challenges Challenge[] @relation("ChallengeToSkill")
@@ -46,13 +48,15 @@ model Skill {
 }
 
 model SubSkill {
-  id         String      @id @default(uuid()) @db.Uuid
-  name       String
-  skillId    String      @map("skill_id") @db.Uuid
-  created_at DateTime    @default(now()) @db.Timestamptz(6)
-  updated_at DateTime    @updatedAt @db.Timestamptz(6)
-  criteria   Criterion[]
-  skill      Skill       @relation(fields: [skillId], references: [id])
+  id                String               @id @default(uuid()) @db.Uuid
+  name              String
+  skillId           String               @map("skill_id") @db.Uuid
+  created_at        DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime             @updatedAt @db.Timestamptz(6)
+  numId             Int?                 @unique @map("num_id")
+  criteria          Criterion[]
+  skill             Skill                @relation(fields: [skillId], references: [id])
+  questionRelations QuestionCompetency[]
 
   @@unique([skillId, name])
   @@map("SubSkill")
@@ -104,22 +108,11 @@ model Submission {
   @@map("Submission")
 }
 
-enum UserRole {
-  RECRUITER
-  CANDIDATE
-}
-
-enum SubmissionStatus {
-  IN_PROGRESS
-  COMPLETED
-  FAILED
-}
-
 model CommonPosition {
   id          String   @id @default(uuid()) @db.Uuid
   title       String   @unique
   icon        String
-  description String   @db.Text
+  description String
   created_at  DateTime @default(now()) @db.Timestamptz(6)
   updated_at  DateTime @updatedAt @db.Timestamptz(6)
 
@@ -127,19 +120,17 @@ model CommonPosition {
 }
 
 model Position {
-  id             String            @id @default(uuid()) @db.Uuid
+  id             String             @id @default(uuid()) @db.Uuid
   title          String
-  department     String
-  jobDescription String            @db.Text
-  context        String?           @db.Text
-  status         PositionStatus    @default(DRAFT)
-  openings       Int               @default(1)
-  creatorId      String            @map("creator_id")
-  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
-  creator        User              @relation(fields: [creatorId], references: [id])
-  skills         PositionSkill[]
+  jobDescription String
+  context        String?
+  openings       Int                @default(1)
+  creatorId      String             @map("creator_id")
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  creator        User               @relation(fields: [creatorId], references: [id])
   questions      PositionQuestion[]
+  skills         PositionSkill[]
 
   @@map("Position")
 }
@@ -149,7 +140,7 @@ model PositionSkill {
   positionId   String   @map("position_id") @db.Uuid
   categoryName String   @map("category_name")
   skillName    String   @map("skill_name")
-  competencies String[] 
+  competencies String[]
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   position     Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
@@ -160,18 +151,36 @@ model PositionSkill {
 model PositionQuestion {
   id             String   @id @default(uuid()) @db.Uuid
   positionId     String   @map("position_id") @db.Uuid
-  question       String   @db.Text
-  context        String?  @db.Text
-  skillsAssessed Json     @map("skills_assessed")
+  question       String
+  context        String?
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   position       Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  competencies   QuestionCompetency[]
 
   @@map("PositionQuestion")
 }
 
-enum PositionStatus {
-  DRAFT
-  ACTIVE
-  ARCHIVED
+model QuestionCompetency {
+  id           String           @id @default(uuid()) @db.Uuid
+  questionId   String           @map("question_id") @db.Uuid
+  competencyId String           @map("competency_id") @db.Uuid
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6) 
+  question     PositionQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  competency   SubSkill         @relation(fields: [competencyId], references: [id])
+
+  @@unique([questionId, competencyId])
+  @@map("QuestionCompetency")
+}
+
+enum UserRole {
+  RECRUITER
+  CANDIDATE
+}
+
+enum SubmissionStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
 }

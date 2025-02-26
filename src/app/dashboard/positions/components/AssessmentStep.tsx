@@ -38,7 +38,7 @@ interface AssessmentQuestion {
   context: string;
   question: string;
   skills_assessed: Array<{
-    id: number;
+    numId: number | null;
     name: string;
   }>;
 }
@@ -57,16 +57,12 @@ interface Assessment {
 interface AssessmentStepProps {
   assessment: Assessment;
   onAssessmentChange: (assessment: Assessment) => void;
-  onRegenerateCase: () => void;
-  loading?: boolean;
   hideHeader?: boolean;
 }
 
 export function AssessmentStep({
   assessment,
   onAssessmentChange,
-  onRegenerateCase,
-  loading = false,
   hideHeader = false,
 }: AssessmentStepProps) {
   // State for new question
@@ -74,7 +70,7 @@ export function AssessmentStep({
   const [newQuestionContext, setNewQuestionContext] = React.useState("");
   const [newQuestion, setNewQuestion] = React.useState("");
   const [newQuestionSkills, setNewQuestionSkills] = React.useState<
-    Array<{ id: number; name: string }>
+    Array<{ numId: number | null; name: string }>
   >([]);
   const [skillComboboxOpen, setSkillComboboxOpen] = React.useState(false);
 
@@ -97,7 +93,10 @@ export function AssessmentStep({
       {
         context: newQuestionContext || "",
         question: newQuestion || "",
-        skills_assessed: newQuestionSkills,
+        skills_assessed: newQuestionSkills.map((skill) => ({
+          numId: skill.numId,
+          name: skill.name,
+        })),
       },
     ];
 
@@ -120,10 +119,16 @@ export function AssessmentStep({
     if (!dbSkillsData) return [];
 
     return dbSkillsData.map(
-      (item: { skillName: string; categoryName: string }) => ({
-        id: Math.random(), // Use a proper ID in production
+      (item: {
+        skillName: string;
+        skillNumId: number | null;
+        categoryName: string;
+        categoryNumId: number | null;
+      }) => ({
+        numId: item.skillNumId,
         name: item.skillName,
         category: item.categoryName,
+        categoryNumId: item.categoryNumId,
       }),
     );
   }, [dbSkillsData]);
@@ -132,10 +137,28 @@ export function AssessmentStep({
   const addSkillToQuestion = (skillName: string) => {
     if (newQuestionSkills.some((skill) => skill.name === skillName)) return;
 
+    // Find the skill in the data to get its numId
+    const skillData = dbSkillsData?.find(
+      (item: { skillName: string; skillNumId: number | null }) =>
+        item.skillName === skillName,
+    );
+
+    if (!skillData || skillData.skillNumId === null) {
+      console.warn(
+        `Adding skill without numId: ${skillName}. This might cause issues when saving.`,
+      );
+    }
+
+    const skillNumId = skillData?.skillNumId || 0;
+
+    console.log(
+      `Adding skill: ${skillName} with numId ${skillNumId} to question`,
+    );
+
     setNewQuestionSkills((prev) => [
       ...prev,
       {
-        id: Math.random(), // Use a proper ID in production
+        numId: skillNumId,
         name: skillName,
       },
     ]);
@@ -240,174 +263,176 @@ export function AssessmentStep({
   // Custom components for markdown rendering
   const MarkdownComponents: Components = {
     // Style headings
-    h1: ({ node, ...props }) => (
+    h1: ({ ...props }) => (
       <h1 className="mb-3 text-[14px] font-medium text-verbo-dark" {...props} />
     ),
-    h2: ({ node, ...props }) => (
+    h2: ({ ...props }) => (
       <h2
         className="mb-2.5 mt-4 text-[13px] font-medium text-verbo-dark"
         {...props}
       />
     ),
-    h3: ({ node, ...props }) => (
+    h3: ({ ...props }) => (
       <h3
-        className="mb-2 mt-3.5 text-[12px] font-medium text-verbo-dark"
+        className="mb-2 mt-3 text-[12px] font-medium text-verbo-dark"
         {...props}
       />
     ),
-    h4: ({ node, ...props }) => (
+    h4: ({ ...props }) => (
       <h4
         className="mb-2 mt-3 text-[11px] font-medium text-verbo-dark"
         {...props}
       />
     ),
+    h5: ({ ...props }) => (
+      <h5
+        className="mb-1 mt-2 text-[10px] font-medium text-verbo-dark"
+        {...props}
+      />
+    ),
+    h6: ({ ...props }) => (
+      <h6
+        className="mb-1 mt-2 text-xs font-medium text-verbo-dark"
+        {...props}
+      />
+    ),
     // Style paragraphs
-    p: ({ node, ...props }) => (
-      <p className="mb-2.5 text-xs text-foreground/80" {...props} />
+    p: ({ ...props }) => (
+      <p className="mb-3 text-sm text-verbo-dark/90" {...props} />
     ),
     // Style links
-    a: ({ node, ...props }) => (
+    a: ({ ...props }) => (
       <a
-        className="font-medium text-verbo-blue no-underline hover:underline"
+        className="text-verbo-blue hover:text-verbo-blue/80 hover:underline"
         {...props}
       />
     ),
     // Style emphasis and strong
-    em: ({ node, ...props }) => (
+    em: ({ ...props }) => (
       <em className="italic text-foreground/80" {...props} />
     ),
-    strong: ({ node, ...props }) => (
+    strong: ({ ...props }) => (
       <strong className="font-medium text-foreground/90" {...props} />
     ),
     // Style lists
-    ul: ({ node, ...props }) => (
-      <ul className="mb-2.5 list-disc pl-5" {...props} />
+    ul: ({ ...props }) => (
+      <ul className="mb-3 ml-4 list-disc space-y-0.5 text-sm" {...props} />
     ),
-    ol: ({ node, ...props }) => (
-      <ol className="mb-2.5 list-decimal pl-5" {...props} />
+    ol: ({ ...props }) => (
+      <ol className="mb-3 ml-4 list-decimal space-y-0.5 text-sm" {...props} />
     ),
-    li: ({ node, ...props }) => (
-      <li
-        className="mb-1 text-xs text-foreground/80 marker:text-foreground"
+    li: ({ ...props }) => <li className="text-verbo-dark/90" {...props} />,
+    // Style code blocks
+    code: ({ ...props }) => (
+      <code
+        className="rounded bg-slate-100 px-1 py-0.5 font-mono text-xs text-verbo-dark"
         {...props}
       />
     ),
-    // Style code blocks and inline code
-    code: ({ inline, className, children, ...props }: CodeProps) => {
-      const match = /language-(\w+)/.exec(className || "");
-      return !inline && match ? (
-        <code
-          className={`block w-full overflow-auto rounded-md border border-border/10 bg-muted/20 p-2 text-xs font-medium ${match[1] ? `language-${match[1]}` : ""}`}
-          {...props}
-        >
-          {children}
-        </code>
-      ) : (
-        <code
-          className="rounded bg-verbo-purple/5 px-1 py-0.5 text-xs font-medium text-verbo-purple/80"
-          {...props}
-        >
-          {children}
-        </code>
-      );
-    },
+    pre: ({ ...props }) => (
+      <pre
+        className="mb-3 overflow-auto rounded-md bg-slate-100 p-2"
+        {...props}
+      />
+    ),
     // Style blockquotes
-    blockquote: ({ node, ...props }) => (
+    blockquote: ({ ...props }) => (
       <blockquote
-        className="my-2.5 border-l-2 border-verbo-purple/30 pl-3 italic text-muted-foreground"
+        className="mb-3 border-l-2 border-slate-300 pl-3 text-sm italic text-verbo-dark/80"
         {...props}
       />
     ),
     // Style horizontal rules
-    hr: ({ node, ...props }) => (
-      <hr className="my-3 border-border/50" {...props} />
+    hr: ({ ...props }) => (
+      <hr className="my-3 border-t border-slate-200" {...props} />
     ),
     // Style tables
-    table: ({ node, ...props }) => (
-      <div className="my-2.5 overflow-auto">
-        <table
-          className="w-full min-w-full border-collapse border border-border/30 text-left text-xs"
-          {...props}
-        />
+    table: ({ ...props }) => (
+      <div className="mb-3 overflow-x-auto">
+        <table className="w-full border-collapse text-sm" {...props} />
       </div>
     ),
-    thead: ({ node, ...props }) => (
+    thead: ({ ...props }) => (
       <thead className="bg-muted/30 text-foreground/90" {...props} />
     ),
-    tbody: ({ node, ...props }) => <tbody {...props} />,
-    tr: ({ node, ...props }) => (
+    tbody: ({ ...props }) => <tbody {...props} />,
+    tr: ({ ...props }) => (
       <tr className="border-b border-border/30 even:bg-muted/10" {...props} />
     ),
-    th: ({ node, ...props }) => (
+    th: ({ ...props }) => (
       <th
         className="border border-border/30 p-1 text-[10px] font-medium"
         {...props}
       />
     ),
-    td: ({ node, ...props }) => (
+    td: ({ ...props }) => (
       <td className="border border-border/30 p-1 text-[10px]" {...props} />
-    ),
-    pre: ({ node, ...props }) => (
-      <pre
-        className="my-2.5 overflow-auto rounded-md border border-border/10 bg-muted/20 p-0"
-        {...props}
-      />
     ),
   };
 
   // Smaller components for question context and content
   const QuestionMarkdownComponents: Components = {
     // Style headings
-    h1: ({ node, ...props }) => (
+    h1: ({ ...props }) => (
       <h1
         className="mb-1.5 text-[14px] font-medium text-verbo-dark"
         {...props}
       />
     ),
-    h2: ({ node, ...props }) => (
+    h2: ({ ...props }) => (
       <h2
         className="mb-1.5 mt-2.5 text-[13px] font-medium text-verbo-dark"
         {...props}
       />
     ),
-    h3: ({ node, ...props }) => (
+    h3: ({ ...props }) => (
       <h3
         className="mb-1 mt-2 text-[12px] font-medium text-verbo-dark"
         {...props}
       />
     ),
-    h4: ({ node, ...props }) => (
+    h4: ({ ...props }) => (
       <h4
         className="mb-1 mt-2 text-[11px] font-medium text-verbo-dark"
         {...props}
       />
     ),
+    h5: ({ ...props }) => (
+      <h5
+        className="mb-1 mt-2 text-[10px] font-medium text-verbo-dark"
+        {...props}
+      />
+    ),
+    h6: ({ ...props }) => (
+      <h6
+        className="mb-1 mt-2 text-xs font-medium text-verbo-dark"
+        {...props}
+      />
+    ),
     // Style paragraphs
-    p: ({ node, ...props }) => (
+    p: ({ ...props }) => (
       <p className="mb-1.5 text-xs text-foreground/80" {...props} />
     ),
     // Style links
-    a: ({ node, ...props }) => (
+    a: ({ ...props }) => (
       <a
         className="font-medium text-verbo-blue no-underline hover:underline"
         {...props}
       />
     ),
     // Style emphasis and strong
-    em: ({ node, ...props }) => (
+    em: ({ ...props }) => (
       <em className="italic text-foreground/80" {...props} />
     ),
-    strong: ({ node, ...props }) => (
+    strong: ({ ...props }) => (
       <strong className="font-medium text-foreground/90" {...props} />
     ),
     // Style lists
-    ul: ({ node, ...props }) => (
-      <ul className="mb-1.5 list-disc pl-4" {...props} />
-    ),
-    ol: ({ node, ...props }) => (
+    ul: ({ ...props }) => <ul className="mb-1.5 list-disc pl-4" {...props} />,
+    ol: ({ ...props }) => (
       <ol className="mb-1.5 list-decimal pl-4" {...props} />
     ),
-    li: ({ node, ...props }) => (
+    li: ({ ...props }) => (
       <li
         className="mb-0.5 text-xs text-foreground/80 marker:text-foreground"
         {...props}
@@ -418,7 +443,7 @@ export function AssessmentStep({
       const match = /language-(\w+)/.exec(className || "");
       return !inline && match ? (
         <code
-          className="block w-full overflow-auto rounded-md border border-border/10 bg-muted/20 p-1.5 text-xs font-medium"
+          className={`block w-full overflow-auto rounded-md border border-border/10 bg-muted/20 p-1.5 text-xs font-medium ${match[1] ? `language-${match[1]}` : ""}`}
           {...props}
         >
           {children}
@@ -433,18 +458,16 @@ export function AssessmentStep({
       );
     },
     // Style blockquotes
-    blockquote: ({ node, ...props }) => (
+    blockquote: ({ ...props }) => (
       <blockquote
         className="my-1.5 border-l-2 border-verbo-purple/30 pl-2 text-foreground/70"
         {...props}
       />
     ),
     // Style horizontal rules
-    hr: ({ node, ...props }) => (
-      <hr className="my-2 border-border/50" {...props} />
-    ),
+    hr: ({ ...props }) => <hr className="my-2 border-border/50" {...props} />,
     // Style tables
-    table: ({ node, ...props }) => (
+    table: ({ ...props }) => (
       <div className="my-1.5 overflow-auto">
         <table
           className="w-full min-w-full border-collapse border border-border/30 text-left text-xs"
@@ -452,23 +475,23 @@ export function AssessmentStep({
         />
       </div>
     ),
-    thead: ({ node, ...props }) => (
+    thead: ({ ...props }) => (
       <thead className="bg-muted/30 text-foreground/90" {...props} />
     ),
-    tbody: ({ node, ...props }) => <tbody {...props} />,
-    tr: ({ node, ...props }) => (
+    tbody: ({ ...props }) => <tbody {...props} />,
+    tr: ({ ...props }) => (
       <tr className="border-b border-border/30 even:bg-muted/10" {...props} />
     ),
-    th: ({ node, ...props }) => (
+    th: ({ ...props }) => (
       <th
         className="border border-border/30 p-1 text-[10px] font-medium"
         {...props}
       />
     ),
-    td: ({ node, ...props }) => (
+    td: ({ ...props }) => (
       <td className="border border-border/30 p-1 text-[10px]" {...props} />
     ),
-    pre: ({ node, ...props }) => (
+    pre: ({ ...props }) => (
       <pre
         className="my-1.5 overflow-auto rounded-md border border-border/10 bg-muted/20 p-0"
         {...props}
@@ -629,7 +652,7 @@ export function AssessmentStep({
                     <div className="mt-1.5 flex flex-wrap gap-1">
                       {question.skills_assessed.map((skill, skillIdx) => (
                         <Badge
-                          key={skillIdx}
+                          key={`${skill.numId || skillIdx}`}
                           variant="outline"
                           className="h-5 border-verbo-purple/20 bg-verbo-purple/10 px-1.5 py-0 text-[10px] text-verbo-purple"
                         >
@@ -793,7 +816,7 @@ export function AssessmentStep({
                                 </CommandEmpty>
                                 {getAvailableSkills().map((skill) => (
                                   <CommandItem
-                                    key={skill.id}
+                                    key={skill.numId?.toString() || skill.name}
                                     value={`${skill.name} ${skill.category}`}
                                     onSelect={() =>
                                       addSkillToQuestion(skill.name)

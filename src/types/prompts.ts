@@ -5,35 +5,38 @@
 // Shared types between prompt modules
 export interface DatabaseCategory {
   name: string;
+  numId?: number;
   skills: Array<{
     name: string;
+    numId?: number;
     competencies: Array<{
       name: string;
+      numId?: number;
     }>;
   }>;
 }
 
 export interface IndexedCategory {
-  id: number;
+  numId: number | null;
   name: string;
   skills: Array<{
-    id: number;
+    numId: number | null;
     name: string;
     competencies: Array<{
-      id: number;
+      numId: number | null;
       name: string;
     }>;
   }>;
 }
 
 export interface FormattedSkill {
-  id: number;
+  numId: number | null;
   name: string;
   skills: Array<{
-    id: number;
+    numId: number | null;
     name: string;
     competencies: Array<{
-      id: number;
+      numId: number | null;
       name: string;
     }>;
   }>;
@@ -46,13 +49,13 @@ export interface FormattedSkill {
  */
 export interface IndexedSkillsData {
   categories: Array<{
-    id: number;
+    numId: number | null;
     name: string;
     skills: Array<{
-      id: number;
+      numId: number | null;
       name: string;
       competencies: Array<{
-        id: number;
+        numId: number | null;
         name: string;
       }>;
     }>;
@@ -64,9 +67,9 @@ export interface IndexedSkillsData {
  */
 export interface IndexedAIResponse {
   selected_competencies: Array<{
-    category_id: number;
-    skill_id: number;
-    competency_ids: number[];
+    category_numId: number | null;
+    skill_numId: number | null;
+    competency_numIds: Array<number | null>;
   }>;
 }
 
@@ -75,10 +78,13 @@ export interface IndexedAIResponse {
  */
 export interface AISkillCategory {
   name: string;
+  numId?: number;
   skills: Array<{
     name: string;
+    numId?: number;
     competencies: Array<{
       name: string;
+      numId?: number;
       selected: boolean;
     }>;
   }>;
@@ -98,7 +104,7 @@ export interface AssessmentQuestion {
   context: string;
   question: string;
   skills_assessed: Array<{
-    id: number;
+    numId: number | null;
     name: string;
   }>;
 }
@@ -108,5 +114,19 @@ export interface AssessmentQuestion {
  */
 export interface GeneratedAssessment {
   context: string;
-  questions: AssessmentQuestion[];
+  questions: Array<{
+    context: string;
+    question: string;
+    skills_assessed?: Array<{
+      numId: number | null;
+      name: string;
+    }>;
+  }>;
+  _internal?: {
+    competencyIdMap: Record<string, { 
+      numId: number | null;
+      categoryNumId: number | null;
+      skillNumId: number | null;
+    }>;
+  };
 } 

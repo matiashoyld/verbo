@@ -5,6 +5,31 @@ import { fileURLToPath } from 'url';
 
 const prisma = new PrismaClient();
 
+// Type definitions for the data in JSON file
+interface Category {
+  id: number;
+  name: string;
+}
+
+interface Skill {
+  id: number;
+  categoryId: number;
+  name: string;
+}
+
+interface Competency {
+  id: number;
+  skillId: number;
+  name: string;
+  criteria: string;
+}
+
+interface TaxonomyData {
+  categories: Category[];
+  skills: Skill[];
+  competencies: Competency[];
+}
+
 // ES Modules compatible __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,104 +59,84 @@ async function seedSkillTaxonomy() {
   const fileContent = fs.readFileSync(filePath, 'utf-8');
   
   // Parse the JSON content
-  const records = JSON.parse(fileContent);
+  const taxonomyData = JSON.parse(fileContent) as TaxonomyData;
   
-  console.log(`Found ${records.length} skill taxonomy records in the JSON file`);
+  console.log(`Found ${taxonomyData.categories.length} categories, ${taxonomyData.skills.length} skills, and ${taxonomyData.competencies.length} competencies in the JSON file`);
   
-  // Group records by category and skill
-  const categoriesMap = new Map();
+  // Maps to store the relationships between original numeric IDs and new UUIDs
+  const categoryIdMap = new Map<number, string>();
+  const skillIdMap = new Map<number, string>();
   
-  for (const record of records) {
-    const { category, skill, competency, criteria } = record;
-    
-    if (!categoriesMap.has(category)) {
-      categoriesMap.set(category, new Map());
-    }
-    
-    const skillsMap = categoriesMap.get(category);
-    
-    if (!skillsMap.has(skill)) {
-      skillsMap.set(skill, new Map());
-    }
-    
-    const competenciesMap = skillsMap.get(skill);
-    
-    if (!competenciesMap.has(competency)) {
-      competenciesMap.set(competency, []);
-    }
-    
-    competenciesMap.get(competency).push(criteria);
-  }
+  // Clear existing data to avoid conflicts
+  console.log('Clearing existing data...');
+  await prisma.criterion.deleteMany({});
+  await prisma.subSkill.deleteMany({});
+  await prisma.skill.deleteMany({});
+  await prisma.category.deleteMany({});
   
-  // Insert data into the database
-  for (const [categoryName, skillsMap] of categoriesMap) {
-    console.log(`Processing category: ${categoryName}`);
-    
-    // Create or find the category
-    const category = await prisma.category.upsert({
-      where: { name: categoryName },
-      create: { name: categoryName },
-      update: {},
+  // First, create all categories with their numeric IDs
+  console.log('Creating categories...');
+  for (const category of taxonomyData.categories) {
+    const createdCategory = await prisma.category.create({
+      data: {
+        name: category.name,
+        numId: category.id
+      }
     });
     
-    for (const [skillName, competenciesMap] of skillsMap) {
-      console.log(`  Processing skill: ${skillName}`);
-      
-      // Create or find the skill
-      const skill = await prisma.skill.upsert({
-        where: { 
-          categoryId_name: {
-            categoryId: category.id,
-            name: skillName,
-          }
-        },
-        create: {
-          name: skillName,
-          categoryId: category.id,
-        },
-        update: {},
-      });
-      
-      for (const [competencyName, criteriaList] of competenciesMap) {
-        console.log(`    Processing competency: ${competencyName}`);
-        
-        // Create or find the subskill (competency)
-        const subSkill = await prisma.subSkill.upsert({
-          where: {
-            skillId_name: {
-              skillId: skill.id,
-              name: competencyName,
+    // Store mapping between numeric ID and UUID
+    categoryIdMap.set(category.id, createdCategory.id);
+  }
+  
+  // Next, create all skills with their numeric IDs and category relationships
+  console.log('Creating skills...');
+  for (const skill of taxonomyData.skills) {
+    const categoryUuid = categoryIdMap.get(skill.categoryId);
+    if (!categoryUuid) {
+      console.warn(`Warning: Category ID ${skill.categoryId} not found for skill ${skill.name}`);
+      continue;
+    }
+    
+    const createdSkill = await prisma.skill.create({
+      data: {
+        name: skill.name,
+        numId: skill.id,
+        categoryId: categoryUuid
+      }
+    });
+    
+    // Store mapping between numeric ID and UUID
+    skillIdMap.set(skill.id, createdSkill.id);
+  }
+  
+  // Finally, create competencies as subskills with their criteria
+  console.log('Creating competencies (subskills) and criteria...');
+  for (const competency of taxonomyData.competencies) {
+    const skillUuid = skillIdMap.get(competency.skillId);
+    if (!skillUuid) {
+      console.warn(`Warning: Skill ID ${competency.skillId} not found for competency ${competency.name}`);
+      continue;
+    }
+    
+    try {
+      // Create the subskill
+      const subSkill = await prisma.subSkill.create({
+        data: {
+          name: competency.name,
+          numId: competency.id,
+          skillId: skillUuid,
+          // Create the criterion as part of the subskill creation
+          criteria: {
+            create: {
+              description: competency.criteria
             }
-          },
-          create: {
-            name: competencyName,
-            skillId: skill.id,
-          },
-          update: {},
-        });
-        
-        // Create criteria
-        for (const criteriaDesc of criteriaList) {
-          console.log(`      Adding criterion: ${criteriaDesc.substring(0, 30)}...`);
-          
-          // Check if criterion already exists to avoid duplicates
-          const existingCriterion = await prisma.criterion.findFirst({
-            where: {
-              description: criteriaDesc,
-              subSkillId: subSkill.id,
-            }
-          });
-          
-          if (!existingCriterion) {
-            await prisma.criterion.create({
-              data: {
-                description: criteriaDesc,
-                subSkillId: subSkill.id,
-              },
-            });
           }
         }
-      }
+      });
+      
+      console.log(`Created subskill: ${competency.name} with ID ${subSkill.id}`);
+    } catch (error: any) {
+      console.warn(`Failed to create subskill ${competency.name} for skill ID ${competency.skillId}: ${error.message}`);
     }
   }
   

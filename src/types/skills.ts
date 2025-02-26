@@ -32,12 +32,15 @@ export type CompetencyName = string;
 export interface Competency {
   name: CompetencyName;
   selected: boolean;
+  numId?: number | null;
 }
 
 export interface CategoryGroup {
   category: CategoryName;
+  categoryNumId?: number | null;
   skills: Array<{
     name: SkillName;
+    numId?: number | null;
     competencies: Competency[];
   }>;
 }

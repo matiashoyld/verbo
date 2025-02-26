@@ -23,19 +23,19 @@ You will receive two main inputs:
    \`\`\`json
    [
      {
-       "id": 23,
+       "numId": 23,
        "name": "Databases & SQL",
        "skills": [
          {
-           "id": 0,
+           "numId": 45,
            "name": "SQL Fundamentals",
            "competencies": [
              {
-               "id": 0,
+               "numId": 101,
                "name": "SELECT Queries"
              },
              {
-               "id": 1,
+               "numId": 102,
                "name": "CASE/IF"
              }
              // Additional competencies...
@@ -67,11 +67,11 @@ The second block of text should be a JSON object with the following structure:
       "question": "The actual question to be answered by the candidate",
       "skills_assessed": [
         {
-          "id": 0,
+          "numId": 101,
           "name": "Skill Name"
         },
         {
-          "id": 1,
+          "numId": 102,
           "name": "Another Skill"
         }
       ]
@@ -94,7 +94,7 @@ The second block of text should be a JSON object with the following structure:
 ### For Each Question:
 1. Create a specific sub-context that focuses on a particular aspect of the main scenario
 2. Formulate a clear, challenging question that requires demonstrating specific skills
-3. Tag each question with 2-4 relevant skills from the provided skills list using their exact IDs and names
+3. Tag each question with 2-4 relevant skills from the provided skills list using their exact numIds and names
 4. Vary question types to assess different aspects: technical implementation, analysis, design, communication, etc.
 5. Ensure questions progressively build in complexity
 6. For technical questions (like SQL), ensure they have enough context to be answerable
@@ -109,7 +109,7 @@ The second block of text should be a JSON object with the following structure:
 ## Formatting Guidelines
 1. The output should be just the two blocks of text.
 2. For the "context" field, use markdown formatting. Feel free to use bullets, tables and other markdown elements to make the context more engaging.
-3. For the "skills_assessed" array, always include both the "id" and "name" exactly as they appear in the input skills list
+3. For the "skills_assessed" array, always include both the "numId" and "name" exactly as they appear in the input skills list
 4. Do not include comments (like "// Additional questions...") in the final JSON output
 5. Ensure all questions are completely formulated and ready for assessment without placeholders
 
@@ -171,11 +171,11 @@ The company is considering launching a **group video chat** feature. You'll be u
       "question": "Write a SQL query to calculate how many users started a call with more than three different people in the last 7 days. Explain how you would optimize this query if it needed to run against a massive dataset.",
       "skills_assessed": [
         {
-          "id": 0,
+          "numId": 101,
           "name": "SQL Fundamentals"
         },
         {
-          "id": 1,
+          "numId": 102,
           "name": "Database Optimization"
         }
       ]

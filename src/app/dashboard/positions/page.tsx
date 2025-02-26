@@ -12,6 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { api } from "~/trpc/react";
 import { NewPositionDialog } from "./components/NewPositionDialog";
 
@@ -19,17 +25,14 @@ import { NewPositionDialog } from "./components/NewPositionDialog";
 interface Position {
   id: string;
   title: string;
-  department: string;
-  openings: number;
-  status: "DRAFT" | "ACTIVE" | "ARCHIVED";
   created: string;
+  createdAt: string;
   questionCount: number;
 }
 
 export default function PositionsPage() {
   // Fetch positions from the API
-  const { data: positions, isLoading } =
-    api.positions.getPositions.useQuery<Position[]>();
+  const { data: positions, isLoading } = api.positions.getPositions.useQuery();
 
   // State for controlling the dialog
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -64,10 +67,8 @@ export default function PositionsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Position</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Openings</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead>Questions</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -81,20 +82,22 @@ export default function PositionsPage() {
                           {position.title}
                         </div>
                       </TableCell>
-                      <TableCell>{position.department}</TableCell>
-                      <TableCell>{position.openings}</TableCell>
                       <TableCell>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            position.status === "ACTIVE"
-                              ? "bg-verbo-green/20 text-verbo-green"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {position.status}
-                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger className="cursor-default">
+                              {position.created}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>
+                                Created:{" "}
+                                {new Date(position.createdAt).toLocaleString()}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </TableCell>
-                      <TableCell>{position.created}</TableCell>
+                      <TableCell>{position.questionCount}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
                           <Button variant="outline" size="sm">
@@ -123,7 +126,7 @@ export default function PositionsPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">
@@ -136,36 +139,29 @@ export default function PositionsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CardTitle className="text-sm font-medium">New Today</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {positions?.filter((p: Position) => p.status === "ACTIVE")
-                .length || 0}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Draft</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {positions?.filter((p: Position) => p.status === "DRAFT")
-                .length || 0}
+              {positions?.filter(
+                (p: Position) =>
+                  p.created.includes("minute") ||
+                  p.created.includes("hour") ||
+                  p.created === "today",
+              ).length || 0}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">
-              Total Openings
+              Total Questions
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {positions?.reduce(
-                (sum: number, p: Position) => sum + p.openings,
+                (sum: number, p: Position) => sum + p.questionCount,
                 0,
               ) || 0}
             </div>

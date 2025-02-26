@@ -33,9 +33,7 @@ export function IconCloud({ icons, images }: IconCloudProps) {
     y: number;
     startX: number;
     startY: number;
-    distance: number;
-    startTime: number;
-    duration: number;
+    timestamp: number;
   } | null>(null);
   const animationFrameRef = useRef<number>();
   const rotationRef = useRef(rotation);
@@ -162,20 +160,17 @@ export function IconCloud({ icons, images }: IconCloudProps) {
 
         const currentX = rotationRef.current.x;
         const currentY = rotationRef.current.y;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const distance = Math.sqrt(
           Math.pow(targetX - currentX, 2) + Math.pow(targetY - currentY, 2),
         );
-
-        const duration = Math.min(2000, Math.max(800, distance * 1000));
 
         setTargetRotation({
           x: targetX,
           y: targetY,
           startX: currentX,
           startY: currentY,
-          distance,
-          startTime: performance.now(),
-          duration,
+          timestamp: Date.now(),
         });
         return;
       }
@@ -210,6 +205,45 @@ export function IconCloud({ icons, images }: IconCloudProps) {
     setIsDragging(false);
   };
 
+  // Update current rotation from target rotation or mouse movement
+  useEffect(() => {
+    if (isDragging) {
+      // Update rotation directly while dragging
+      setRotation((prev) => ({
+        x: prev.x,
+        y: prev.y,
+      }));
+    } else if (targetRotation) {
+      // Animate rotation when released
+      const animate = () => {
+        const now = Date.now();
+        const elapsed = now - targetRotation.timestamp;
+        const duration = 1000; // Animation duration in ms
+
+        if (elapsed < duration) {
+          const t = easeOutCubic(elapsed / duration);
+          setRotation({
+            x:
+              targetRotation.startX +
+              t * (targetRotation.x - targetRotation.startX),
+            y:
+              targetRotation.startY +
+              t * (targetRotation.y - targetRotation.startY),
+          });
+          requestAnimationFrame(animate);
+        } else {
+          setRotation({
+            x: targetRotation.x,
+            y: targetRotation.y,
+          });
+          setTargetRotation(null);
+        }
+      };
+
+      requestAnimationFrame(animate);
+    }
+  }, [isDragging, targetRotation]);
+
   // Animation and rendering
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -228,8 +262,8 @@ export function IconCloud({ icons, images }: IconCloudProps) {
       const speed = 0.003 + (distance / maxDistance) * 0.01;
 
       if (targetRotation) {
-        const elapsed = performance.now() - targetRotation.startTime;
-        const progress = Math.min(1, elapsed / targetRotation.duration);
+        const elapsed = performance.now() - targetRotation.timestamp;
+        const progress = Math.min(1, elapsed / 1000);
         const easedProgress = easeOutCubic(progress);
 
         rotationRef.current = {

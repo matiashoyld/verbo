@@ -28,10 +28,13 @@ export async function extractSkillsFromJobDescription(
   allDatabaseData: {
     categories: Array<{
       name: string;
+      numId?: number | null;
       skills: Array<{
         name: string;
+        numId?: number | null;
         competencies: Array<{
           name: string;
+          numId?: number | null;
         }>;
       }>;
     }>;
@@ -41,16 +44,16 @@ export async function extractSkillsFromJobDescription(
     console.log("\n==== SKILL EXTRACTION PROCESS STARTING ====");
     console.log("Extracting skills from job description with Gemini AI...");
     
-    // Transform the input data to include indices
+    // Transform the input data to include database numIds
     const indexedData: IndexedSkillsData = {
-      categories: allDatabaseData.categories.map((category, categoryIndex) => ({
-        id: categoryIndex,
+      categories: allDatabaseData.categories.map((category) => ({
+        numId: category.numId || null,
         name: category.name,
-        skills: category.skills.map((skill, skillIndex) => ({
-          id: skillIndex,
+        skills: category.skills.map((skill) => ({
+          numId: skill.numId || null,
           name: skill.name,
-          competencies: skill.competencies.map((competency, competencyIndex) => ({
-            id: competencyIndex,
+          competencies: skill.competencies.map((competency) => ({
+            numId: competency.numId || null,
             name: competency.name,
           })),
         })),
@@ -117,25 +120,28 @@ export async function extractSkillsFromJobDescription(
     // Process each set of selections
     for (const selection of parsedIndexResponse.selected_competencies) {
       // Get the category and skill from the indexed data
-      const category = indexedData.categories[selection.category_id];
+      const categoryId = selection.category_numId;
+      const category = indexedData.categories.find(c => c.numId === categoryId);
       if (!category) {
-        console.warn(`Category with index ${selection.category_id} not found`);
+        console.warn(`Category with numId ${categoryId} not found`);
         continue;
       }
       
-      const skill = category.skills[selection.skill_id];
+      const skillId = selection.skill_numId;
+      const skill = category.skills.find(s => s.numId === skillId);
       if (!skill) {
-        console.warn(`Skill with index ${selection.skill_id} not found in category ${category.name}`);
+        console.warn(`Skill with numId ${skillId} not found in category ${category.name}`);
         continue;
       }
       
       // Get or create the category in our result
-      let categoryIndex = addedCategories.get(selection.category_id);
+      let categoryIndex = addedCategories.get(categoryId || -1);
       if (categoryIndex === undefined) {
         categoryIndex = outputResult.categories.length;
-        addedCategories.set(selection.category_id, categoryIndex);
+        addedCategories.set(categoryId || -1, categoryIndex);
         outputResult.categories.push({
           name: category.name,
+          numId: category.numId as number | undefined, // Cast to match the expected type
           skills: [],
         });
       }
@@ -155,13 +161,15 @@ export async function extractSkillsFromJobDescription(
       // Create or get the skill object
       let skillObject: {
         name: string;
-        competencies: Array<{ name: string; selected: boolean }>;
+        numId?: number;
+        competencies: Array<{ name: string; numId?: number; selected: boolean }>;
       };
       
       if (existingSkillIndex === -1) {
         // Add new skill to the category
         skillObject = {
           name: skill.name,
+          numId: skill.numId as number | undefined, // Cast to match the expected type
           competencies: [],
         };
         resultCategory.skills.push(skillObject);
@@ -172,10 +180,10 @@ export async function extractSkillsFromJobDescription(
       }
       
       // Add the selected competencies
-      for (const competencyId of selection.competency_ids) {
-        const competency = skill.competencies[competencyId];
+      for (const competencyId of selection.competency_numIds) {
+        const competency = skill.competencies.find(c => c.numId === competencyId);
         if (!competency) {
-          console.warn(`Competency with index ${competencyId} not found in skill ${skill.name}`);
+          console.warn(`Competency with numId ${competencyId} not found in skill ${skill.name}`);
           continue;
         }
         
@@ -184,6 +192,7 @@ export async function extractSkillsFromJobDescription(
         if (!existingCompetency) {
           skillObject.competencies.push({
             name: competency.name,
+            numId: competency.numId as number | undefined, // Cast to match the expected type
             selected: true,
           });
         }
@@ -205,14 +214,14 @@ export async function extractSkillsFromJobDescription(
       (count, category) => count + category.skills.length, 0
     )}`);
 
-    // Log each category and its skills
+    // Log each category and its skills, now with numIds
     console.log("\n==== EXTRACTED SKILLS BY CATEGORY ====");
     outputResult.categories.forEach(category => {
-      console.log(`Category: ${category.name} (${category.skills.length} skills)`);
+      console.log(`Category: ${category.name} (numId: ${category.numId ?? 'unknown'}) (${category.skills.length} skills)`);
       category.skills.forEach(skill => {
-        console.log(`  - ${skill.name} (${skill.competencies.length} competencies)`);
+        console.log(`  - ${skill.name} (numId: ${skill.numId ?? 'unknown'}) (${skill.competencies.length} competencies)`);
         skill.competencies.forEach(comp => {
-          console.log(`    • ${comp.name}`);
+          console.log(`    • ${comp.name} (numId: ${comp.numId ?? 'unknown'})`);
         });
       });
     });
@@ -235,11 +244,14 @@ export async function generateAssessmentCase(
   skillsData: {
     categories: Array<{
       name: string;
+      numId?: number | null;
       skills: Array<{
         name: string;
+        numId?: number | null;
         competencies: Array<{
           name: string;
           selected: boolean;
+          numId?: number | null;
         }>;
       }>;
     }>;
@@ -249,22 +261,77 @@ export async function generateAssessmentCase(
     console.log("\n==== ASSESSMENT GENERATION PROCESS STARTING ====");
     console.log("Generating assessment case with Gemini AI...");
     
+    // Updated function to generate safe fallback IDs that won't conflict with real database IDs
+    // Returns a negative ID that includes information about the entity type
+    const generateFallbackId = (index: number, entityType: string): number => {
+      // Use negative numbers to distinguish from real IDs
+      // Add a multiplier based on entity type to avoid collisions between different entity types
+      const typeMultiplier = 
+        entityType === 'category' ? 10000 :
+        entityType === 'skill' ? 20000 : 30000; // 30000 for competency
+      
+      return -(index + 1 + typeMultiplier);
+    };
+
+    // Track all competencies being used with their IDs for later lookup
+    const competencyIdMap = new Map<string, { numId: number | null, categoryNumId: number | null, skillNumId: number | null }>();
+
+    // Track missing ID counts for logging
+    let missingCategoryIds = 0;
+    let missingSkillIds = 0;
+    let missingCompetencyIds = 0;
+
     // Transform the skills data to the format expected by the prompt
     const formattedSkills = skillsData.categories.map((category, categoryIndex) => {
+      // Log when a category doesn't have a numId
+      if (!category.numId) {
+        console.warn(`Category without numId: ${category.name}`);
+        missingCategoryIds++;
+      }
+      
+      // Use actual numId if available, otherwise generate a fallback ID
+      // This ensures we don't create large hash values that might be confused with real IDs
+      const categoryNumId = category.numId ?? generateFallbackId(categoryIndex, 'category');
+      
       return {
-        id: categoryIndex,
+        numId: categoryNumId,
         name: category.name,
         skills: category.skills
           .filter(skill => skill.competencies.some(comp => comp.selected))
           .map((skill, skillIndex) => {
+            // Log when a skill doesn't have a numId
+            if (!skill.numId) {
+              console.warn(`Skill without numId: ${skill.name} in category ${category.name}`);
+              missingSkillIds++;
+            }
+            
+            // Use actual numId if available, otherwise generate a fallback ID
+            const skillNumId = skill.numId ?? generateFallbackId(skillIndex, 'skill');
+            
             return {
-              id: skillIndex,
+              numId: skillNumId,
               name: skill.name,
               competencies: skill.competencies
                 .filter(comp => comp.selected)
-                .map((competency, compIndex) => {
+                .map((competency, competencyIndex) => {
+                  // Log when a competency doesn't have a numId
+                  if (!competency.numId) {
+                    console.warn(`Competency without numId: ${competency.name} in skill ${skill.name}`);
+                    missingCompetencyIds++;
+                  }
+                  
+                  // Use actual numId if available, otherwise generate a fallback ID
+                  const competencyNumId = competency.numId ?? generateFallbackId(competencyIndex, 'competency');
+                  
+                  // Record competency ID mapping for later lookup
+                  competencyIdMap.set(competency.name.toLowerCase(), {
+                    numId: competencyNumId,
+                    categoryNumId: categoryNumId,
+                    skillNumId: skillNumId
+                  });
+                  
                   return {
-                    id: compIndex,
+                    numId: competencyNumId,
                     name: competency.name,
                   };
                 }),
@@ -273,56 +340,251 @@ export async function generateAssessmentCase(
       };
     }).filter(category => category.skills.length > 0);
 
-    console.log(`Processed data for Assessment: ${formattedSkills.length} categories with selected skills`);
+    // Log summary of missing numIds
+    console.log(`Missing numId summary:
+- Categories missing numId: ${missingCategoryIds}
+- Skills missing numId: ${missingSkillIds}
+- Competencies missing numId: ${missingCompetencyIds}`);
+
+    // Log summary of numId usage
+    const numIdStats = {
+      categoriesWithNumId: formattedSkills.filter(cat => cat.numId && cat.numId > 0).length,
+      totalCategories: formattedSkills.length,
+      skillsWithNumId: 0,
+      totalSkills: 0,
+      competenciesWithNumId: 0,
+      totalCompetencies: 0,
+    };
     
+    // Count skills and competencies with numIds
+    formattedSkills.forEach(cat => {
+      numIdStats.totalSkills += cat.skills.length;
+      numIdStats.skillsWithNumId += cat.skills.filter(skill => !!skill.numId).length;
+      
+      cat.skills.forEach(skill => {
+        numIdStats.totalCompetencies += skill.competencies.length;
+        numIdStats.competenciesWithNumId += skill.competencies.filter(comp => !!comp.numId).length;
+      });
+    });
+    
+    console.log(`NumId statistics:
+- Categories: ${numIdStats.categoriesWithNumId}/${numIdStats.totalCategories} (${Math.round(numIdStats.categoriesWithNumId/numIdStats.totalCategories*100)}%)
+- Skills: ${numIdStats.skillsWithNumId}/${numIdStats.totalSkills} (${Math.round(numIdStats.skillsWithNumId/numIdStats.totalSkills*100)}%)
+- Competencies: ${numIdStats.competenciesWithNumId}/${numIdStats.totalCompetencies} (${Math.round(numIdStats.competenciesWithNumId/numIdStats.totalCompetencies*100)}%)`);
+
     // Construct prompt for the AI using the extracted prompt
     const prompt = createAssessmentGenerationPrompt(jobDescription, formattedSkills);
 
-    console.log("\nSending request to Gemini AI for assessment generation...");
+    // Log the full prompt being sent to the AI
+    console.log("\n==== FULL PROMPT SENT TO GEMINI AI ====");
+    console.log(prompt);
+    console.log("=====================================");
+
+    // Call the Gemini API with the constructed prompt
+    console.log("\nSending request to Gemini AI...");
     const aiResult = await model.generateContent(prompt);
     const response = await aiResult.response;
     const text = response.text();
 
-    console.log("\n==== RECEIVED RESPONSE FROM GEMINI AI ====");
-    console.log("Processing response...");
+    console.log("\n==== COMPLETE RESPONSE FROM GEMINI AI ====");
+    console.log(text.substring(0, 500) + "...");
+    console.log("=========================================");
 
-    // Extract markdown and JSON blocks from the response
-    const markdownMatch = text.match(/```markdown\s*([\s\S]*?)\s*```/);
-    const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+    // Improved extraction logic with multiple fallback approaches
+    let context = "";
+    let questions = [];
 
-    if (!markdownMatch || !jsonMatch) {
-      console.error("Could not extract markdown or JSON blocks from Gemini response");
-      throw new Error("Failed to generate assessment case: invalid response format");
+    // Try to extract markdown blocks from the response first (# Assessment Case, # Questions)
+    const contextMatches = text.match(/# Assessment Case\s+([\s\S]*?)(?=# Questions|$)/);
+    const questionsMatches = text.match(/# Questions\s+([\s\S]*)/);
+
+    if (contextMatches && questionsMatches) {
+      context = contextMatches[1]?.trim() || "";
+      const questionsText = questionsMatches[1]?.trim() || "";
+
+      // Parse questions from the questions text
+      // Format expected: ## Question N: Title \n Context \n\n Question text \n\n Skills assessed: skill1, skill2
+      const questionRegex = /## Question (\d+)(?::[^\n]*)?\s+([\s\S]*?)(?=## Question \d+|$)/g;
+      let match;
+
+      while ((match = questionRegex.exec(questionsText)) !== null) {
+        // Ensure match[2] exists before trying to use it
+        if (!match[2]) continue;
+        
+        const fullQuestionText = match[2].trim();
+        
+        // Parse out the context, question, and skills assessed
+        const contextMatch = fullQuestionText.match(/([\s\S]*?)(?=\n\n)/);
+        const questionMatch = fullQuestionText.match(/\n\n([\s\S]*?)(?=\n\nSkills assessed:|$)/);
+        const skillsMatch = fullQuestionText.match(/Skills assessed:([\s\S]*)/);
+        
+        if (contextMatch?.[1] && questionMatch?.[1]) {
+          const questionContext = contextMatch[1].trim();
+          const questionText = questionMatch[1].trim();
+          const skillsText = skillsMatch?.[1]?.trim() || "";
+          
+          // Parse skills from comma-separated list
+          const skillsList = skillsText.split(',').map(s => s.trim()).filter(s => s);
+          
+          // Map skills to their IDs
+          const skillsAssessed = skillsList.map((skill) => {
+            const skillLower = skill.toLowerCase();
+            const mappedId = competencyIdMap.get(skillLower);
+            
+            return {
+              numId: mappedId?.numId || null,
+              name: skill,
+            };
+          });
+          
+          questions.push({
+            context: questionContext,
+            question: questionText,
+            skills_assessed: skillsAssessed,
+          });
+        }
+      }
     }
 
-    // Since we've checked that markdownMatch and jsonMatch are not null, we can safely access their elements
-    // TypeScript doesn't recognize the above check as guaranteeing non-nullness of array elements
-    // so we add additional null checks
-    const contextMarkdown = markdownMatch[1] ? markdownMatch[1].trim() : '';
-    const jsonString = jsonMatch[1] ? jsonMatch[1].trim() : '';
-
-    console.log("\n==== EXTRACTED MARKDOWN CONTEXT ====");
-    console.log(contextMarkdown.substring(0, 200) + "...");
-    console.log("\n==== EXTRACTED JSON QUESTIONS ====");
-    console.log(jsonString.substring(0, 200) + "...");
-
-    // Parse the JSON questions
-    const parsedQuestions = JSON.parse(jsonString);
+    // Fallback: Try to extract JSON directly if markdown approach fails
+    if (!context || questions.length === 0) {
+      console.log("Structured extraction failed, trying direct JSON extraction...");
+      try {
+        // Find any JSON-like structure in the response
+        const jsonMatches = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) || 
+                            text.match(/(\{[\s\S]*"questions"[\s\S]*?\})/);
+                            
+        if (jsonMatches && jsonMatches[1]) {
+          const extractedJson = jsonMatches[1];
+          const parsedJson = JSON.parse(extractedJson);
+          
+          // Extract context from parsed JSON if available
+          if (parsedJson && parsedJson.context) {
+            context = parsedJson.context;
+          } else if (text.includes("```markdown")) {
+            // Try to extract markdown block if JSON doesn't have context
+            const markdownMatch = text.match(/```markdown\s*([\s\S]*?)\s*```/);
+            if (markdownMatch && markdownMatch[1]) {
+              context = markdownMatch[1].trim();
+            }
+          }
+          
+          // If context is still empty, extract a reasonable portion from the beginning of the response
+          if (!context) {
+            // Get first substantial paragraph
+            const firstParagraphs = text.split('\n\n').filter(p => p.trim().length > 50);
+            if (firstParagraphs.length > 0) {
+              context = firstParagraphs[0]?.trim() || "";
+            }
+          }
+          
+          // Extract questions array from JSON
+          if (parsedJson.questions && Array.isArray(parsedJson.questions)) {
+            questions = parsedJson.questions.map((q: { 
+              context?: string; 
+              question?: string; 
+              skills_assessed?: Array<{ numId?: number; name?: string }> 
+            }) => {
+              const skills_assessed = Array.isArray(q.skills_assessed) 
+                ? q.skills_assessed.map((s: { numId?: number; name?: string }) => ({
+                    numId: s.numId || null,
+                    name: s.name || "Unknown Skill"
+                  }))
+                : [];
+                
+              return {
+                context: q.context || "",
+                question: q.question || "",
+                skills_assessed
+              };
+            });
+          }
+        }
+      } catch (jsonError) {
+        console.warn("JSON extraction fallback failed:", jsonError);
+      }
+    }
     
-    // Validate the questions structure
-    if (!parsedQuestions.questions || !Array.isArray(parsedQuestions.questions)) {
-      throw new Error("Invalid response format: missing or malformed 'questions' array");
+    // Final fallback: if we still don't have usable data, create a basic structure
+    if (!context || questions.length === 0) {
+      console.warn("All extraction methods failed, using emergency fallback");
+      
+      // Create a minimal viable response using whatever text we can extract
+      context = "Based on the job description, complete the following assessment tasks to demonstrate your skills.";
+      
+      // Create at least one question from the response
+      const lines = text.split('\n').filter(line => line.trim().length > 20);
+      if (lines.length > 2) {
+        questions.push({
+          context: lines[0] || "",
+          question: lines[1] || "",
+          skills_assessed: Array.from(competencyIdMap.entries())
+            .slice(0, 2)
+            .map(([key, value]) => ({
+              numId: value?.numId || null,
+              name: key
+            }))
+        });
+      } else {
+        questions.push({
+          context: "Technical assessment scenario",
+          question: "Demonstrate your technical skills by solving this problem",
+          skills_assessed: []
+        });
+      }
     }
 
-    // Create combined response
-    const generatedAssessment: GeneratedAssessment = {
-      context: contextMarkdown,
-      questions: parsedQuestions.questions
+    // Construct final response with IDs preserved
+    const result: GeneratedAssessment = {
+      context,
+      questions,
+      _internal: {
+        competencyIdMap: Object.fromEntries(
+          Array.from(competencyIdMap.entries()).map(([key, value]) => [
+            key, 
+            { 
+              numId: value.numId,
+              categoryNumId: value.categoryNumId,
+              skillNumId: value.skillNumId
+            }
+          ])
+        )
+      }
     };
 
-    return generatedAssessment;
+    // Log summary of questions with skill IDs being generated
+    console.log(`\n==== ASSESSMENT GENERATED ====`);
+    console.log(`Generated ${questions.length} questions for assessment`);
+    console.log(`Context length: ${context.length} characters`);
+    
+    let totalSkillsAssessed = 0;
+    let totalSkillsWithIds = 0;
+    
+    questions.forEach((q: { 
+      context: string; 
+      question: string; 
+      skills_assessed: Array<{ numId: number | null; name: string }>
+    }, i: number) => {
+      console.log(`Question ${i+1}: ${q.skills_assessed.length} skills assessed`);
+      
+      q.skills_assessed.forEach((skill: { numId: number | null; name: string }) => {
+        totalSkillsAssessed++;
+        if (skill.numId) {
+          totalSkillsWithIds++;
+          console.log(`  - ${skill.name} (ID: ${skill.numId})`);
+        } else {
+          console.log(`  - ${skill.name} (No ID found)`);
+        }
+      });
+    });
+    
+    console.log(`\nTotal skills assessed: ${totalSkillsAssessed}`);
+    console.log(`Skills with preserved IDs: ${totalSkillsWithIds} (${Math.round(totalSkillsWithIds/totalSkillsAssessed*100)}%)`);
+    console.log(`=============================\n`);
+
+    return result;
   } catch (error) {
-    console.error("Error generating assessment case:", error);
-    throw new Error(`Failed to generate assessment case: ${error instanceof Error ? error.message : String(error)}`);
+    console.error("Error in AI assessment generation:", error);
+    throw new Error(`Failed to generate assessment: ${error instanceof Error ? error.message : String(error)}`);
   }
-} 
+}

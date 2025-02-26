@@ -3,35 +3,16 @@ import { z } from "zod";
 import { extractSkillsFromJobDescription, generateAssessmentCase } from "~/lib/gemini";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
-// Types for the database structures
-interface Category {
-  id: string;
-  name: string;
-}
-
-interface SubSkill {
-  id: string;
-  name: string;
-}
-
-interface Skill {
-  id: string;
-  name: string;
-  categoryId: string;
-  category: {
-    id: string;
-    name: string;
-  };
-  subSkills: SubSkill[];
-}
-
 // Types for the structured data format we send to the AI
 interface StructuredCategory {
   name: string;
+  numId?: number | null;
   skills: Array<{
     name: string;
+    numId?: number | null;
     competencies: Array<{
       name: string;
+      numId?: number | null;
     }>;
   }>;
 }
@@ -194,15 +175,18 @@ export const positionsRouter = createTRPCRouter({
           select: {
             id: true,
             name: true,
+            numId: true,
             category: {
               select: {
                 name: true,
+                numId: true,
               },
             },
             // Get the associated subSkills (competencies)
             subSkills: {
               select: {
                 name: true,
+                numId: true,
               },
             },
           },
@@ -211,9 +195,12 @@ export const positionsRouter = createTRPCRouter({
         // Transform the data into the format expected by the frontend
         const transformedData = skills.map((skill) => ({
           skillName: skill.name,
+          skillNumId: skill.numId,
           categoryName: skill.category.name,
+          categoryNumId: skill.category.numId,
           competencies: skill.subSkills.map((subSkill) => ({
             name: subSkill.name,
+            numId: subSkill.numId,
           })),
         }));
 
@@ -224,28 +211,34 @@ export const positionsRouter = createTRPCRouter({
         return [
           {
             skillName: "JavaScript",
+            skillNumId: 1,
             categoryName: "Programming",
+            categoryNumId: 1,
             competencies: [
-              { name: "DOM Manipulation" },
-              { name: "ES6+ Features" },
-              { name: "Asynchronous Patterns" }
+              { name: "DOM Manipulation", numId: 1 },
+              { name: "ES6+ Features", numId: 2 },
+              { name: "Asynchronous Patterns", numId: 3 }
             ]
           },
           {
             skillName: "TypeScript",
+            skillNumId: 2,
             categoryName: "Programming",
+            categoryNumId: 1,
             competencies: [
-              { name: "Type Definitions" },
-              { name: "Advanced Types" }
+              { name: "Type Definitions", numId: 4 },
+              { name: "Advanced Types", numId: 5 }
             ]
           },
           {
             skillName: "React",
+            skillNumId: 3,
             categoryName: "Frontend",
+            categoryNumId: 2,
             competencies: [
-              { name: "Hooks" },
-              { name: "Context API" },
-              { name: "State Management" }
+              { name: "Hooks", numId: 6 },
+              { name: "Context API", numId: 7 },
+              { name: "State Management", numId: 8 }
             ]
           }
         ];
@@ -259,12 +252,15 @@ export const positionsRouter = createTRPCRouter({
         skills: z.array(
           z.object({
             category: z.string(),
+            categoryNumId: z.number().nullable().optional(),
             skills: z.array(
               z.object({
                 name: z.string(),
+                numId: z.number().nullable().optional(),
                 competencies: z.array(
                   z.object({
                     name: z.string(),
+                    numId: z.number().nullable().optional(),
                     selected: z.boolean(),
                   })
                 ),
@@ -282,7 +278,12 @@ export const positionsRouter = createTRPCRouter({
         const transformedSkills = {
           categories: input.skills.map(category => ({
             name: category.category,
-            skills: category.skills
+            numId: category.categoryNumId,
+            skills: category.skills.map(skill => ({
+              name: skill.name,
+              numId: skill.numId,
+              competencies: skill.competencies
+            }))
           }))
         };
         
@@ -303,17 +304,19 @@ export const positionsRouter = createTRPCRouter({
     .input(
       z.object({
         title: z.string(),
-        department: z.string(),
         jobDescription: z.string(),
         skills: z.array(
           z.object({
             category: z.string(),
+            categoryNumId: z.number().nullable().optional(),
             skills: z.array(
               z.object({
                 name: z.string(),
+                numId: z.number().nullable().optional(),
                 competencies: z.array(
                   z.object({
                     name: z.string(),
+                    numId: z.number().nullable().optional(),
                     selected: z.boolean(),
                   })
                 ),
@@ -330,12 +333,19 @@ export const positionsRouter = createTRPCRouter({
               question: z.string(),
               skills_assessed: z.array(
                 z.object({
-                  id: z.number(),
+                  numId: z.number().optional(),
                   name: z.string(),
                 })
               ),
             })
           ),
+          _internal: z.object({
+            competencyIdMap: z.record(z.string(), z.object({
+              numId: z.number(),
+              categoryNumId: z.number().nullable(),
+              skillNumId: z.number().nullable(),
+            }))
+          }).optional(),
         }),
       })
     )
@@ -343,25 +353,18 @@ export const positionsRouter = createTRPCRouter({
       try {
         console.log("Creating position with userId:", ctx.userId);
         
-        // Use one of the known user IDs from the database
-        // We know we have these two users available:
-        const knownUserIds = [
-          "user_2tTQWcqEh7WGcUVvuH2tUiTuOEK", // matiashoyl@gmail.com
-          "user_2tTTk0Uw9VnK2myNaIgTeB7EWgm"  // matias@laboratorio.la
-        ];
-        
-        // Use the current user's ID if it matches one of our known users, otherwise use the first known user
-        const creatorId = knownUserIds.includes(ctx.userId) ? ctx.userId : knownUserIds[0];
+        // Use the current user's ID directly instead of hardcoded IDs
+        const creatorId = ctx.userId;
         
         console.log("Using creator ID:", creatorId);
         
         // Create the position record using SQL with proper type casting
         const positionResult = await ctx.db.$queryRaw<Array<{id: string}>>`
           INSERT INTO "Position" (
-            id, title, department, "jobDescription", context, status, openings, "creator_id", "created_at", "updated_at"
+            id, title, "jobDescription", context, openings, "creator_id", "created_at", "updated_at"
           ) VALUES (
-            gen_random_uuid(), ${input.title}, ${input.department}, ${input.jobDescription}, 
-            ${input.assessment.context}, 'DRAFT', 1, ${creatorId}, NOW(), NOW()
+            gen_random_uuid(), ${input.title}, ${input.jobDescription}, 
+            ${input.assessment.context}, 1, ${creatorId}, NOW(), NOW()
           ) RETURNING id
         `;
         
@@ -375,37 +378,91 @@ export const positionsRouter = createTRPCRouter({
           throw new Error("Failed to get position ID after creation"); 
         })();
         
-        // Save the skills for this position using SQL
-        for (const category of input.skills) {
-          for (const skill of category.skills) {
-            // Only save skills that have at least one selected competency
-            const selectedCompetencies = skill.competencies
-              .filter(comp => comp.selected)
-              .map(comp => comp.name);
-            
-            if (selectedCompetencies.length > 0) {
-              await ctx.db.$executeRaw`
-                INSERT INTO "PositionSkill" (
-                  id, "position_id", "category_name", "skill_name", competencies, "created_at", "updated_at"
-                ) VALUES (
-                  gen_random_uuid(), ${positionId}::uuid, ${category.category}, ${skill.name}, 
-                  ${selectedCompetencies}, NOW(), NOW()
-                )
-              `;
-            }
-          }
-        }
-
-        // Save the questions for this position using SQL
+        // Create position questions and associate competencies
         for (const question of input.assessment.questions) {
-          await ctx.db.$executeRaw`
+          // Insert the question without the skills_assessed field
+          const questionResult = await ctx.db.$queryRaw<Array<{id: string}>>`
             INSERT INTO "PositionQuestion" (
-              id, "position_id", question, context, "skills_assessed", "created_at", "updated_at"
+              id, "position_id", question, context, "created_at", "updated_at"
             ) VALUES (
               gen_random_uuid(), ${positionId}::uuid, ${question.question}, ${question.context}, 
-              ${JSON.stringify(question.skills_assessed)}, NOW(), NOW()
-            )
+              NOW(), NOW()
+            ) RETURNING id
           `;
+          
+          if (questionResult && questionResult.length > 0 && questionResult[0]) {
+            const questionId = questionResult[0].id;
+            
+            // Process skills for the question
+            try {
+              if (question.skills_assessed && question.skills_assessed.length > 0) {
+                console.log(`Processing ${question.skills_assessed.length} skills for question ${questionId}`);
+                
+                // Statistics tracking
+                let directMatches = 0;
+                let failed = 0;
+                let missingNumIds = 0;
+                
+                // Process each skill
+                for (const skill of question.skills_assessed) {
+                  try {
+                    let competencyId = null;
+                    
+                    // Skip negative numIds (these are our fallbacks from the generateFallbackId function)
+                    if (skill.numId !== null && skill.numId !== undefined) {
+                      if (skill.numId < 0) {
+                        console.warn(`Skipping fallback numId ${skill.numId} for "${skill.name}" - this is not a real database ID`);
+                        missingNumIds++;
+                        continue;
+                      }
+                      
+                      // Look up the competency by its numId (which should match the SubSkill.num_id column)
+                      const result = await ctx.db.$queryRaw<Array<{ id: string }>>`
+                        SELECT id FROM "SubSkill" WHERE "num_id" = ${skill.numId}::int LIMIT 1
+                      `;
+                      
+                      if (result && result.length > 0 && result[0]) {
+                        competencyId = result[0].id;
+                        directMatches++;
+                        console.log(`✓ Direct numId match for "${skill.name}" using numId: ${skill.numId}`);
+                      } else {
+                        console.warn(`✗ No competency found with numId: ${skill.numId} for "${skill.name}"`);
+                        failed++;
+                      }
+                    } else {
+                      console.warn(`✗ Skill "${skill.name}" has no numId`);
+                      missingNumIds++;
+                    }
+                    
+                    // If we found a competency, create the association
+                    if (competencyId) {
+                      await ctx.db.$executeRaw`
+                        INSERT INTO "QuestionCompetency" (
+                          id, "question_id", "competency_id", "created_at", "updated_at"
+                        ) VALUES (
+                          gen_random_uuid(), ${questionId}::uuid, ${competencyId}::uuid, NOW(), NOW()
+                        )
+                      `;
+                    } else {
+                      console.warn(`✗ Failed to find competency for "${skill.name}"`);
+                      failed++;
+                    }
+                  } catch (error) {
+                    console.error(`Error processing skill "${skill.name}":`, error);
+                    failed++;
+                  }
+                }
+                
+                // Log summary statistics for this question
+                console.log(`Question competency matching: 
+- ${directMatches} direct matches (${Math.round((directMatches)/(question.skills_assessed.length)*100 || 0)}%)
+- ${failed} failed matches
+- ${missingNumIds} skills with missing or invalid numIds`);
+              }
+            } catch (error) {
+              console.error(`Error processing skills for question ${questionId}:`, error);
+            }
+          }
         }
 
         return { success: true, positionId };
@@ -421,38 +478,31 @@ export const positionsRouter = createTRPCRouter({
       const positions = await ctx.db.$queryRaw<Array<{
         id: string;
         title: string;
-        department: string;
-        openings: number;
-        status: string;
         created_at: Date;
         question_count: number;
       }>>`
         SELECT 
           p.id, 
           p.title, 
-          p.department, 
-          p.openings, 
-          p.status, 
           p.created_at,
           COUNT(pq.id) as question_count
         FROM "Position" p
         LEFT JOIN "PositionQuestion" pq ON p.id = pq.position_id
-        GROUP BY p.id, p.title, p.department, p.openings, p.status, p.created_at
+        GROUP BY p.id, p.title, p.created_at
         ORDER BY p.created_at DESC
       `;
 
+      // Transform the results to match the expected interface
       return positions.map(position => ({
         id: position.id,
         title: position.title,
-        department: position.department,
-        openings: position.openings,
-        status: position.status,
         created: formatRelativeTime(position.created_at),
-        questionCount: position.question_count,
+        createdAt: position.created_at.toISOString(),
+        questionCount: Number(position.question_count)
       }));
     } catch (error) {
       console.error("Error fetching positions:", error);
-      return [];
+      throw error;
     }
   }),
 });
@@ -462,10 +512,11 @@ export const positionsRouter = createTRPCRouter({
  * for use with the indexing approach of the AI
  */
 async function fetchCompleteSkillsData(db: PrismaClient): Promise<StructuredData> {
-  // Get all categories
+  // Get all categories with numIds
   const categories = await db.category.findMany({
     select: {
       id: true,
+      numId: true,
       name: true,
     },
   });
@@ -474,17 +525,20 @@ async function fetchCompleteSkillsData(db: PrismaClient): Promise<StructuredData
   const skills = await db.skill.findMany({
     select: {
       id: true,
+      numId: true,
       name: true,
       categoryId: true,
       category: {
         select: {
           id: true,
+          numId: true,
           name: true,
         },
       },
       subSkills: {
         select: {
           id: true,
+          numId: true,
           name: true,
         },
       },
@@ -493,18 +547,21 @@ async function fetchCompleteSkillsData(db: PrismaClient): Promise<StructuredData
 
   // Build a nested structure that matches what our AI function expects
   const structuredData: StructuredData = {
-    categories: categories.map((category: Category) => {
+    categories: categories.map((category) => {
       // Find all skills that belong to this category
-      const categorySkills = skills.filter((skill: Skill) => 
+      const categorySkills = skills.filter((skill) => 
         skill.categoryId === category.id
       );
       
       return {
         name: category.name,
-        skills: categorySkills.map((skill: Skill) => ({
+        numId: category.numId,
+        skills: categorySkills.map((skill) => ({
           name: skill.name,
-          competencies: skill.subSkills.map((subSkill: SubSkill) => ({
-            name: subSkill.name
+          numId: skill.numId,
+          competencies: skill.subSkills.map((subSkill) => ({
+            name: subSkill.name,
+            numId: subSkill.numId
           }))
         }))
       };

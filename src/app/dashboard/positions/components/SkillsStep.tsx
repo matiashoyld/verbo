@@ -23,8 +23,10 @@ import { CategoryGroup, CategoryName, SkillName } from "~/types/skills";
 // Type definition for database skills data
 interface DBSkillData {
   skillName: string;
+  skillNumId: number | null;
   categoryName: string;
-  competencies?: Array<{ name: string }>;
+  categoryNumId: number | null;
+  competencies?: Array<{ name: string; numId: number | null }>;
 }
 
 interface SkillsStepProps {
@@ -33,90 +35,147 @@ interface SkillsStepProps {
     updater: (currentSkills: CategoryGroup[]) => CategoryGroup[],
   ) => void;
   hideHeader?: boolean;
+  onAddSkill?: (skillName: SkillName) => void;
 }
 
 export function SkillsStep({
   skills,
   onSkillsChange,
   hideHeader = false,
+  onAddSkill,
 }: SkillsStepProps) {
   // Use our new database endpoint to fetch skills and categories
-  const { data: dbSkillsData, isLoading } =
+  const { data: dbSkillsData } =
     api.positions.getAllSkillsAndCategories.useQuery();
+
+  // Map to store competencies for each skill
+  const competenciesMap = React.useMemo(() => {
+    if (!dbSkillsData) return {};
+
+    const map: Record<
+      string,
+      Array<{ name: string; numId: number | null }>
+    > = {};
+    dbSkillsData.forEach((item: DBSkillData) => {
+      if (item.competencies) {
+        map[item.skillName] = item.competencies;
+      }
+    });
+    return map;
+  }, [dbSkillsData]);
 
   // An object to map skills to their respective categories
   const skillToCategoryMap = React.useMemo(() => {
     if (!dbSkillsData) return {};
 
-    const map: Record<string, string> = {};
+    const map: Record<string, { name: string; numId: number | null }> = {};
     dbSkillsData.forEach((item: DBSkillData) => {
-      map[item.skillName] = item.categoryName;
+      map[item.skillName] = {
+        name: item.categoryName,
+        numId: item.categoryNumId,
+      };
     });
     return map;
   }, [dbSkillsData]);
 
-  // Competencies mapping from the database
-  const competenciesMap = React.useMemo(() => {
-    if (!dbSkillsData) return {};
+  // Implement the addSkill function to be used internally and potentially externally
+  // This is exported for use by parent components via the onAddSkill prop
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const addSkill = React.useCallback(
+    (skillName: SkillName) => {
+      // Get the category from our database mapping
+      const categoryData = skillToCategoryMap[skillName] || {
+        name: "Other",
+        numId: null,
+      };
+      const category = categoryData.name as CategoryName;
+      const categoryNumId = categoryData.numId;
 
-    const map: Record<string, string[]> = {};
-    dbSkillsData.forEach((item: DBSkillData) => {
-      if (item.competencies) {
-        map[item.skillName] = item.competencies.map((c) => c.name);
-      }
-    });
-    return map;
-  }, [dbSkillsData]);
-
-  const addSkill = (skillName: SkillName) => {
-    // Get the category from our database mapping
-    const category = skillToCategoryMap[skillName] || "Other";
-
-    // Get competencies from our database or use a default
-    const defaultCompetencies = (
-      competenciesMap[skillName] || ["General Knowledge"]
-    ).map((name) => ({
-      name,
-      selected: true,
-    }));
-
-    onSkillsChange((currentSkills: CategoryGroup[]) => {
-      const categoryIndex = currentSkills.findIndex(
-        (c: CategoryGroup) => c.category === category,
+      // Find the skill data to get its numId
+      const skillData = dbSkillsData?.find(
+        (item: DBSkillData) => item.skillName === skillName,
       );
-      if (categoryIndex >= 0) {
-        const newSkills = [...currentSkills];
-        if (
-          !newSkills[categoryIndex]?.skills.some((s) => s.name === skillName)
-        ) {
-          newSkills[categoryIndex] = {
+      const skillNumId = skillData?.skillNumId || null;
+
+      // Get competencies from our database or use a default
+      const defaultCompetencies = (
+        competenciesMap[skillName] || [
+          { name: "General Knowledge", numId: null },
+        ]
+      ).map((comp) => ({
+        name: comp.name,
+        numId: comp.numId,
+        selected: true,
+      }));
+
+      // Update skills
+      onSkillsChange((currentSkills: CategoryGroup[]) => {
+        // Try to find if this category already exists
+        const categoryIndex = currentSkills.findIndex(
+          (c: CategoryGroup) => c.category === category,
+        );
+
+        // If we found the category, add the skill to it
+        if (categoryIndex !== -1 && currentSkills[categoryIndex]?.skills) {
+          // Check if the skill already exists
+          const skillIndex = currentSkills[categoryIndex].skills.findIndex(
+            (s) => s.name === skillName,
+          );
+
+          // If the skill already exists, we don't need to add it
+          if (skillIndex !== -1) {
+            return currentSkills;
+          }
+
+          // Add the skill to the existing category
+          const newSkills = [...currentSkills];
+          if (newSkills[categoryIndex]) {
+            newSkills[categoryIndex] = {
+              ...newSkills[categoryIndex],
+              category: category, // Ensure category is always set
+              skills: [
+                ...newSkills[categoryIndex].skills,
+                {
+                  name: skillName,
+                  numId: skillNumId,
+                  competencies: defaultCompetencies,
+                },
+              ],
+            };
+          }
+          return newSkills;
+        }
+
+        // Otherwise, create a new category with this skill
+        return [
+          ...currentSkills,
+          {
             category,
+            categoryNumId,
             skills: [
-              ...(newSkills[categoryIndex]?.skills || []),
               {
                 name: skillName,
+                numId: skillNumId,
                 competencies: defaultCompetencies,
               },
             ],
-          };
-          return newSkills;
-        }
-        return currentSkills;
+          },
+        ];
+      });
+
+      // Call the external handler if provided
+      if (onAddSkill) {
+        onAddSkill(skillName);
       }
-      return [
-        ...currentSkills,
-        {
-          category,
-          skills: [
-            {
-              name: skillName,
-              competencies: defaultCompetencies,
-            },
-          ],
-        },
-      ];
-    });
-  };
+    },
+    [
+      skillToCategoryMap,
+      dbSkillsData,
+      competenciesMap,
+      onSkillsChange,
+      onAddSkill,
+    ],
+  );
 
   const removeSkill = (category: CategoryName, skillName: SkillName) => {
     onSkillsChange((currentSkills: CategoryGroup[]) => {
