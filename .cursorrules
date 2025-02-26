@@ -11,6 +11,7 @@ This is a T3 Stack application with Clerk authentication. The stack is modern an
 - Work with the existing Prisma schema for database operations
 - Follow the established Tailwind CSS patterns for styling
 - Use the "~" path alias prefix for imports (e.g., "~/components/ui/button") rather than "@" as configured in the project's tsconfig.json and components.json
+- When building new components for a specific page, they should be positioned inside the same directory as the page file in a folder called "components".
 - Use the established color palette defined in tailwind.config.ts under the 'verbo' namespace:
   - verbo-green: #73ea91 (Primary action, success states)
   - verbo-purple: #872ce5 (Accent color, highlights)
