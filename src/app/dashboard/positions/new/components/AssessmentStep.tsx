@@ -84,7 +84,7 @@ export function AssessmentStep({
     ),
     // Style paragraphs
     p: ({ node, ...props }) => (
-      <p className="mb-2.5 text-xs text-muted-foreground" {...props} />
+      <p className="mb-2.5 text-xs text-foreground/80" {...props} />
     ),
     // Style links
     a: ({ node, ...props }) => (
@@ -101,10 +101,17 @@ export function AssessmentStep({
       <strong className="font-medium text-foreground/90" {...props} />
     ),
     // Style lists
-    ul: ({ node, ...props }) => <ul className="mb-2.5 pl-5" {...props} />,
-    ol: ({ node, ...props }) => <ol className="mb-2.5 pl-5" {...props} />,
+    ul: ({ node, ...props }) => (
+      <ul className="mb-2.5 list-disc pl-5" {...props} />
+    ),
+    ol: ({ node, ...props }) => (
+      <ol className="mb-2.5 list-decimal pl-5" {...props} />
+    ),
     li: ({ node, ...props }) => (
-      <li className="mb-1 text-xs marker:text-verbo-purple/60" {...props} />
+      <li
+        className="mb-1 text-xs text-foreground/80 marker:text-foreground"
+        {...props}
+      />
     ),
     // Style blockquotes
     blockquote: ({ node, ...props }) => (
@@ -200,7 +207,7 @@ export function AssessmentStep({
     ),
     // Style paragraphs
     p: ({ node, ...props }) => (
-      <p className="mb-1.5 text-xs text-muted-foreground" {...props} />
+      <p className="mb-1.5 text-xs text-foreground/80" {...props} />
     ),
     // Style links
     a: ({ node, ...props }) => (
@@ -217,10 +224,17 @@ export function AssessmentStep({
       <strong className="font-medium text-foreground/90" {...props} />
     ),
     // Style lists
-    ul: ({ node, ...props }) => <ul className="mb-1.5 pl-4" {...props} />,
-    ol: ({ node, ...props }) => <ol className="mb-1.5 pl-4" {...props} />,
+    ul: ({ node, ...props }) => (
+      <ul className="mb-1.5 list-disc pl-4" {...props} />
+    ),
+    ol: ({ node, ...props }) => (
+      <ol className="mb-1.5 list-decimal pl-4" {...props} />
+    ),
     li: ({ node, ...props }) => (
-      <li className="mb-0.5 text-xs marker:text-verbo-purple/60" {...props} />
+      <li
+        className="mb-0.5 text-xs text-foreground/80 marker:text-foreground"
+        {...props}
+      />
     ),
     // Style blockquotes
     blockquote: ({ node, ...props }) => (
@@ -242,14 +256,14 @@ export function AssessmentStep({
       const match = /language-(\w+)/.exec(className || "");
       return !inline && match ? (
         <code
-          className="block w-full overflow-auto rounded-md border border-border/10 bg-muted/20 p-1.5 text-[10px] font-medium"
+          className="block w-full overflow-auto rounded-md border border-border/10 bg-muted/20 p-1.5 text-xs font-medium"
           {...props}
         >
           {children}
         </code>
       ) : (
         <code
-          className="rounded bg-muted/30 px-1 py-0 text-[10px] font-medium text-verbo-purple/80"
+          className="rounded bg-muted/30 px-1 py-0 text-xs font-medium text-verbo-purple/80"
           {...props}
         >
           {children}
