@@ -3,13 +3,18 @@
 import { AnimatePresence, motion } from "framer-motion";
 import * as React from "react";
 import { Button } from "~/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { api } from "~/trpc/react";
 import type { CategoryGroup, CategoryName, SkillName } from "~/types/skills";
 import { AssessmentStep } from "./components/AssessmentStep";
 import { JobDescriptionStep } from "./components/JobDescriptionStep";
 import { LoadingIndicator } from "./components/LoadingIndicator";
 import { SkillsStep } from "./components/SkillsStep";
-import { Stepper } from "./components/Stepper";
 
 export default function NewPositionPage() {
   const [step, setStep] = React.useState(1);
@@ -33,10 +38,23 @@ export default function NewPositionPage() {
       "Documentation and code comments",
     ],
     description: "",
+    context: "",
+    questions: [] as Array<{
+      context: string;
+      question: string;
+      skills_assessed: Array<{
+        id: number;
+        name: string;
+      }>;
+    }>,
   });
 
   // Set up the tRPC mutation
   const extractSkillsMutation = api.positions.extractSkills.useMutation();
+
+  // Set up the tRPC mutation for generating the assessment
+  const generateAssessmentMutation =
+    api.positions.generateAssessment.useMutation();
 
   const handleNext = async () => {
     setLoading(true);
@@ -88,11 +106,32 @@ export default function NewPositionPage() {
           applyFallbackSkills();
         }
       } else if (step === 2) {
-        setAssessment((prev) => ({
-          ...prev,
-          title: "Full-Stack Web Application Development Case",
-          description: `Build a task management application that allows users to create, update, and manage their daily tasks. 
-          
+        try {
+          // Use the generateAssessment mutation to get an assessment case
+          const result = await generateAssessmentMutation.mutateAsync({
+            jobDescription,
+            skills,
+          });
+
+          if (result && result.context && result.questions) {
+            // Update the assessment state with the generated content
+            setAssessment((prev) => ({
+              ...prev,
+              title: "Technical Assessment Case",
+              difficulty: "medium",
+              estimatedTime: "2 hours",
+              context: result.context,
+              questions: result.questions,
+            }));
+          } else {
+            // Fall back to a default assessment if the result is invalid
+            console.warn("Invalid assessment result, using fallback");
+            setAssessment((prev) => ({
+              ...prev,
+              title: "Full-Stack Web Application Development Case",
+              context: `Build a task management application that allows users to create, update, and manage their daily tasks.`,
+              description: `Build a task management application that allows users to create, update, and manage their daily tasks. 
+              
 Key Requirements:
 - Implement user authentication and authorization
 - Create a RESTful API with proper endpoint structure
@@ -104,7 +143,30 @@ Key Requirements:
 - Include proper documentation
 
 The candidate should demonstrate their ability to create a well-structured, scalable application while following best practices in both frontend and backend development.`,
-        }));
+            }));
+          }
+        } catch (error) {
+          console.error("Error generating assessment:", error);
+          // Use fallback if the API call fails
+          setAssessment((prev) => ({
+            ...prev,
+            title: "Full-Stack Web Application Development Case",
+            context: `Build a task management application that allows users to create, update, and manage their daily tasks.`,
+            description: `Build a task management application that allows users to create, update, and manage their daily tasks. 
+            
+Key Requirements:
+- Implement user authentication and authorization
+- Create a RESTful API with proper endpoint structure
+- Develop a responsive React frontend with modern state management
+- Implement real-time updates using WebSocket
+- Include proper error handling and input validation
+- Write comprehensive tests for both frontend and backend
+- Use TypeScript for type safety
+- Include proper documentation
+
+The candidate should demonstrate their ability to create a well-structured, scalable application while following best practices in both frontend and backend development.`,
+          }));
+        }
       }
     } catch (error) {
       console.error("Error in step transition:", error);
@@ -160,39 +222,70 @@ The candidate should demonstrate their ability to create a well-structured, scal
     setLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setAssessment((prev) => ({
-        ...prev,
-        description: `Create a real-time chat application with the following features:
+      // Use the generateAssessment mutation to regenerate the case
+      const result = await generateAssessmentMutation.mutateAsync({
+        jobDescription,
+        skills,
+      });
 
-Key Requirements:
-- Implement user authentication with OAuth
-- Create group chat functionality
-- Add file sharing capabilities
-- Implement message search and filtering
-- Create a responsive UI with dark mode support
-- Add typing indicators and read receipts
-- Implement message encryption
-- Add comprehensive test coverage
-
-The candidate should focus on creating a secure, scalable chat application while demonstrating their understanding of real-time communication and modern web development practices.`,
-      }));
+      if (result && result.context && result.questions) {
+        // Update the assessment state with the new generated content
+        setAssessment((prev) => ({
+          ...prev,
+          context: result.context,
+          questions: result.questions,
+        }));
+      } else {
+        // If we got an invalid result, show an error
+        console.warn("Invalid assessment regeneration result");
+      }
+    } catch (error) {
+      console.error("Error regenerating assessment:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  // Step names for tooltips
+  const stepNames = ["Job Description", "Skills", "Assessment"];
+
   return (
     <div className="container max-w-4xl py-10">
-      <div className="mb-8">
-        <h1 className="mb-2 text-3xl font-bold">Create New Position</h1>
-        <p className="text-muted-foreground">
-          Set up a new position and we&apos;ll help you create the perfect
-          assessment.
-        </p>
-      </div>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">Create New Position</h1>
+          <p className="text-muted-foreground">
+            Set up a new position and we&apos;ll help you create the perfect
+            assessment.
+          </p>
+        </div>
 
-      <Stepper currentStep={step} />
+        <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-2 py-1 text-xs font-medium shadow-sm">
+          <span className="text-muted-foreground">Step</span>
+          <div className="flex">
+            {[1, 2, 3].map((stepNumber) => (
+              <TooltipProvider key={stepNumber} delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={`relative flex h-5 w-5 cursor-default select-none items-center justify-center rounded-full transition-colors ${
+                        step === stepNumber
+                          ? "bg-verbo-purple text-white"
+                          : "text-muted-foreground hover:text-verbo-dark"
+                      }`}
+                    >
+                      {stepNumber}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    {stepNames[stepNumber - 1]}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <AnimatePresence mode="wait">
         {step === 1 && !loading && (

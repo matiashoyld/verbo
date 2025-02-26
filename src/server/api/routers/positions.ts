@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
-import { extractSkillsFromJobDescription } from "~/lib/gemini";
+import { extractSkillsFromJobDescription, generateAssessmentCase } from "~/lib/gemini";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 // Types for the database structures
@@ -231,6 +231,53 @@ export const positionsRouter = createTRPCRouter({
             ]
           }
         ];
+      }
+    }),
+
+  generateAssessment: publicProcedure
+    .input(
+      z.object({
+        jobDescription: z.string(),
+        skills: z.array(
+          z.object({
+            category: z.string(),
+            skills: z.array(
+              z.object({
+                name: z.string(),
+                competencies: z.array(
+                  z.object({
+                    name: z.string(),
+                    selected: z.boolean(),
+                  })
+                ),
+              })
+            ),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        console.log("Generating assessment case for job description:", input.jobDescription.substring(0, 50) + "...");
+        
+        // Transform the input skills to match the expected format
+        const transformedSkills = {
+          categories: input.skills.map(category => ({
+            name: category.category,
+            skills: category.skills
+          }))
+        };
+        
+        // Call the Gemini function to generate the assessment
+        const assessmentCase = await generateAssessmentCase(
+          input.jobDescription,
+          transformedSkills
+        );
+        
+        return assessmentCase;
+      } catch (error) {
+        console.error("Error in generateAssessment procedure:", error);
+        throw new Error("Failed to generate assessment case");
       }
     }),
 });
