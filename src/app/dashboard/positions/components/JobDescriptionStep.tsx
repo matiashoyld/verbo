@@ -42,8 +42,8 @@ export function JobDescriptionStep({
         </div>
       )}
 
-      <div className="space-y-6">
-        <div className="relative">
+      <div>
+        <div className="relative mb-4">
           {isLoadingPositions ? (
             <div className="flex items-center justify-center py-4">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -107,7 +107,7 @@ export function JobDescriptionStep({
 
         <Separator />
 
-        <div className="space-y-2">
+        <div className="mt-6 space-y-2">
           <Textarea
             placeholder="Enter job description here..."
             value={jobDescription}
