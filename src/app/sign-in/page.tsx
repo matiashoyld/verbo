@@ -10,8 +10,8 @@ export default function SignInPage() {
             footerActionLink: "text-verbo-blue hover:text-verbo-blue/90",
           },
         }}
-        redirectUrl="/dashboard"
-        afterSignInUrl="/dashboard"
+        redirectUrl="/"
+        afterSignInUrl="/"
       />
     </div>
   );

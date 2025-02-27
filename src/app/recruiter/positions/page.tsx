@@ -93,7 +93,7 @@ export default function PositionsPage() {
 
   // Function to copy position link to clipboard
   const copyPositionLink = (position: Position) => {
-    const link = `${window.location.origin}/dashboard/positions/${position.id}`;
+    const link = `${window.location.origin}/recruiter/positions/${position.id}`;
     navigator.clipboard.writeText(link).then(() => {
       toast.success("Link copied", {
         description: "Position link copied to clipboard.",

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import CodeEditor from "@uiw/react-textarea-code-editor";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -17,12 +18,233 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { AuroraText } from "~/components/magicui/aurora-text";
 import { BentoCard, BentoGrid } from "~/components/magicui/bento-grid";
 import { InteractiveHoverButton } from "~/components/magicui/interactive-hover-button";
 import { Button } from "~/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { cn } from "~/lib/utils";
+import { api } from "~/trpc/react";
 
+// Function to create a sidebar navigation component
+function SidebarNav({
+  className,
+  items,
+  ...props
+}: {
+  className?: string;
+  items: { href: string; title: string }[];
+  [key: string]: any;
+}) {
+  const pathname = usePathname();
+
+  return (
+    <nav
+      className={cn(
+        "flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1",
+        className,
+      )}
+      {...props}
+    >
+      {items.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={cn(
+            "inline-flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+            pathname === item.href
+              ? "bg-accent text-accent-foreground"
+              : "transparent",
+          )}
+        >
+          {item.title}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+// Recruiter Dashboard Content
+function RecruiterDashboard() {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <div className="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
+        <aside className="fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-3.5rem)] w-full shrink-0 overflow-y-auto border-r md:sticky md:block">
+          <div className="py-6 pr-6 lg:py-8">
+            <SidebarNav
+              items={[
+                { title: "Overview", href: "/" },
+                { title: "Skills", href: "/skills" },
+                { title: "Positions", href: "/positions" },
+                { title: "Challenges", href: "/challenges" },
+                { title: "Submissions", href: "/submissions" },
+                { title: "Analytics", href: "/analytics" },
+                { title: "Settings", href: "/settings" },
+              ]}
+            />
+          </div>
+        </aside>
+        <main className="flex w-full flex-col overflow-hidden">
+          <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex items-center justify-between space-y-2">
+              <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Challenges
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">
+                    Active challenges in your pipeline
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Active Submissions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">
+                    Submissions in progress
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Completed Assessments
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">
+                    Completed in the last 30 days
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Average Score
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">N/A</div>
+                  <p className="text-xs text-muted-foreground">
+                    Across all assessments
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+              <Card className="col-span-4">
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>
+                    Your latest assessment activities
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground">
+                    No recent activity to display.
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="col-span-3">
+                <CardHeader>
+                  <CardTitle>Top Skills</CardTitle>
+                  <CardDescription>
+                    Most assessed skills in your pipeline
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground">
+                    No skills data available yet.
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// Candidate Dashboard Content - Placeholder for now
+function CandidateDashboard() {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <div className="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
+        <aside className="fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-3.5rem)] w-full shrink-0 overflow-y-auto border-r md:sticky md:block">
+          <div className="py-6 pr-6 lg:py-8">
+            <SidebarNav
+              items={[
+                { title: "My Challenges", href: "/" },
+                { title: "Past Submissions", href: "/candidate/submissions" },
+                { title: "Profile", href: "/candidate/profile" },
+              ]}
+            />
+          </div>
+        </aside>
+        <main className="flex w-full flex-col overflow-hidden">
+          <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+            <div className="flex items-center justify-between space-y-2">
+              <h2 className="text-3xl font-bold tracking-tight">
+                My Challenges
+              </h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle>No challenges yet</CardTitle>
+                  <CardDescription>
+                    Your assigned challenges will appear here
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                  Once a recruiter assigns you a challenge, you'll be able to
+                  start it here.
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// Loading indicator
+function LoadingDashboard() {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="text-center">
+        <h2 className="mb-2 text-xl font-semibold">
+          Loading your workspace...
+        </h2>
+        <div className="mx-auto h-2 w-24 animate-pulse rounded-full bg-verbo-purple"></div>
+      </div>
+    </div>
+  );
+}
+
+// Marketing page components (existing code)
 function BackgroundGradient() {
   return (
     <div className="absolute inset-0 -z-10 h-full w-full bg-white [background:radial-gradient(125%_125%_at_50%_10%,#fff_40%,#fff_100%)] dark:bg-gray-950 dark:[background:radial-gradient(125%_125%_at_50%_10%,#020617_40%,#020617_100%)]">
@@ -272,417 +494,153 @@ function InteractiveDemo() {
 }
 
 export default function Page() {
+  const { isLoaded, userId, isSignedIn } = useAuth();
+
+  // Query to fetch the user's role from the database
+  const { data: userData, isLoading: isLoadingUser } =
+    api.user.getUserRole.useQuery(
+      undefined, // No parameters needed
+      { enabled: isLoaded && isSignedIn }, // Only run the query if the user is signed in
+    );
+
+  // If the user is signed in, render the appropriate dashboard based on their role
+  if (isLoaded && isSignedIn) {
+    // If we're still loading the user data, show a loading indicator
+    if (isLoadingUser || !userData) {
+      return <LoadingDashboard />;
+    }
+
+    // Show content based on user role
+    if (userData.role === "RECRUITER") {
+      return <RecruiterDashboard />;
+    } else if (userData.role === "CANDIDATE") {
+      return <CandidateDashboard />;
+    } else {
+      // Fallback if role is not recognized
+      return <LoadingDashboard />;
+    }
+  }
+
+  // If the user is not signed in, show the marketing page
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="relative min-h-screen pb-10">
       <BackgroundGradient />
 
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="container space-y-12 py-24 sm:py-32">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mx-auto flex max-w-[64rem] flex-col items-center gap-4 text-center"
-          >
-            <h1 className="text-4xl font-bold sm:text-6xl md:text-7xl">
-              The Future of <AuroraText>Skill Assessment</AuroraText>
+      {/* Hero Section */}
+      <section className="relative pt-20 md:pt-32">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center space-y-4 text-center">
+            <div className="mb-4 inline-block rounded-full bg-verbo-purple/10 px-3 py-1 text-sm text-verbo-purple">
+              Now in private beta
+            </div>
+            <h1 className="max-w-3xl text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl">
+              <AuroraText>AI-Powered Skill Assessments</AuroraText>
+              <span className="mt-2 block">for Modern Hiring</span>
             </h1>
             <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
-              Transform your hiring process with AI-powered assessments. Let AI
-              guide candidates through interactive challenges while providing
-              detailed insights.
+              Replace hours of interviews with accurate, consistent, and
+              scalable skill assessments. Get deeper insights with less effort.
             </p>
-            <div className="flex gap-4">
-              <InteractiveHoverButton>Start Free Trial</InteractiveHoverButton>
+            <div className="flex flex-col gap-2 min-[400px]:flex-row">
+              <Link href="/sign-up">
+                <InteractiveHoverButton className="bg-verbo-green text-black hover:bg-verbo-green/90">
+                  Get Started
+                </InteractiveHoverButton>
+              </Link>
+              <Link href="/sign-in">
+                <Button variant="outline">Sign In</Button>
+              </Link>
             </div>
-          </motion.div>
+          </div>
+        </div>
+      </section>
 
-          {/* Interactive Demo */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <InteractiveDemo />
-          </motion.div>
-        </section>
+      {/* Demo Section */}
+      <section className="py-10 md:py-16 lg:py-20">
+        <div className="container px-4 md:px-6">
+          <InteractiveDemo />
+        </div>
+      </section>
 
-        {/* Features Bento Grid */}
-        <section className="container py-16 sm:py-24">
-          <h2 className="mb-12 text-center text-3xl font-bold">
-            Powerful Features for Modern Hiring
+      {/* Features Section */}
+      <section className="py-10 md:py-16">
+        <div className="container px-4 md:px-6">
+          <h2 className="mb-4 text-center text-3xl font-bold">
+            Built for recruiters, backed by AI
           </h2>
-          <BentoGrid>
+          <p className="mx-auto mb-12 max-w-3xl text-center text-muted-foreground">
+            Transform your hiring process with consistent, thorough skill
+            assessments that scale with your needs.
+          </p>
+          <BentoGrid className="mx-auto max-w-5xl">
             <BentoCard
-              name="AI-Powered Assessment"
-              description="Real-time analysis of candidate responses with comprehensive insights into skills and capabilities."
-              Icon={Brain}
-              href="#"
-              cta="Learn more"
-              className="col-span-3 lg:col-span-2"
-              background={
-                <div className="absolute inset-0 flex items-start justify-center overflow-hidden">
-                  <div className="relative h-[250px] w-full">
-                    {/* Code Editor-like Interface */}
-                    <div className="absolute left-1/2 top-10 w-[90%] -translate-x-1/2 rounded-lg border bg-background/80 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out [mask-image:linear-gradient(to_bottom,#000_0%,#000_60%,transparent_95%)] group-hover:scale-[0.98]">
-                      {/* Editor Header */}
-                      <div className="flex items-center justify-between border-b px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-full bg-red-500/50" />
-                          <div className="h-3 w-3 rounded-full bg-yellow-500/50" />
-                          <div className="h-3 w-3 rounded-full bg-green-500/50" />
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          assessment.js
-                        </div>
-                      </div>
-                      {/* Code Content */}
-                      <div className="space-y-2 p-4">
-                        {[...Array(3)].map((_, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.2 }}
-                            className="flex items-center gap-2"
-                          >
-                            <div className="text-xs text-muted-foreground">
-                              {i + 1}
-                            </div>
-                            <div className="h-4 flex-1 rounded bg-primary/10">
-                              <motion.div
-                                className="h-full rounded bg-primary/30"
-                                initial={{ width: "0%" }}
-                                animate={{ width: ["0%", "100%", "60%"] }}
-                                transition={{
-                                  duration: 2,
-                                  repeat: Infinity,
-                                  repeatDelay: 1,
-                                }}
-                              />
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <motion.div
-                                className="h-3 w-3 rounded-full bg-green-500/50"
-                                initial={{ scale: 0 }}
-                                animate={{ scale: [0, 1.2, 1] }}
-                                transition={{ delay: i * 0.2 + 1 }}
-                              />
-                              <motion.div
-                                className="text-xs text-green-500"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: i * 0.2 + 1.2 }}
-                              >
-                                {["95%", "88%", "92%"][i]}
-                              </motion.div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                    {/* Floating AI Indicators */}
-                    <div className="absolute inset-x-0 top-0 h-full [mask-image:linear-gradient(to_bottom,#000_20%,transparent_90%)]">
-                      {[...Array(8)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          className="absolute h-2 w-2 rounded-full bg-primary/50 shadow-[0_0_10px_4px_rgba(var(--primary),.2)]"
-                          style={{
-                            left: `${10 + ((i * 80) % 90)}%`,
-                            top: `${(i * 30) % 60}%`,
-                          }}
-                          animate={{
-                            scale: [1, 1.2, 1],
-                            opacity: [0.3, 0.8, 0.3],
-                          }}
-                          transition={{
-                            duration: 2,
-                            repeat: Infinity,
-                            delay: i * 0.2,
-                          }}
-                        />
-                      ))}
-                    </div>
-                    {/* White Blur Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/20 to-transparent dark:from-background/80 dark:via-background/20 dark:to-transparent" />
-                  </div>
-                </div>
-              }
-            />
-            <BentoCard
-              name="Interactive Challenges"
-              description="Engage candidates with real-world coding scenarios and live feedback."
-              Icon={PlayCircle}
-              href="#"
-              cta="Try demo"
-              className="col-span-3 lg:col-span-1"
-              background={
-                <div className="absolute inset-0 flex items-start justify-center overflow-hidden">
-                  <div className="relative h-[180px] w-full">
-                    {/* Code Challenge Interface */}
-                    <div className="absolute left-1/2 top-6 w-[85%] -translate-x-1/2 rounded-lg border bg-background/80 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out [mask-image:linear-gradient(to_bottom,#000_0%,#000_60%,transparent_95%)] group-hover:scale-95">
-                      <div className="mb-3 flex items-center justify-between">
-                        <div className="text-xs font-medium">Challenge 01</div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          <motion.div
-                            animate={{ opacity: [1, 0.5, 1] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                          >
-                            02:45
-                          </motion.div>
-                        </div>
-                      </div>
-                      <CodeEditor
-                        value="function solve(input) {\n  // Your solution here\n}"
-                        language="js"
-                        className="rounded border !bg-muted/30"
-                        style={{
-                          fontSize: 12,
-                          backgroundColor: "transparent",
-                          fontFamily: "monospace",
-                        }}
-                        padding={8}
-                      />
-                      <motion.div
-                        className="mt-3 h-1 w-full rounded-full bg-muted"
-                        initial={{ width: "0%" }}
-                        animate={{ width: "65%" }}
-                        transition={{ duration: 1 }}
-                      >
-                        <div className="h-full rounded-full bg-primary" />
-                      </motion.div>
-                    </div>
-                    {/* White Blur Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/20 to-transparent dark:from-background/80 dark:via-background/20 dark:to-transparent" />
-                  </div>
-                </div>
-              }
-            />
-            <BentoCard
-              name="Time Analytics"
-              description="Track performance metrics and completion times with detailed insights."
-              Icon={Clock}
-              href="#"
-              cta="View analytics"
-              className="col-span-3 lg:col-span-1"
-              background={
-                <div className="absolute inset-0 flex items-start justify-center overflow-hidden">
-                  <div className="relative h-[180px] w-full">
-                    <div className="absolute left-1/2 top-6 w-[85%] -translate-x-1/2">
-                      {/* Analytics Chart */}
-                      <div className="rounded-lg border bg-background/80 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out [mask-image:linear-gradient(to_bottom,#000_0%,#000_60%,transparent_95%)] group-hover:scale-95">
-                        <div className="mb-4 flex items-center justify-between">
-                          <div className="text-xs font-medium">
-                            Performance Trend
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-primary" />
-                            <div className="text-xs text-muted-foreground">
-                              Live
-                            </div>
-                          </div>
-                        </div>
-                        <div className="relative h-20">
-                          <svg
-                            className="h-full w-full"
-                            preserveAspectRatio="none"
-                          >
-                            <motion.path
-                              d="M 0 40 C 100 30, 150 60, 300 35"
-                              className="fill-none stroke-primary stroke-2"
-                              initial={{ pathLength: 0 }}
-                              animate={{ pathLength: 1 }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                            />
-                            {[...Array(5)].map((_, i) => (
-                              <motion.circle
-                                key={i}
-                                cx={60 * i}
-                                cy={35 + Math.sin(i) * 10}
-                                r="3"
-                                className="fill-primary"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: i * 0.2 }}
-                              />
-                            ))}
-                          </svg>
-                          <motion.div
-                            className="absolute bottom-0 left-0 h-full w-full"
-                            style={{
-                              background:
-                                "linear-gradient(to top, hsl(var(--primary)/.2), transparent)",
-                              clipPath:
-                                "polygon(0 100%, 100% 100%, 100% 50%, 0 70%)",
-                            }}
-                            animate={{
-                              clipPath: [
-                                "polygon(0 100%, 100% 100%, 100% 50%, 0 70%)",
-                                "polygon(0 100%, 100% 100%, 100% 60%, 0 40%)",
-                                "polygon(0 100%, 100% 100%, 100% 50%, 0 70%)",
-                              ],
-                            }}
-                            transition={{ duration: 3, repeat: Infinity }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    {/* White Blur Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/20 to-transparent dark:from-background/80 dark:via-background/20 dark:to-transparent" />
-                  </div>
-                </div>
-              }
-            />
-            <BentoCard
-              name="Smart Analysis"
-              description="Advanced AI algorithms analyze responses and provide detailed skill assessments."
+              name="Realistic Challenges"
+              description="Put candidates in real-world scenarios that accurately test their skills, not just their interview abilities."
               Icon={MessageSquare}
+              className="md:col-span-2"
               href="#"
               cta="Learn more"
-              className="col-span-3 lg:col-span-2"
               background={
-                <div className="absolute inset-0 flex items-start justify-center overflow-hidden">
-                  <div className="relative h-[250px] w-full">
-                    {/* Analysis Interface */}
-                    <div className="absolute left-1/2 top-10 grid w-[90%] -translate-x-1/2 grid-cols-2 gap-4 transition-all duration-300 ease-out [mask-image:linear-gradient(to_bottom,#000_0%,#000_60%,transparent_95%)] group-hover:scale-[0.98]">
-                      {/* Left Column - Skills Analysis */}
-                      <div className="space-y-3">
-                        {[
-                          "Problem Solving",
-                          "Code Quality",
-                          "Communication",
-                        ].map((skill, i) => (
-                          <motion.div
-                            key={skill}
-                            className="rounded-lg border bg-background/80 p-3 shadow-sm backdrop-blur-sm"
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.2 }}
-                          >
-                            <div className="mb-2 text-xs font-medium">
-                              {skill}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="h-2 flex-1 rounded-full bg-muted">
-                                <motion.div
-                                  className="h-full rounded-full bg-primary"
-                                  initial={{ width: "0%" }}
-                                  animate={{ width: `${[85, 92, 78][i]}%` }}
-                                  transition={{ duration: 1, delay: i * 0.2 }}
-                                />
-                              </div>
-                              <div className="text-xs text-primary">
-                                {[85, 92, 78][i]}%
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                      {/* Right Column - Live Analysis */}
-                      <div className="relative">
-                        <motion.div
-                          className="absolute inset-0 rounded-lg border bg-background/80 p-3 shadow-sm backdrop-blur-sm"
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.6 }}
-                        >
-                          <div className="mb-2 text-xs font-medium">
-                            Live Analysis
-                          </div>
-                          <div className="space-y-2">
-                            {[
-                              "Analyzing response patterns...",
-                              "Evaluating code structure...",
-                              "Generating insights...",
-                            ].map((text, i) => (
-                              <motion.div
-                                key={i}
-                                className="flex items-center gap-2"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.8 + i * 0.3 }}
-                              >
-                                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                <div className="text-xs text-muted-foreground">
-                                  {text}
-                                </div>
-                              </motion.div>
-                            ))}
-                          </div>
-                          <motion.div
-                            className="mt-3 h-1 w-full rounded-full bg-muted"
-                            initial={{ width: "0%" }}
-                            animate={{ width: "100%" }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                          >
-                            <div className="h-full animate-pulse rounded-full bg-primary" />
-                          </motion.div>
-                        </motion.div>
-                      </div>
-                    </div>
-                    {/* White Blur Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/20 to-transparent dark:from-background/80 dark:via-background/20 dark:to-transparent" />
-                  </div>
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-verbo-purple/10 to-verbo-green/5"></div>
+              }
+            />
+            <BentoCard
+              name="AI-Guided Interviews"
+              description="Our AI guides candidates through challenges, adapting to their responses in real-time."
+              Icon={Brain}
+              className="col-span-1"
+              href="#"
+              cta="Learn more"
+              background={
+                <div className="absolute inset-0 bg-gradient-to-br from-verbo-blue/10 to-verbo-purple/5"></div>
+              }
+            />
+            <BentoCard
+              name="Time Efficiency"
+              description="Replace hours of technical interviews with automated assessments that are just as insightful."
+              Icon={Clock}
+              className="col-span-1"
+              href="#"
+              cta="Learn more"
+              background={
+                <div className="absolute inset-0 bg-gradient-to-br from-verbo-green/10 to-verbo-blue/5"></div>
+              }
+            />
+            <BentoCard
+              name="Candidate Insights"
+              description="Deep, structured analysis of candidate skills, with specific evidence and clear scoring."
+              Icon={Database}
+              className="md:col-span-2"
+              href="#"
+              cta="Learn more"
+              background={
+                <div className="absolute inset-0 bg-gradient-to-br from-verbo-dark/10 to-verbo-purple/5"></div>
               }
             />
           </BentoGrid>
-        </section>
-
-        {/* CTA Section */}
-        <section className="relative border-t">
-          <div className="container py-24 sm:py-32">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="mx-auto max-w-[58rem] text-center"
-            >
-              <h2 className="text-3xl font-bold leading-tight sm:text-4xl">
-                Ready to transform your hiring process?
-              </h2>
-              <p className="mt-4 text-muted-foreground sm:text-lg">
-                Join leading companies using verbo.ai to find the best talent
-                efficiently.
-              </p>
-              <Button size="lg" className="group mt-8">
-                Get Started Now
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </motion.div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="border-t bg-background/60 py-6 backdrop-blur-sm">
-        <div className="container flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <p className="text-sm text-muted-foreground">
-            © 2024 verbo.ai. All rights reserved.
-          </p>
-          <nav className="flex gap-4">
-            <Link
-              href="#"
-              className="text-sm text-muted-foreground hover:text-primary"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="#"
-              className="text-sm text-muted-foreground hover:text-primary"
-            >
-              Terms
-            </Link>
-            <Link
-              href="#"
-              className="text-sm text-muted-foreground hover:text-primary"
-            >
-              Contact
-            </Link>
-          </nav>
         </div>
-      </footer>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 md:py-24">
+        <div className="container px-4 md:px-6">
+          <div className="mx-auto max-w-3xl rounded-lg bg-muted p-8 text-center md:p-12">
+            <h3 className="mb-2 text-2xl font-bold md:text-3xl">
+              Ready to transform your hiring process?
+            </h3>
+            <p className="mb-6 text-muted-foreground">
+              Join the companies already saving hundreds of interview hours per
+              month.
+            </p>
+            <Link href="/sign-up">
+              <Button className="h-11 bg-verbo-green px-8 text-black hover:bg-verbo-green/90">
+                Get Started Now
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

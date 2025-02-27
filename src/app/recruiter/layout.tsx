@@ -9,7 +9,7 @@ interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
   items: { href: string; title: string }[];
 }
 
-export default function DashboardLayout({
+export default function RecruiterLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -21,13 +21,13 @@ export default function DashboardLayout({
           <div className="py-6 pr-6 lg:py-8">
             <SidebarNav
               items={[
-                { title: "Overview", href: "/dashboard" },
-                { title: "Skills", href: "/dashboard/skills" },
-                { title: "Positions", href: "/dashboard/positions" },
-                { title: "Challenges", href: "/dashboard/challenges" },
-                { title: "Submissions", href: "/dashboard/submissions" },
-                { title: "Analytics", href: "/dashboard/analytics" },
-                { title: "Settings", href: "/dashboard/settings" },
+                { title: "Overview", href: "/recruiter" },
+                { title: "Skills", href: "/recruiter/skills" },
+                { title: "Positions", href: "/recruiter/positions" },
+                { title: "Challenges", href: "/recruiter/challenges" },
+                { title: "Submissions", href: "/recruiter/submissions" },
+                { title: "Analytics", href: "/recruiter/analytics" },
+                { title: "Settings", href: "/recruiter/settings" },
               ]}
             />
           </div>

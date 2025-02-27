@@ -44,17 +44,35 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-export const db = globalForPrisma.prisma ?? createPrismaClient();
+// Check if we're running in a Node.js environment
+let prisma: PrismaClient | undefined = undefined;
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+try {
+  // This will throw in Edge Runtime
+  if (typeof window === 'undefined') {
+    prisma = globalForPrisma.prisma ?? createPrismaClient();
+    
+    if (process.env.NODE_ENV !== "production") {
+      globalForPrisma.prisma = prisma;
+    }
+  }
+} catch (error) {
+  console.error("Error initializing Prisma (possibly in Edge Runtime):", error);
+}
 
-// Test the database connection in development
-if (process.env.NODE_ENV === "development") {
-  db.$connect()
-    .then(() => {
-      console.log("Successfully connected to the database");
-    })
-    .catch((error) => {
-      console.error("Failed to connect to the database:", error);
-    });
+export const db = prisma as PrismaClient;
+
+// Only attempt to connect in a Node.js environment, not Edge Runtime
+try {
+  if (process.env.NODE_ENV === "development" && typeof window === 'undefined' && db) {
+    db.$connect()
+      .then(() => {
+        console.log("Successfully connected to the database");
+      })
+      .catch((error) => {
+        console.error("Failed to connect to the database:", error);
+      });
+  }
+} catch (error) {
+  console.error("Error during database connection:", error);
 }
