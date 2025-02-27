@@ -16,8 +16,11 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
 // Create a model instance with the appropriate model name
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-thinking-exp-01-21" });
 
-// Add API request timeout (30 seconds)
-const API_TIMEOUT_MS = 30000;
+// Add API request timeout (shorter timeout for Vercel environment)
+const IS_VERCEL = process.env.VERCEL === '1';
+const API_TIMEOUT_MS = IS_VERCEL ? 15000 : 30000; // Use shorter timeout in Vercel
+
+console.log(`Environment: ${IS_VERCEL ? 'Vercel' : 'Local'}, Timeout: ${API_TIMEOUT_MS}ms`);
 
 /**
  * Helper function to create a promise that rejects after specified timeout
@@ -54,6 +57,7 @@ export async function extractSkillsFromJobDescription(
 ): Promise<AISkillsResult> {
   try {
     console.log("\n==== SKILL EXTRACTION PROCESS STARTING ====");
+    console.log(`Running in ${IS_VERCEL ? 'Vercel' : 'Local'} environment`);
     console.log("Extracting skills from job description with Gemini AI...");
     
     // Check if API key is configured
@@ -66,6 +70,7 @@ export async function extractSkillsFromJobDescription(
     const apiKeyPrefix = process.env.GOOGLE_AI_API_KEY.substring(0, 4);
     console.log(`Using Gemini API with key prefix: ${apiKeyPrefix}***`);
     console.log(`Using model: gemini-2.0-flash-thinking-exp-01-21`);
+    console.log(`API timeout set to: ${API_TIMEOUT_MS}ms`);
     
     // Transform the input data to include database numIds
     const indexedData: IndexedSkillsData = {
@@ -97,32 +102,57 @@ export async function extractSkillsFromJobDescription(
     // Construct prompt for the AI with indexed data structure using the extracted prompt
     const prompt = createSkillExtractionPrompt(jobDescription, indexedData);
 
-    // Log the full prompt being sent to the AI
-    console.log("\n==== FULL PROMPT SENT TO GEMINI AI ====");
-    console.log(prompt);
-    console.log("=====================================");
+    // Calculate and log prompt size metrics
+    const promptSize = Buffer.from(prompt).length;
+    const promptKB = (promptSize / 1024).toFixed(2);
+    console.log(`\n==== PROMPT SIZE METRICS ====`);
+    console.log(`Prompt size: ${promptSize} bytes (${promptKB} KB)`);
+    console.log(`Job description length: ${jobDescription.length} characters`);
+    console.log(`==============================`);
+
+    // Log a sample of the prompt to avoid huge logs
+    console.log("\n==== PROMPT SAMPLE (first 500 chars) ====");
+    console.log(prompt.substring(0, 500) + "...");
+    console.log("================================");
 
     // Make API request with timing and detailed logging
     console.log("\nSending request to Gemini AI...");
+    console.log(`Current time: ${new Date().toISOString()}`);
     const startTime = Date.now();
     
     try {
-      // Use Promise.race to implement a timeout
+      // Log just before the actual API call
+      console.log(`Initiating API call at: ${new Date().toISOString()}`);
+      
+      // Create both promises up front for better logging
+      const modelPromise = model.generateContent(prompt);
+      const timeoutPromise = createTimeout(API_TIMEOUT_MS);
+      
+      // Use Promise.race to implement a timeout with better logging
       const aiResult = await Promise.race([
-        model.generateContent(prompt),
-        createTimeout(API_TIMEOUT_MS)
+        modelPromise.catch(err => {
+          console.error(`Model promise rejected at ${new Date().toISOString()}: ${err}`);
+          throw err;
+        }),
+        timeoutPromise
       ]);
       
       console.log(`API request completed in ${Date.now() - startTime}ms`);
+      console.log(`Completed at: ${new Date().toISOString()}`);
       
-      // Process the response
+      // Process the response with additional logging
       console.log("Getting response from Gemini AI result...");
+      const responseStartTime = Date.now();
       const response = await aiResult.response;
+      console.log(`Response object retrieved in ${Date.now() - responseStartTime}ms`);
       
       console.log("Extracting text from response...");
+      const textStartTime = Date.now();
       const text = response.text();
+      console.log(`Text extracted in ${Date.now() - textStartTime}ms`);
       
       console.log(`Received ${text.length} characters in response`);
+      console.log(`Response first 100 chars: ${text.substring(0, 100)}...`);
 
       // Find and extract the JSON object from the response
       const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -133,7 +163,7 @@ export async function extractSkillsFromJobDescription(
 
       const jsonString = jsonMatch[0];
       console.log("\n==== EXTRACTED JSON ====");
-      console.log(jsonString);
+      console.log(jsonString.substring(0, 500) + "..."); // Limit log size
       console.log("=======================");
 
       // Parse the indexed response
@@ -264,7 +294,7 @@ export async function extractSkillsFromJobDescription(
 
       return outputResult;
     } catch (apiError) {
-      console.error("Error during Gemini API call:", apiError);
+      console.error(`Error during Gemini API call at ${new Date().toISOString()}:`, apiError);
       console.error("API call elapsed time:", Date.now() - startTime, "ms");
       
       // Additional diagnostic information about the error
@@ -276,16 +306,46 @@ export async function extractSkillsFromJobDescription(
         console.error("Non-Error object thrown:", apiError);
       }
       
+      // Check for timeout specific errors
+      if (apiError instanceof Error && apiError.message.includes('timed out')) {
+        console.error(`TIMEOUT DETECTED: The API call exceeded the ${API_TIMEOUT_MS}ms timeout`);
+        
+        // For Vercel, add special error log
+        if (IS_VERCEL) {
+          console.error("This is likely due to Vercel function execution limits or network issues");
+        }
+      }
+      
       throw new Error(`Gemini API call failed: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
     }
   } catch (error) {
-    console.error("Error in AI skill extraction:", error);
+    console.error(`Skill extraction error at ${new Date().toISOString()}:`, error);
+    
     // Add more error details for debugging
     if (error instanceof Error) {
       console.error("Error name:", error.name);
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
     }
+    
+    // Provide a fallback empty result if we encounter an error
+    if (IS_VERCEL && error instanceof Error && 
+        (error.message.includes('timed out') || error.message.includes('timeout'))) {
+      console.error("Returning empty result due to timeout in Vercel environment");
+      return {
+        categories: [{
+          name: "Error",
+          skills: [{
+            name: "API Timeout",
+            competencies: [{
+              name: "API request timed out in Vercel environment",
+              selected: true
+            }]
+          }]
+        }]
+      };
+    }
+    
     throw new Error(`Failed to extract skills: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
@@ -315,6 +375,7 @@ export async function generateAssessmentCase(
 ): Promise<GeneratedAssessment> {
   try {
     console.log("\n==== ASSESSMENT GENERATION PROCESS STARTING ====");
+    console.log(`Running in ${IS_VERCEL ? 'Vercel' : 'Local'} environment`);
     console.log("Generating assessment case with Gemini AI...");
     
     // Check if API key is configured
@@ -327,6 +388,7 @@ export async function generateAssessmentCase(
     const apiKeyPrefix = process.env.GOOGLE_AI_API_KEY.substring(0, 4);
     console.log(`Using Gemini API with key prefix: ${apiKeyPrefix}***`);
     console.log(`Using model: gemini-2.0-flash-thinking-exp-01-21`);
+    console.log(`API timeout set to: ${API_TIMEOUT_MS}ms`);
     
     // Updated function to generate safe fallback IDs that won't conflict with real database IDs
     // Returns a negative ID that includes information about the entity type
@@ -442,35 +504,63 @@ export async function generateAssessmentCase(
     // Construct prompt for the AI using the extracted prompt
     const prompt = createAssessmentGenerationPrompt(jobDescription, formattedSkills);
 
-    // Log the full prompt being sent to the AI
-    console.log("\n==== FULL PROMPT SENT TO GEMINI AI ====");
-    console.log(prompt);
-    console.log("=====================================");
+    // Calculate and log prompt size metrics
+    const promptSize = Buffer.from(prompt).length;
+    const promptKB = (promptSize / 1024).toFixed(2);
+    console.log(`\n==== PROMPT SIZE METRICS ====`);
+    console.log(`Prompt size: ${promptSize} bytes (${promptKB} KB)`);
+    console.log(`Job description length: ${jobDescription.length} characters`);
+    console.log(`Total categories: ${formattedSkills.length}`);
+    console.log(`Total skills: ${numIdStats.totalSkills}`);
+    console.log(`Total competencies: ${numIdStats.totalCompetencies}`);
+    console.log(`==============================`);
+
+    // Log a sample of the prompt (just the first part) to avoid huge logs
+    console.log("\n==== PROMPT SAMPLE (first 500 chars) ====");
+    console.log(prompt.substring(0, 500) + "...");
+    console.log("================================");
 
     // Call the Gemini API with the constructed prompt
     console.log("\nSending request to Gemini AI...");
+    console.log(`Current time: ${new Date().toISOString()}`);
     const startTime = Date.now();
     
     let text;
     try {
-      // Use Promise.race to implement a timeout
+      // Log just before the actual API call
+      console.log(`Initiating API call at: ${new Date().toISOString()}`);
+      
+      // Create both promises up front for better logging
+      const modelPromise = model.generateContent(prompt);
+      const timeoutPromise = createTimeout(API_TIMEOUT_MS);
+      
+      // Use Promise.race to implement a timeout with better logging
       const aiResult = await Promise.race([
-        model.generateContent(prompt),
-        createTimeout(API_TIMEOUT_MS)
+        modelPromise.catch(err => {
+          console.error(`Model promise rejected at ${new Date().toISOString()}: ${err}`);
+          throw err;
+        }),
+        timeoutPromise
       ]);
       
       console.log(`API request completed in ${Date.now() - startTime}ms`);
+      console.log(`Completed at: ${new Date().toISOString()}`);
       
-      // Process the response
+      // Process the response with additional logging
       console.log("Getting response from Gemini AI result...");
+      const responseStartTime = Date.now();
       const response = await aiResult.response;
+      console.log(`Response object retrieved in ${Date.now() - responseStartTime}ms`);
       
       console.log("Extracting text from response...");
+      const textStartTime = Date.now();
       text = response.text();
+      console.log(`Text extracted in ${Date.now() - textStartTime}ms`);
       
       console.log(`Received ${text.length} characters in response`);
+      console.log(`Response first 100 chars: ${text.substring(0, 100)}...`);
     } catch (apiError) {
-      console.error("Error during Gemini API call:", apiError);
+      console.error(`Error during Gemini API call at ${new Date().toISOString()}:`, apiError);
       console.error("API call elapsed time:", Date.now() - startTime, "ms");
       
       // Additional diagnostic information about the error
@@ -480,6 +570,16 @@ export async function generateAssessmentCase(
         console.error("Error stack:", apiError.stack);
       } else {
         console.error("Non-Error object thrown:", apiError);
+      }
+      
+      // Check for timeout specific errors
+      if (apiError instanceof Error && apiError.message.includes('timed out')) {
+        console.error(`TIMEOUT DETECTED: The API call exceeded the ${API_TIMEOUT_MS}ms timeout`);
+        
+        // For Vercel, add special error log
+        if (IS_VERCEL) {
+          console.error("This is likely due to Vercel function execution limits or network issues");
+        }
       }
       
       throw new Error(`Gemini API call failed: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
@@ -679,13 +779,39 @@ export async function generateAssessmentCase(
 
     return result;
   } catch (error) {
-    console.error("Error in AI assessment generation:", error);
+    console.error(`Assessment generation error at ${new Date().toISOString()}:`, error);
+    
     // Add more error details for debugging
     if (error instanceof Error) {
       console.error("Error name:", error.name);
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
+      
+      // Provide a more specific error message for timeout issues
+      if (error.message.includes('timed out') || error.message.includes('timeout')) {
+        if (IS_VERCEL) {
+          return {
+            context: "Assessment generation timed out in Vercel environment",
+            questions: [{
+              context: "Error occurred during assessment generation",
+              question: "Please try again or contact support if the issue persists",
+              skills_assessed: []
+            }],
+            _internal: { competencyIdMap: {} }
+          };
+        }
+      }
     }
-    throw new Error(`Failed to generate assessment: ${error instanceof Error ? error.message : String(error)}`);
+    
+    // Provide a meaningful fallback result if we encounter an error
+    return {
+      context: "Error occurred during assessment generation",
+      questions: [{
+        context: "Unable to generate assessment case",
+        question: "Please try again or contact support if the issue persists",
+        skills_assessed: []
+      }],
+      _internal: { competencyIdMap: {} }
+    };
   }
 }
