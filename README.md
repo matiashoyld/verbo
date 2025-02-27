@@ -1,6 +1,6 @@
 # verbo.ai
 
-![Verbo.ai Banner](/public/images/verbo-banner.png)
+![Verbo.ai Banner](/public/verbo-banner.png)
 
 (You can play with the app [here](https://verbo-alpha.vercel.app/))
 
