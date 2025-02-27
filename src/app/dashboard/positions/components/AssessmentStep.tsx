@@ -333,7 +333,7 @@ export function AssessmentStep({
       const match = /language-(\w+)/.exec(className || "");
       return !inline && match ? (
         <code
-          className={`block w-full overflow-auto rounded-md border border-border/10 bg-muted/20 p-1.5 text-xs font-medium ${match[1] ? `language-${match[1]}` : ""}`}
+          className={`block w-full overflow-visible whitespace-pre-wrap break-words rounded-md border border-border/10 bg-muted/20 p-1.5 text-xs font-medium ${match[1] ? `language-${match[1]}` : ""}`}
           {...props}
         >
           {children}
@@ -358,9 +358,9 @@ export function AssessmentStep({
     hr: ({ ...props }) => <hr className="my-2 border-border/50" {...props} />,
     // Style tables
     table: ({ ...props }) => (
-      <div className="my-1.5 overflow-auto">
+      <div className="my-1.5 w-full overflow-visible">
         <table
-          className="w-full min-w-full border-collapse border border-border/30 text-left text-xs"
+          className="w-full border-collapse border border-border/30 text-left text-xs"
           {...props}
         />
       </div>
@@ -374,16 +374,19 @@ export function AssessmentStep({
     ),
     th: ({ ...props }) => (
       <th
-        className="border border-border/30 p-1 text-[10px] font-medium"
+        className="break-words border border-border/30 p-1 text-[10px] font-medium"
         {...props}
       />
     ),
     td: ({ ...props }) => (
-      <td className="border border-border/30 p-1 text-[10px]" {...props} />
+      <td
+        className="whitespace-normal break-words border border-border/30 p-1 text-[10px]"
+        {...props}
+      />
     ),
     pre: ({ ...props }) => (
       <pre
-        className="my-1.5 overflow-auto rounded-md border border-border/10 bg-muted/20 p-0"
+        className="my-1.5 overflow-visible whitespace-pre-wrap rounded-md border border-border/10 bg-muted/20 p-0"
         {...props}
       />
     ),
@@ -402,11 +405,11 @@ export function AssessmentStep({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         {/* Left Column: Case Context */}
         <div className="overflow-hidden">
           <ScrollArea className="h-[500px] w-full">
-            <div className="w-full break-words pr-6 text-xs">
+            <div className="w-full overflow-visible whitespace-normal break-words text-xs">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={MarkdownComponents}
