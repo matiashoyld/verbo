@@ -3,6 +3,12 @@
 import { Loader2 } from "lucide-react";
 import { useRef } from "react";
 import { api } from "~/trpc/react";
+import type {
+  Category,
+  CompetencyModel,
+  Criterion,
+  Skill,
+} from "~/types/skills";
 import { CategoryItem } from "./components/CategoryItem";
 import { CompetencyItem } from "./components/CompetencyItem";
 import { SkillItem } from "./components/SkillItem";
@@ -14,15 +20,76 @@ import { SkillsUploadDialog } from "./dialogs/SkillsUploadDialog";
 import { useTaxonomyActions } from "./hooks/useTaxonomyActions";
 import { useTaxonomyState } from "./hooks/useTaxonomyState";
 
+// Function to map API response to our expected types
+interface ApiCategory {
+  id: string;
+  name: string;
+  skills?: ApiSkill[];
+}
+
+interface ApiSkill {
+  id: string;
+  name: string;
+  competencies?: ApiCompetency[];
+}
+
+interface ApiCompetency {
+  id: string;
+  name: string;
+  criteria?: ApiCriterion[];
+}
+
+interface ApiCriterion {
+  id: string;
+  description: string;
+}
+
+const mapApiToCategories = (apiCategories: ApiCategory[]): Category[] => {
+  return apiCategories.map((apiCategory): Category => {
+    return {
+      id: apiCategory.id,
+      name: apiCategory.name,
+      skills:
+        apiCategory.skills?.map((apiSkill: ApiSkill): Skill => {
+          return {
+            id: apiSkill.id,
+            name: apiSkill.name,
+            competencies:
+              apiSkill.competencies?.map(
+                (apiCompetency: ApiCompetency): CompetencyModel => {
+                  return {
+                    id: apiCompetency.id,
+                    name: apiCompetency.name,
+                    criteria:
+                      apiCompetency.criteria?.map(
+                        (apiCriterion: ApiCriterion): Criterion => {
+                          return {
+                            id: apiCriterion.id,
+                            description: apiCriterion.description,
+                          };
+                        },
+                      ) || [],
+                  };
+                },
+              ) || [],
+          };
+        }) || [],
+    };
+  });
+};
+
 export default function SkillsPage() {
   // All hooks must be at the top level before any conditional returns
-  const { data: categories, isLoading } = api.skills.getAll.useQuery();
+  const { data: apiCategories, isLoading } = api.skills.getAll.useQuery();
 
   // Refs
   const editInputRef = useRef<HTMLInputElement>(null);
 
+  // Map API response to our expected types for the state hook
+  const categories = apiCategories ? mapApiToCategories(apiCategories) : [];
+
   // Get state from hook - using an empty array for initial state if categories is undefined
-  const taxonomyState = useTaxonomyState(categories ?? []);
+  const taxonomyState = useTaxonomyState(categories);
 
   // Get actions from hook
   const actions = useTaxonomyActions({
@@ -37,7 +104,7 @@ export default function SkillsPage() {
     expandedCriteria,
     editingCategoryId,
     editingSkillId,
-    editingSubSkillId,
+    editingCompetencyId,
     editName,
     deleteDialogOpen,
     itemToDelete,
@@ -157,23 +224,23 @@ export default function SkillsPage() {
               </div>
               <div className="overflow-y-auto p-2.5">
                 <div className="grid gap-2.5">
-                  {selectedSkill.subSkills.map((subSkill) => {
-                    const criterionId = `${selectedSkill.id}-${subSkill.id}`;
+                  {selectedSkill.competencies.map((competency) => {
+                    const criterionId = `${selectedSkill.id}-${competency.id}`;
                     const isExpanded = expandedCriteria.has(criterionId);
 
                     return (
                       <CompetencyItem
-                        key={subSkill.id}
-                        subSkill={subSkill}
+                        key={competency.id}
+                        competency={competency}
                         skillId={selectedSkill.id}
                         isExpanded={isExpanded}
-                        isEditing={editingSubSkillId === subSkill.id}
+                        isEditing={editingCompetencyId === competency.id}
                         editName={editName}
                         editInputRef={editInputRef}
                         onToggleCriterion={taxonomyState.toggleCriterion}
-                        onStartEditing={actions.startEditingSubSkill}
+                        onStartEditing={actions.startEditingCompetency}
                         onOpenDeleteDialog={actions.openDeleteDialog}
-                        onEditSave={actions.handleSaveSubSkill}
+                        onEditSave={actions.handleSaveCompetency}
                         onEditInputChange={(e) =>
                           taxonomyState.setEditName(e.target.value)
                         }
@@ -183,7 +250,7 @@ export default function SkillsPage() {
                     );
                   })}
                 </div>
-                {selectedSkill.subSkills.length === 0 && (
+                {selectedSkill.competencies.length === 0 && (
                   <div className="py-4 text-center text-sm text-gray-500">
                     <p>No criteria added yet</p>
                     <p className="text-xs">
@@ -199,10 +266,9 @@ export default function SkillsPage() {
         {/* Delete Confirmation Dialog */}
         <DeleteConfirmDialog
           open={deleteDialogOpen}
-          setOpen={taxonomyState.setDeleteDialogOpen}
-          itemName={itemToDelete?.name ?? ""}
-          itemType={itemToDelete?.type ?? "category"}
-          onConfirm={actions.handleDeleteConfirm}
+          onOpenChange={taxonomyState.setDeleteDialogOpen}
+          itemToDelete={itemToDelete}
+          onConfirmDelete={actions.handleDeleteConfirm}
         />
       </div>
     </div>

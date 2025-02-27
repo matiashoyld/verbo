@@ -10,10 +10,10 @@ export interface Category {
 export interface Skill {
   id: string;
   name: string;
-  subSkills: SubSkill[];
+  competencies: CompetencyModel[];
 }
 
-export interface SubSkill {
+export interface CompetencyModel {
   id: string;
   name: string;
   criteria: Criterion[];

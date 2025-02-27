@@ -1,17 +1,17 @@
 import { ChevronDown, ChevronUp, Edit3, Trash2 } from "lucide-react";
 import React from "react";
 import { Input } from "~/components/ui/input";
-import type { SubSkill } from "~/types/skills";
+import type { CompetencyModel } from "~/types/skills";
 
 interface CompetencyItemProps {
-  subSkill: SubSkill;
+  competency: CompetencyModel;
   skillId: string;
   isExpanded: boolean;
   isEditing: boolean;
   editName: string;
   editInputRef: React.RefObject<HTMLInputElement>;
   onToggleCriterion: (criterionId: string) => void;
-  onStartEditing: (e: React.MouseEvent, subSkill: SubSkill) => void;
+  onStartEditing: (e: React.MouseEvent, competency: CompetencyModel) => void;
   onOpenDeleteDialog: (
     e: React.MouseEvent,
     id: string,
@@ -25,7 +25,7 @@ interface CompetencyItemProps {
 }
 
 export function CompetencyItem({
-  subSkill,
+  competency,
   skillId,
   isExpanded,
   isEditing,
@@ -39,7 +39,7 @@ export function CompetencyItem({
   onEditInputKeyDown,
   onEditInputBlur,
 }: CompetencyItemProps) {
-  const criterionId = `${skillId}-${subSkill.id}`;
+  const criterionId = `${skillId}-${competency.id}`;
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
@@ -66,7 +66,7 @@ export function CompetencyItem({
           />
         ) : (
           <h3 className="text-sm font-semibold text-gray-900">
-            {subSkill.name}
+            {competency.name}
           </h3>
         )}
         <div className="flex items-center gap-1.5">
@@ -98,7 +98,7 @@ export function CompetencyItem({
               className="p-0.5 text-gray-500 hover:text-gray-700"
               onClick={(e) => {
                 e.stopPropagation();
-                onStartEditing(e, subSkill);
+                onStartEditing(e, competency);
               }}
             >
               <Edit3 className="h-3.5 w-3.5" />
@@ -107,7 +107,12 @@ export function CompetencyItem({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onOpenDeleteDialog(e, subSkill.id, subSkill.name, "competency");
+              onOpenDeleteDialog(
+                e,
+                competency.id,
+                competency.name,
+                "competency",
+              );
             }}
             className="p-0.5 text-gray-500 hover:text-red-500"
           >
@@ -120,10 +125,10 @@ export function CompetencyItem({
           )}
         </div>
       </div>
-      {isExpanded && subSkill.criteria[0] && (
+      {isExpanded && competency.criteria[0] && (
         <div className="border-t border-gray-100 px-3 pb-2.5 pt-1.5">
           <p className="text-xs text-gray-700">
-            {subSkill.criteria[0].description}
+            {competency.criteria[0].description}
           </p>
         </div>
       )}

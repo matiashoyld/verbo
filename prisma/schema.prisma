@@ -40,14 +40,14 @@ model Skill {
   updated_at DateTime    @updatedAt @db.Timestamptz(6)
   numId      Int?        @unique @map("num_id")
   category   Category    @relation(fields: [categoryId], references: [id])
-  subSkills  SubSkill[]
+  competencies Competency[]
   challenges Challenge[] @relation("ChallengeToSkill")
 
   @@unique([categoryId, name])
   @@map("Skill")
 }
 
-model SubSkill {
+model Competency {
   id                String               @id @default(uuid()) @db.Uuid
   name              String
   skillId           String               @map("skill_id") @db.Uuid
@@ -59,16 +59,16 @@ model SubSkill {
   questionRelations QuestionCompetency[]
 
   @@unique([skillId, name])
-  @@map("SubSkill")
+  @@map("Competency")
 }
 
 model Criterion {
   id          String   @id @default(uuid()) @db.Uuid
   description String
-  subSkillId  String   @map("sub_skill_id") @db.Uuid
+  competencyId String   @map("competency_id") @db.Uuid
   created_at  DateTime @default(now()) @db.Timestamptz(6)
   updated_at  DateTime @updatedAt @db.Timestamptz(6)
-  subSkill    SubSkill @relation(fields: [subSkillId], references: [id])
+  competency  Competency @relation(fields: [competencyId], references: [id])
 
   @@map("Criterion")
 }
@@ -130,22 +130,8 @@ model Position {
   updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
   creator        User               @relation(fields: [creatorId], references: [id])
   questions      PositionQuestion[]
-  skills         PositionSkill[]
 
   @@map("Position")
-}
-
-model PositionSkill {
-  id           String   @id @default(uuid()) @db.Uuid
-  positionId   String   @map("position_id") @db.Uuid
-  categoryName String   @map("category_name")
-  skillName    String   @map("skill_name")
-  competencies String[]
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  position     Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
-
-  @@map("PositionSkill")
 }
 
 model PositionQuestion {
@@ -168,7 +154,7 @@ model QuestionCompetency {
   createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6) 
   question     PositionQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  competency   SubSkill         @relation(fields: [competencyId], references: [id])
+  competency   Competency       @relation(fields: [competencyId], references: [id])
 
   @@unique([questionId, competencyId])
   @@map("QuestionCompetency")

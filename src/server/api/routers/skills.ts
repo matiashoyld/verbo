@@ -103,8 +103,8 @@ export const skillsRouter = createTRPCRouter({
             update: {},
           });
 
-          // Find or create subskill (competency)
-          const subSkill = await ctx.db.subSkill.upsert({
+          // Find or create competency
+          const competency = await ctx.db.competency.upsert({
             where: {
               skillId_name: {
                 skillId: skill.id,
@@ -122,7 +122,7 @@ export const skillsRouter = createTRPCRouter({
           await ctx.db.criterion.create({
             data: {
               description: record.criteria,
-              subSkillId: subSkill.id,
+              competencyId: competency.id,
             },
           });
         }
@@ -161,7 +161,7 @@ export const skillsRouter = createTRPCRouter({
         include: {
           skills: {
             include: {
-              subSkills: {
+              competencies: {
                 include: {
                   criteria: true,
                 },
@@ -236,7 +236,7 @@ export const skillsRouter = createTRPCRouter({
       }
     }),
     
-  // Update procedures for categories, skills, and subskills
+  // Update procedures for categories, skills, and competencies
   updateCategory: protectedProcedure
     .input(z.object({ id: z.string(), name: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -321,17 +321,19 @@ export const skillsRouter = createTRPCRouter({
       }
     }),
     
-  updateSubSkill: protectedProcedure
+  updateCompetency: protectedProcedure
     .input(z.object({ id: z.string(), name: z.string() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        // Skip user role check during development
         if (process.env.NODE_ENV === "development") {
-          console.log("Development mode: Skipping user role check for updateSubSkill");
+          console.log("Development mode: Skipping user role check for updateCompetency");
         } else {
-          // For production, you'd want proper role checking
+          // Find user by alternative method since we can't rely on ctx.user directly
+          const { userId } = ctx;
+          
           const users = await ctx.db.user.findMany({
             where: {
+              // Add search conditions that might work better with your data
               role: "RECRUITER",
             },
             take: 1,
@@ -341,20 +343,20 @@ export const skillsRouter = createTRPCRouter({
           
           if (!user || user.role !== "RECRUITER") {
             throw new TRPCError({
-              code: "UNAUTHORIZED",
+              code: "FORBIDDEN",
               message: "Only recruiters can update competencies",
             });
           }
         }
-        
-        const subSkill = await ctx.db.subSkill.update({
+
+        const competency = await ctx.db.competency.update({
           where: { id: input.id },
           data: { name: input.name },
         });
-        
-        return subSkill;
+
+        return competency;
       } catch (error) {
-        console.error("Error updating subSkill:", error);
+        console.error("Error updating competency:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update competency",
@@ -393,20 +395,20 @@ export const skillsRouter = createTRPCRouter({
         // First, find all skills associated with this category
         const skills = await ctx.db.skill.findMany({
           where: { categoryId: input.id },
-          include: { subSkills: true },
+          include: { competencies: true },
         });
 
-        // For each skill, delete its subskills and then the skill itself
+        // For each skill, delete its competencies and then the skill itself
         for (const skill of skills) {
-          // For each subskill, delete its criteria
-          for (const subSkill of skill.subSkills) {
+          // For each competency, delete its criteria
+          for (const competency of skill.competencies) {
             await ctx.db.criterion.deleteMany({
-              where: { subSkillId: subSkill.id },
+              where: { competencyId: competency.id },
             });
           }
           
-          // Delete all subskills for this skill
-          await ctx.db.subSkill.deleteMany({
+          // Delete all competencies for this skill
+          await ctx.db.competency.deleteMany({
             where: { skillId: skill.id },
           });
           
@@ -458,20 +460,20 @@ export const skillsRouter = createTRPCRouter({
           }
         }
 
-        // First find all subskills associated with this skill
-        const subSkills = await ctx.db.subSkill.findMany({
+        // First find all competencies associated with this skill
+        const competencies = await ctx.db.competency.findMany({
           where: { skillId: input.id },
         });
         
-        // For each subskill, delete its criteria
-        for (const subSkill of subSkills) {
+        // For each competency, delete its criteria
+        for (const competency of competencies) {
           await ctx.db.criterion.deleteMany({
-            where: { subSkillId: subSkill.id },
+            where: { competencyId: competency.id },
           });
         }
         
-        // Delete all subskills for this skill
-        await ctx.db.subSkill.deleteMany({
+        // Delete all competencies for this skill
+        await ctx.db.competency.deleteMany({
           where: { skillId: input.id },
         });
         
@@ -491,13 +493,13 @@ export const skillsRouter = createTRPCRouter({
       }
     }),
 
-  deleteSubSkill: protectedProcedure
+  deleteCompetency: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       try {
         // Skip user role check during development
         if (process.env.NODE_ENV === "development") {
-          console.log("Development mode: Skipping user role check for deleteSubSkill");
+          console.log("Development mode: Skipping user role check for deleteCompetency");
         } else {
           // For production, you'd want proper role checking
           const users = await ctx.db.user.findMany({
@@ -511,29 +513,28 @@ export const skillsRouter = createTRPCRouter({
           
           if (!user || user.role !== "RECRUITER") {
             throw new TRPCError({
-              code: "UNAUTHORIZED",
+              code: "FORBIDDEN",
               message: "Only recruiters can delete competencies",
             });
           }
         }
 
-        // First delete all criteria for this subskill
+        // First delete all criteria for this competency
         await ctx.db.criterion.deleteMany({
-          where: { subSkillId: input.id },
+          where: { competencyId: input.id },
         });
         
-        // Now delete the subskill itself
-        const subSkill = await ctx.db.subSkill.delete({
+        // Now delete the competency itself
+        const competency = await ctx.db.competency.delete({
           where: { id: input.id },
         });
         
-        return subSkill;
+        return competency;
       } catch (error) {
-        console.error("Error deleting subskill:", error);
+        console.error("Error deleting competency:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to delete competency",
-          cause: error,
         });
       }
     }),
@@ -637,7 +638,7 @@ export const skillsRouter = createTRPCRouter({
       }
     }),
 
-  createSubSkill: protectedProcedure
+  createCompetency: protectedProcedure
     .input(z.object({ 
       id: z.string(), 
       name: z.string(),
@@ -648,7 +649,7 @@ export const skillsRouter = createTRPCRouter({
       try {
         // Skip user role check during development
         if (process.env.NODE_ENV === "development") {
-          console.log("Development mode: Skipping user role check for createSubSkill");
+          console.log("Development mode: Skipping user role check for createCompetency");
         } else {
           // For production, you'd want proper role checking
           const users = await ctx.db.user.findMany({
@@ -662,14 +663,14 @@ export const skillsRouter = createTRPCRouter({
           
           if (!user || user.role !== "RECRUITER") {
             throw new TRPCError({
-              code: "UNAUTHORIZED",
+              code: "FORBIDDEN",
               message: "Only recruiters can create competencies",
             });
           }
         }
         
-        // Create the subskill
-        const subSkill = await ctx.db.subSkill.create({
+        // Create the competency
+        const competency = await ctx.db.competency.create({
           data: { 
             id: input.id,
             name: input.name,
@@ -685,9 +686,9 @@ export const skillsRouter = createTRPCRouter({
           }
         });
         
-        return subSkill;
+        return competency;
       } catch (error) {
-        console.error("Error creating subskill:", error);
+        console.error("Error creating competency:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create competency",

@@ -70,7 +70,7 @@ async function seedSkillTaxonomy() {
   // Clear existing data to avoid conflicts
   console.log('Clearing existing data...');
   await prisma.criterion.deleteMany({});
-  await prisma.subSkill.deleteMany({});
+  await prisma.competency.deleteMany({});
   await prisma.skill.deleteMany({});
   await prisma.category.deleteMany({});
   
@@ -109,8 +109,8 @@ async function seedSkillTaxonomy() {
     skillIdMap.set(skill.id, createdSkill.id);
   }
   
-  // Finally, create competencies as subskills with their criteria
-  console.log('Creating competencies (subskills) and criteria...');
+  // Finally, create competencies with their criteria
+  console.log('Creating competencies and criteria...');
   for (const competency of taxonomyData.competencies) {
     const skillUuid = skillIdMap.get(competency.skillId);
     if (!skillUuid) {
@@ -119,13 +119,13 @@ async function seedSkillTaxonomy() {
     }
     
     try {
-      // Create the subskill
-      const subSkill = await prisma.subSkill.create({
+      // Create the competency
+      const createdCompetency = await prisma.competency.create({
         data: {
           name: competency.name,
           numId: competency.id,
           skillId: skillUuid,
-          // Create the criterion as part of the subskill creation
+          // Create the criterion as part of the competency creation
           criteria: {
             create: {
               description: competency.criteria
@@ -134,9 +134,9 @@ async function seedSkillTaxonomy() {
         }
       });
       
-      console.log(`Created subskill: ${competency.name} with ID ${subSkill.id}`);
+      console.log(`Created competency: ${competency.name} with ID ${createdCompetency.id}`);
     } catch (error: any) {
-      console.warn(`Failed to create subskill ${competency.name} for skill ID ${competency.skillId}: ${error.message}`);
+      console.warn(`Failed to create competency ${competency.name} for skill ID ${competency.skillId}: ${error.message}`);
     }
   }
   

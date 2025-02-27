@@ -1,9 +1,24 @@
 "use client";
 
-import { Briefcase, Plus } from "lucide-react";
+import {
+  Briefcase,
+  ExternalLink,
+  Link,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -20,6 +35,7 @@ import {
 } from "~/components/ui/tooltip";
 import { api } from "~/trpc/react";
 import { NewPositionDialog } from "./components/NewPositionDialog";
+import { ViewPositionDialog } from "./components/ViewPositionDialog";
 
 // Define the type for the position data returned from the API
 interface Position {
@@ -32,10 +48,64 @@ interface Position {
 
 export default function PositionsPage() {
   // Fetch positions from the API
-  const { data: positions, isLoading } = api.positions.getPositions.useQuery();
+  const {
+    data: positions,
+    isLoading,
+    refetch,
+  } = api.positions.getPositions.useQuery();
 
-  // State for controlling the dialog
-  const [dialogOpen, setDialogOpen] = useState(false);
+  // State for controlling the dialogs
+  const [newDialogOpen, setNewDialogOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // State for tracking the selected position
+  const [selectedPositionId, setSelectedPositionId] = useState<string | null>(
+    null,
+  );
+  const [positionToDelete, setPositionToDelete] = useState<Position | null>(
+    null,
+  );
+
+  // TRPC mutation for deleting a position
+  const deletePositionMutation = api.positions.deletePosition.useMutation({
+    onSuccess: () => {
+      toast.success("Position deleted", {
+        description: "The position and all associated data have been removed.",
+      });
+      refetch();
+    },
+    onError: (error) => {
+      toast.error("Error deleting position", {
+        description: error.message,
+      });
+    },
+  });
+
+  // Function to handle position deletion
+  const handleDeletePosition = () => {
+    if (positionToDelete) {
+      deletePositionMutation.mutate({ id: positionToDelete.id });
+      setDeleteDialogOpen(false);
+      setPositionToDelete(null);
+    }
+  };
+
+  // Function to copy position link to clipboard
+  const copyPositionLink = (position: Position) => {
+    const link = `${window.location.origin}/dashboard/positions/${position.id}`;
+    navigator.clipboard.writeText(link).then(() => {
+      toast.success("Link copied", {
+        description: "Position link copied to clipboard.",
+      });
+    });
+  };
+
+  // Function to handle view position
+  const handleViewPosition = (position: Position) => {
+    setSelectedPositionId(position.id);
+    setViewDialogOpen(true);
+  };
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -43,7 +113,7 @@ export default function PositionsPage() {
         <h2 className="text-3xl font-bold tracking-tight">Positions</h2>
         <Button
           className="bg-verbo-purple hover:bg-verbo-purple/90"
-          onClick={() => setDialogOpen(true)}
+          onClick={() => setNewDialogOpen(true)}
         >
           <Plus className="mr-2 h-4 w-4" />
           New Position
@@ -51,7 +121,14 @@ export default function PositionsPage() {
       </div>
 
       {/* New Position Dialog */}
-      <NewPositionDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <NewPositionDialog open={newDialogOpen} onOpenChange={setNewDialogOpen} />
+
+      {/* View Position Dialog */}
+      <ViewPositionDialog
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+        positionId={selectedPositionId}
+      />
 
       <Card>
         <CardHeader>
@@ -69,7 +146,7 @@ export default function PositionsPage() {
                   <TableHead>Position</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Questions</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -99,14 +176,48 @@ export default function PositionsPage() {
                       </TableCell>
                       <TableCell>{position.questionCount}</TableCell>
                       <TableCell>
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            View
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            Edit
-                          </Button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-[160px]"
+                          >
+                            <DropdownMenuItem
+                              className="flex cursor-pointer items-center gap-2 text-sm"
+                              onClick={() => handleViewPosition(position)}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              <span>View</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="flex cursor-pointer items-center gap-2 text-sm"
+                              onClick={() => copyPositionLink(position)}
+                            >
+                              <Link className="h-4 w-4" />
+                              <span>Copy link</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="flex cursor-pointer items-center gap-2 text-sm text-destructive focus:text-destructive"
+                              onClick={() => {
+                                setPositionToDelete(position);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>Remove</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
@@ -168,6 +279,33 @@ export default function PositionsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg">
+            <h2 className="mb-4 text-xl font-semibold">
+              Are you absolutely sure?
+            </h2>
+            <p className="mb-6 text-sm text-muted-foreground">
+              This will permanently delete the position "
+              {positionToDelete?.title}" and all associated questions and
+              competencies. This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeletePosition}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -17,8 +17,8 @@ export type TaxonomyState = {
   setEditingCategoryId: React.Dispatch<React.SetStateAction<string | null>>;
   editingSkillId: string | null;
   setEditingSkillId: React.Dispatch<React.SetStateAction<string | null>>;
-  editingSubSkillId: string | null;
-  setEditingSubSkillId: React.Dispatch<React.SetStateAction<string | null>>;
+  editingCompetencyId: string | null;
+  setEditingCompetencyId: React.Dispatch<React.SetStateAction<string | null>>;
   editName: string;
   setEditName: React.Dispatch<React.SetStateAction<string>>;
   previousName: string;
@@ -51,7 +51,7 @@ export function useTaxonomyState(initialCategories: Category[]): TaxonomyState {
   // Editing states
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
-  const [editingSubSkillId, setEditingSubSkillId] = useState<string | null>(null);
+  const [editingCompetencyId, setEditingCompetencyId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [previousName, setPreviousName] = useState(""); 
 
@@ -89,8 +89,8 @@ export function useTaxonomyState(initialCategories: Category[]): TaxonomyState {
     setEditingCategoryId,
     editingSkillId,
     setEditingSkillId,
-    editingSubSkillId,
-    setEditingSubSkillId,
+    editingCompetencyId,
+    setEditingCompetencyId,
     editName,
     setEditName,
     previousName,

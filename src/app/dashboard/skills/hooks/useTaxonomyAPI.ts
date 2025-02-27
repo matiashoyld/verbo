@@ -33,8 +33,8 @@ export function useTaxonomyAPI() {
     },
   });
 
-  const updateSubSkill = api.skills.updateSubSkill.useMutation({
-    onSuccess: (/* _updatedSubSkill */) => {
+  const updateCompetency = api.skills.updateCompetency.useMutation({
+    onSuccess: (/* _updatedCompetency */) => {
       savingRef.current = false;
     },
     onError: () => {
@@ -75,7 +75,7 @@ export function useTaxonomyAPI() {
     },
   });
 
-  const deleteSubSkill = api.skills.deleteSubSkill.useMutation({
+  const deleteCompetency = api.skills.deleteCompetency.useMutation({
     onSuccess: () => {
       toast.success("Competency deleted successfully", {
         position: "bottom-right",
@@ -108,7 +108,7 @@ export function useTaxonomyAPI() {
     },
   });
 
-  const createSubSkill = api.skills.createSubSkill.useMutation({
+  const createCompetency = api.skills.createCompetency.useMutation({
     onError: () => {
       toast.error("Failed to save competency to database", {
         position: "bottom-right",
@@ -121,12 +121,12 @@ export function useTaxonomyAPI() {
     savingRef,
     updateCategory,
     updateSkill,
-    updateSubSkill,
+    updateCompetency,
     deleteCategory,
     deleteSkill,
-    deleteSubSkill,
+    deleteCompetency,
     createCategory,
     createSkill,
-    createSubSkill
+    createCompetency
   };
 } 

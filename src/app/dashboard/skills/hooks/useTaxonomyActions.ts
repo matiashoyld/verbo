@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import type { Category, Skill, SubSkill } from "~/types/skills";
+import type { Category, CompetencyModel, Skill } from "~/types/skills";
 import { useTaxonomyAPI } from "./useTaxonomyAPI";
 import type { TaxonomyState } from "./useTaxonomyState";
 
@@ -18,8 +18,8 @@ export function useTaxonomyActions({
   setEditingCategoryId,
   editingSkillId,
   setEditingSkillId,
-  editingSubSkillId,
-  setEditingSubSkillId,
+  editingCompetencyId,
+  setEditingCompetencyId,
   editName,
   setEditName,
   previousName,
@@ -34,24 +34,24 @@ export function useTaxonomyActions({
     savingRef,
     updateCategory,
     updateSkill,
-    updateSubSkill,
+    updateCompetency,
     deleteCategory,
     deleteSkill,
-    deleteSubSkill,
+    deleteCompetency,
     createCategory,
     createSkill,
-    createSubSkill,
+    createCompetency,
   } = useTaxonomyAPI();
 
   // Handlers for selection
   const handleCategorySelect = (category: Category) => {
-    if (editingCategoryId || editingSkillId || editingSubSkillId) return;
+    if (editingCategoryId || editingSkillId || editingCompetencyId) return;
     setSelectedCategory(category);
     setSelectedSkill(null);
   };
 
   const handleSkillSelect = (skill: Skill) => {
-    if (editingCategoryId || editingSkillId || editingSubSkillId) return;
+    if (editingCategoryId || editingSkillId || editingCompetencyId) return;
     setSelectedSkill(skill);
   };
 
@@ -70,11 +70,11 @@ export function useTaxonomyActions({
     setPreviousName(skill.name);
   };
 
-  const startEditingSubSkill = (e: React.MouseEvent, subSkill: SubSkill) => {
+  const startEditingCompetency = (e: React.MouseEvent, competency: CompetencyModel) => {
     e.stopPropagation();
-    setEditingSubSkillId(subSkill.id);
-    setEditName(subSkill.name);
-    setPreviousName(subSkill.name);
+    setEditingCompetencyId(competency.id);
+    setEditName(competency.name);
+    setPreviousName(competency.name);
   };
 
   // Handlers for saving edits
@@ -226,19 +226,19 @@ export function useTaxonomyActions({
     }
   };
 
-  const handleSaveSubSkill = async () => {
-    if (!editingSubSkillId || !editName.trim() || savingRef.current) {
-      setEditingSubSkillId(null);
+  const handleSaveCompetency = async () => {
+    if (!editingCompetencyId || !editName.trim() || savingRef.current) {
+      setEditingCompetencyId(null);
       return;
     }
 
     // Skip if there's no change
     if (selectedSkill) {
-      const subSkill = selectedSkill.subSkills.find(
-        (ss: SubSkill) => ss.id === editingSubSkillId
+      const competency = selectedSkill.competencies.find(
+        (c: CompetencyModel) => c.id === editingCompetencyId
       );
-      if (subSkill && subSkill.name === editName.trim()) {
-        setEditingSubSkillId(null);
+      if (competency && competency.name === editName.trim()) {
+        setEditingCompetencyId(null);
         savingRef.current = false;
         return;
       }
@@ -249,15 +249,15 @@ export function useTaxonomyActions({
     try {
       // First update local state
       if (selectedSkill) {
-        const updatedSubSkills = selectedSkill.subSkills.map((subSkill: SubSkill) =>
-          subSkill.id === editingSubSkillId
-            ? { ...subSkill, name: editName.trim() }
-            : subSkill
+        const updatedCompetencies = selectedSkill.competencies.map((competency: CompetencyModel) =>
+          competency.id === editingCompetencyId
+            ? { ...competency, name: editName.trim() }
+            : competency
         );
 
         const updatedSkill = {
           ...selectedSkill,
-          subSkills: updatedSubSkills,
+          competencies: updatedCompetencies,
         };
 
         // Update the selected skill first
@@ -275,8 +275,8 @@ export function useTaxonomyActions({
       }
 
       // Save to database
-      const result = await updateSubSkill.mutateAsync({
-        id: editingSubSkillId,
+      const result = await updateCompetency.mutateAsync({
+        id: editingCompetencyId,
         name: editName.trim(),
       });
       
@@ -288,7 +288,7 @@ export function useTaxonomyActions({
           description: `Changed from "${oldName}" to "${result.name}"`,
           action: {
             label: "Undo",
-            onClick: () => handleUndoSubSkillEdit(result.id, oldName),
+            onClick: () => handleUndoCompetencyEdit(result.id, oldName),
           },
         });
       }
@@ -296,7 +296,7 @@ export function useTaxonomyActions({
       console.error("Error saving competency:", error);
       savingRef.current = false;
     } finally {
-      setEditingSubSkillId(null);
+      setEditingCompetencyId(null);
     }
   };
 
@@ -305,11 +305,11 @@ export function useTaxonomyActions({
     if (e.key === "Enter") {
       if (editingCategoryId) handleSaveCategory();
       if (editingSkillId) handleSaveSkill();
-      if (editingSubSkillId) handleSaveSubSkill();
+      if (editingCompetencyId) handleSaveCompetency();
     } else if (e.key === "Escape") {
       setEditingCategoryId(null);
       setEditingSkillId(null);
-      setEditingSubSkillId(null);
+      setEditingCompetencyId(null);
       savingRef.current = false;
     }
   };
@@ -319,7 +319,7 @@ export function useTaxonomyActions({
     if (!savingRef.current) {
       if (editingCategoryId) handleSaveCategory();
       if (editingSkillId) handleSaveSkill();
-      if (editingSubSkillId) handleSaveSubSkill();
+      if (editingCompetencyId) handleSaveCompetency();
     }
   };
 
@@ -360,7 +360,7 @@ export function useTaxonomyActions({
     const newSkill: Skill = {
       id: newId,
       name: name.trim(),
-      subSkills: [],
+      competencies: [],
     };
 
     // Update the categories state
@@ -403,7 +403,7 @@ export function useTaxonomyActions({
     const criterionDescription =
       description || "Define criteria for this competency";
 
-    const newCompetency: SubSkill = {
+    const newCompetency: CompetencyModel = {
       id: newId,
       name: name.trim(),
       criteria: [
@@ -417,7 +417,7 @@ export function useTaxonomyActions({
     // Update the selectedSkill state
     const updatedSkill = {
       ...selectedSkill,
-      subSkills: [...selectedSkill.subSkills, newCompetency],
+      competencies: [...selectedSkill.competencies, newCompetency],
     };
     setSelectedSkill(updatedSkill);
 
@@ -443,7 +443,7 @@ export function useTaxonomyActions({
 
     try {
       // Save to database
-      await createSubSkill.mutateAsync({
+      await createCompetency.mutateAsync({
         id: newId,
         name: name.trim(),
         skillId: selectedSkill.id,
@@ -535,17 +535,17 @@ export function useTaxonomyActions({
     }
   };
 
-  const handleDeleteSubSkill = async (subSkillId: string) => {
+  const handleDeleteCompetency = async (competencyId: string) => {
     if (!selectedSkill) return;
 
-    const subSkill = selectedSkill.subSkills.find((ss: SubSkill) => ss.id === subSkillId);
-    if (!subSkill) return;
+    const competency = selectedSkill.competencies.find((c: CompetencyModel) => c.id === competencyId);
+    if (!competency) return;
 
     try {
       // Update local state
       const updatedSkill = {
         ...selectedSkill,
-        subSkills: selectedSkill.subSkills.filter((ss: SubSkill) => ss.id !== subSkillId),
+        competencies: selectedSkill.competencies.filter((c: CompetencyModel) => c.id !== competencyId),
       };
       setSelectedSkill(updatedSkill);
 
@@ -559,11 +559,11 @@ export function useTaxonomyActions({
       setCategories(newCategories);
 
       // Delete from database
-      await deleteSubSkill.mutateAsync({ id: subSkillId });
+      await deleteCompetency.mutateAsync({ id: competencyId });
     } catch (error) {
       console.error("Error deleting competency:", error);
     } finally {
-      setEditingSubSkillId(null);
+      setEditingCompetencyId(null);
     }
   };
 
@@ -593,7 +593,7 @@ export function useTaxonomyActions({
         void handleDeleteSkill(itemToDelete.id);
         break;
       case "competency":
-        void handleDeleteSubSkill(itemToDelete.id);
+        void handleDeleteCompetency(itemToDelete.id);
         break;
     }
   };
@@ -665,18 +665,18 @@ export function useTaxonomyActions({
     });
   };
 
-  const handleUndoSubSkillEdit = (subSkillId: string, oldName: string) => {
+  const handleUndoCompetencyEdit = (competencyId: string, oldName: string) => {
     if (!selectedSkill) return;
 
-    // Find the subskill
-    const subSkill = selectedSkill.subSkills.find((ss: SubSkill) => ss.id === subSkillId);
-    if (!subSkill) return;
+    // Find the competency
+    const competency = selectedSkill.competencies.find((c: CompetencyModel) => c.id === competencyId);
+    if (!competency) return;
 
     // Update local state
     const updatedSkill = {
       ...selectedSkill,
-      subSkills: selectedSkill.subSkills.map((ss: SubSkill) =>
-        ss.id === subSkillId ? { ...ss, name: oldName } : ss
+      competencies: selectedSkill.competencies.map((c: CompetencyModel) =>
+        c.id === competencyId ? { ...c, name: oldName } : c
       ),
     };
 
@@ -693,7 +693,7 @@ export function useTaxonomyActions({
     setCategories(newCategories);
 
     // Save to database
-    void updateSubSkill.mutate({ id: subSkillId, name: oldName });
+    void updateCompetency.mutate({ id: competencyId, name: oldName });
 
     toast.success("Competency name reverted", {
       position: "bottom-right",
@@ -709,10 +709,10 @@ export function useTaxonomyActions({
     // Edit handlers
     startEditingCategory,
     startEditingSkill,
-    startEditingSubSkill,
+    startEditingCompetency,
     handleSaveCategory,
     handleSaveSkill,
-    handleSaveSubSkill,
+    handleSaveCompetency,
     handleEditInputKeyDown,
     handleEditInputBlur,
     
@@ -724,13 +724,13 @@ export function useTaxonomyActions({
     // Delete handlers
     handleDeleteCategory,
     handleDeleteSkill,
-    handleDeleteSubSkill,
+    handleDeleteCompetency,
     openDeleteDialog,
     handleDeleteConfirm,
     
     // Undo handlers
     handleUndoCategoryEdit,
     handleUndoSkillEdit,
-    handleUndoSubSkillEdit,
+    handleUndoCompetencyEdit,
   };
 } 

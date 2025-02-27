@@ -8,35 +8,43 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 
+interface ItemToDelete {
+  id: string;
+  name: string;
+  type: "category" | "skill" | "competency";
+}
+
 interface DeleteConfirmDialogProps {
   open: boolean;
-  setOpen: (open: boolean) => void;
-  itemName: string;
-  itemType: "category" | "skill" | "competency";
-  onConfirm: () => void;
+  onOpenChange: (open: boolean) => void;
+  itemToDelete: ItemToDelete | null;
+  onConfirmDelete: () => void;
 }
 
 export function DeleteConfirmDialog({
   open,
-  setOpen,
-  itemName,
-  itemType,
-  onConfirm,
+  onOpenChange,
+  itemToDelete,
+  onConfirmDelete,
 }: DeleteConfirmDialogProps) {
+  if (!itemToDelete) return null;
+
+  const { name, type } = itemToDelete;
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Delete {itemType}</DialogTitle>
+          <DialogTitle>Delete {type}</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete &quot;{itemName}&quot;?
-            {itemType === "category" && (
+            Are you sure you want to delete &quot;{name}&quot;?
+            {type === "category" && (
               <span className="mt-2 block text-sm font-medium text-red-500">
                 This will also delete all skills and competencies within this
                 category.
               </span>
             )}
-            {itemType === "skill" && (
+            {type === "skill" && (
               <span className="mt-2 block text-sm font-medium text-red-500">
                 This will also delete all competencies within this skill.
               </span>
@@ -47,7 +55,7 @@ export function DeleteConfirmDialog({
           <Button
             type="button"
             variant="outline"
-            onClick={() => setOpen(false)}
+            onClick={() => onOpenChange(false)}
           >
             Cancel
           </Button>
@@ -55,8 +63,8 @@ export function DeleteConfirmDialog({
             type="button"
             variant="destructive"
             onClick={() => {
-              onConfirm();
-              setOpen(false);
+              onConfirmDelete();
+              onOpenChange(false);
             }}
           >
             Delete

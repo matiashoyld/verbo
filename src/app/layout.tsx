@@ -29,7 +29,7 @@ export default function RootLayout({
           <TRPCReactProvider>
             <MainNav />
             {children}
-            <Toaster richColors position="top-center" />
+            <Toaster richColors position="bottom-right" />
           </TRPCReactProvider>
         </ClerkProvider>
       </body>
