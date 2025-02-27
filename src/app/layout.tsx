@@ -5,7 +5,7 @@ import { GeistSans } from "geist/font/sans";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 
-import { MainNav } from "~/components/ui/nav";
+import { NavbarWrapper } from "~/components/ui/navbar-wrapper";
 import { TRPCReactProvider } from "~/trpc/react";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -27,7 +27,7 @@ export default function RootLayout({
       <body className={`font-sans ${inter.variable} ${fontSans.variable}`}>
         <ClerkProvider>
           <TRPCReactProvider>
-            <MainNav />
+            <NavbarWrapper />
             {children}
             <Toaster richColors position="bottom-right" />
           </TRPCReactProvider>

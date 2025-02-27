@@ -42,7 +42,7 @@ function SidebarNav({
 }: {
   className?: string;
   items: { href: string; title: string }[];
-  [key: string]: any;
+  [key: string]: unknown;
 }) {
   const pathname = usePathname();
 

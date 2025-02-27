@@ -739,6 +739,74 @@ export const positionsRouter = createTRPCRouter({
         throw new Error("Failed to update position questions");
       }
     }),
+
+  // Public procedure to get position by ID for candidate view
+  getPositionByIdPublic: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        // Fetch the position with creator information
+        const position = await ctx.db.$queryRaw<Array<{
+          id: string;
+          title: string;
+          job_description: string;
+          context: string;
+          created_at: Date;
+          creator_id: string;
+          creator_name: string | null;
+        }>>`
+          SELECT 
+            p.id, 
+            p.title, 
+            p."jobDescription" as job_description, 
+            p.context, 
+            p.created_at,
+            p.creator_id,
+            u.name as creator_name
+          FROM "Position" p
+          LEFT JOIN "User" u ON p.creator_id = u.id
+          WHERE p.id = ${input.id}::uuid
+        `;
+
+        if (!position || position.length === 0) {
+          return null; // Return null instead of throwing an error
+        }
+
+        // Now we know position[0] exists
+        const positionData = position[0]!;
+
+        // Fetch the questions for this position
+        const questions = await ctx.db.$queryRaw<Array<{
+          id: string;
+          question: string;
+          context: string;
+        }>>`
+          SELECT id, question, context
+          FROM "PositionQuestion"
+          WHERE position_id = ${input.id}::uuid
+          ORDER BY created_at ASC
+        `;
+
+        // Return formatted position data
+        return {
+          id: positionData.id,
+          title: positionData.title,
+          jobDescription: positionData.job_description,
+          context: positionData.context,
+          createdAt: positionData.created_at.toISOString(),
+          creatorId: positionData.creator_id,
+          creatorName: positionData.creator_name,
+          questions: questions.map(q => ({
+            id: q.id,
+            question: q.question,
+            context: q.context,
+          })),
+        };
+      } catch (error) {
+        console.error("Error fetching position by ID (public):", error);
+        return null;
+      }
+    }),
 });
 
 /**

@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
@@ -142,15 +143,48 @@ export function ViewPositionDialog({
     });
   };
 
+  // Function to copy the candidate submission link
+  const copyCandidateLink = () => {
+    if (!positionId) return;
+
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const candidateLink = `${origin}/candidate/position/${positionId}`;
+
+    navigator.clipboard
+      .writeText(candidateLink)
+      .then(() => {
+        toast.success("Candidate link copied", {
+          description:
+            "The link has been copied to your clipboard. Share it with your candidates.",
+        });
+      })
+      .catch(() => {
+        toast.error("Failed to copy link", {
+          description: "Please try again or copy it manually.",
+        });
+      });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col p-0">
         {/* Dialog Header */}
         <div className="p-5">
           <DialogHeader className="text-center sm:text-left">
-            <DialogTitle className="text-lg font-semibold leading-none tracking-tight">
-              {position?.title || "Position Details"}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-semibold leading-none tracking-tight">
+                {position?.title || "Position Details"}
+              </DialogTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 border-verbo-purple/20 text-verbo-purple hover:bg-verbo-purple/10"
+                onClick={copyCandidateLink}
+              >
+                <Link className="h-4 w-4" />
+                <span>Copy Candidate Link</span>
+              </Button>
+            </div>
             <p className="text-sm text-muted-foreground">
               Review and edit the assessment case and questions.
             </p>

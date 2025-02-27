@@ -91,14 +91,26 @@ export default function PositionsPage() {
     }
   };
 
-  // Function to copy position link to clipboard
+  // Function to copy position link to clipboard - ensure it uses the correct path format
   const copyPositionLink = (position: Position) => {
-    const link = `${window.location.origin}/recruiter/positions/${position.id}`;
-    navigator.clipboard.writeText(link).then(() => {
-      toast.success("Link copied", {
-        description: "Position link copied to clipboard.",
+    // Create the URL with the format /candidate/position/[id]
+    const link = `${window.location.origin}/candidate/position/${position.id}`;
+
+    // Copy to clipboard
+    navigator.clipboard
+      .writeText(link)
+      .then(() => {
+        toast.success("Candidate link copied", {
+          description:
+            "The link has been copied to clipboard. Share it with your candidates for them to apply.",
+        });
+      })
+      .catch((error) => {
+        console.error("Failed to copy link:", error);
+        toast.error("Failed to copy link", {
+          description: "Please try again or copy the URL manually.",
+        });
       });
-    });
   };
 
   // Function to handle view position
