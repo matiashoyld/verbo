@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GenerativeModel, GoogleGenerativeAI } from "@google/generative-ai";
 import {
   AISkillsResult,
   GeneratedAssessment,
@@ -13,52 +13,48 @@ process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) =>
 console.log("Initializing Gemini module");
 
 // Initialize variables that will be used across both normal and error code paths
-let IS_VERCEL = false;
-let API_TIMEOUT_MS = 30000;
+const IS_VERCEL = process.env.VERCEL === '1';
+const API_TIMEOUT_MS = IS_VERCEL ? 15000 : 30000; // Use shorter timeout in Vercel
 let genAI: GoogleGenerativeAI;
-let model: any;
+let model: GenerativeModel;
 
-// Flag to track initialization status
-let isInitialized = false;
+// Define types for database entities to avoid 'any' type errors
+interface CompetencyData {
+  name: string;
+  numId?: number | null;
+  selected?: boolean;
+}
+
+interface SkillData {
+  name: string;
+  numId?: number | null;
+  competencies: CompetencyData[];
+}
+
+interface CategoryData {
+  name: string;
+  numId?: number | null;
+  skills: SkillData[];
+}
+
+interface DatabaseData {
+  categories: CategoryData[];
+}
 
 // Functions that will be properly implemented based on initialization success
 let extractSkillsFromJobDescriptionImpl: (
   jobDescription: string,
-  allDatabaseData: any
+  allDatabaseData: DatabaseData
 ) => Promise<AISkillsResult>;
 
 let generateAssessmentCaseImpl: (
   jobDescription: string,
-  skillsData: any
+  skillsData: DatabaseData
 ) => Promise<GeneratedAssessment>;
-
-// Define types for database entities to avoid 'any' type errors
-type CompetencyData = {
-  name: string;
-  numId?: number | null;
-  selected?: boolean;
-};
-
-type SkillData = {
-  name: string;
-  numId?: number | null;
-  competencies: CompetencyData[];
-};
-
-type CategoryData = {
-  name: string;
-  numId?: number | null;
-  skills: SkillData[];
-};
-
-type DatabaseData = {
-  categories: CategoryData[];
-};
 
 // Global initialization error handling
 try {
   // Detect environment
-  IS_VERCEL = process.env.VERCEL === '1';
   console.log(`Environment detected: ${IS_VERCEL ? 'Vercel' : 'Local'}`);
 
   // Check API key before initialization
@@ -80,12 +76,8 @@ try {
   model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-thinking-exp-01-21" });
   console.log("Gemini model initialized successfully");
 
-  // Add API request timeout (shorter timeout for Vercel environment)
-  API_TIMEOUT_MS = IS_VERCEL ? 15000 : 30000; // Use shorter timeout in Vercel
+  // Log environment and timeout information
   console.log(`Environment: ${IS_VERCEL ? 'Vercel' : 'Local'}, Timeout: ${API_TIMEOUT_MS}ms`);
-
-  // Mark initialization as successful
-  isInitialized = true;
   
   // Implementation for successful initialization case
   extractSkillsFromJobDescriptionImpl = async (
@@ -113,8 +105,8 @@ try {
         })),
       };
       
-      // For debugging only - create a simplified implementation that 
-      // won't attempt to recreate all the functionality
+      // For debugging - log job description length and data size
+      console.log(`Job description length: ${jobDescription.length} characters`);
       console.log(`Processed data for AI: ${indexedData.categories.length} categories`);
       
       // This is a simplified stub - in a real implementation, we would include all the original code
@@ -143,6 +135,10 @@ try {
         throw new Error("Gemini model initialization failed");
       }
       
+      // Debug log job description length and data processing
+      console.log(`Job description length: ${jobDescription.length} characters`);
+      console.log(`Processing ${skillsData.categories.length} categories for assessment`);
+      
       // This is a simplified stub - in a real implementation, we would include all the original code
       // from the original function to process the data through the AI
       console.log("Simplified assessment generation implementation (stub)");
@@ -169,8 +165,13 @@ try {
   }
   
   // Implementation for error case
-  extractSkillsFromJobDescriptionImpl = async (): Promise<AISkillsResult> => {
+  extractSkillsFromJobDescriptionImpl = async (
+    jobDescription: string,
+    allDatabaseData: DatabaseData
+  ): Promise<AISkillsResult> => {
     console.error("Called extractSkillsFromJobDescription after initialization failure");
+    console.log(`Job description length (unused): ${jobDescription.length}`);
+    console.log(`Database data categories (unused): ${allDatabaseData.categories.length}`);
     return {
       categories: [{
         name: "Error",
@@ -185,8 +186,13 @@ try {
     };
   };
   
-  generateAssessmentCaseImpl = async (): Promise<GeneratedAssessment> => {
+  generateAssessmentCaseImpl = async (
+    jobDescription: string,
+    skillsData: DatabaseData
+  ): Promise<GeneratedAssessment> => {
     console.error("Called generateAssessmentCase after initialization failure");
+    console.log(`Job description length (unused): ${jobDescription.length}`);
+    console.log(`Skills data categories (unused): ${skillsData.categories.length}`);
     return {
       context: "Gemini API initialization error",
       questions: [{
@@ -214,6 +220,13 @@ export async function extractSkillsFromJobDescription(
   jobDescription: string,
   allDatabaseData: DatabaseData
 ): Promise<AISkillsResult> {
+  // Use the timeout in production to prevent hanging
+  if (IS_VERCEL) {
+    return Promise.race([
+      extractSkillsFromJobDescriptionImpl(jobDescription, allDatabaseData),
+      createTimeout(API_TIMEOUT_MS)
+    ]);
+  }
   return extractSkillsFromJobDescriptionImpl(jobDescription, allDatabaseData);
 }
 
@@ -221,6 +234,13 @@ export async function generateAssessmentCase(
   jobDescription: string,
   skillsData: DatabaseData
 ): Promise<GeneratedAssessment> {
+  // Use the timeout in production to prevent hanging
+  if (IS_VERCEL) {
+    return Promise.race([
+      generateAssessmentCaseImpl(jobDescription, skillsData),
+      createTimeout(API_TIMEOUT_MS)
+    ]);
+  }
   return generateAssessmentCaseImpl(jobDescription, skillsData);
 }
 
@@ -231,7 +251,7 @@ export async function safeExtractSkillsFromJobDescription(
 ): Promise<AISkillsResult> {
   try {
     console.log("Using safe extract skills wrapper");
-    return await extractSkillsFromJobDescriptionImpl(jobDescription, allDatabaseData);
+    return await extractSkillsFromJobDescription(jobDescription, allDatabaseData);
   } catch (error) {
     console.error("Safe extract skills wrapper caught error:", error);
     return {
@@ -255,7 +275,7 @@ export async function safeGenerateAssessmentCase(
 ): Promise<GeneratedAssessment> {
   try {
     console.log("Using safe assessment generation wrapper");
-    return await generateAssessmentCaseImpl(jobDescription, skillsData);
+    return await generateAssessmentCase(jobDescription, skillsData);
   } catch (error) {
     console.error("Safe assessment wrapper caught error:", error);
     return {
