@@ -23,6 +23,7 @@ A skill assessment platform that transforms the hiring process through AI-driven
   - [Authentication](#authentication)
   - [Deployment](#deployment)
   - [Additional Considerations](#additional-considerations)
+  - [Color Palette](#color-palette)
 
 ---
 
@@ -89,11 +90,17 @@ verbo.ai is built on the [T3 Stack](https://create.t3.gg/), which combines:
   - [TypeScript](https://www.typescriptlang.org/) – Type-safe development
   - [tRPC](https://trpc.io/) – End-to-end type-safe APIs
   - [Prisma](https://prisma.io/) – Type-safe ORM for DB interactions
-  - [Supabase](https://supabase.com) – Postgres database, auth, and storage
+  - [Supabase](https://supabase.com) – Postgres database and storage
+
+- **Authentication**:
+  - [Clerk](https://clerk.com/) – Full-featured authentication and user management
+
+- **AI Integration**:
+  - [Vercel AI SDK](https://sdk.vercel.ai/) – AI integration framework
+  - [OpenAI API](https://openai.com/api/) – GPT models for AI interactions
+  - [Google Generative AI](https://ai.google.dev/) – Advanced AI capabilities
 
 - **Additional Services / Tools**:  
-  - [Vercel AI SDK](https://sdk.vercel.ai/) – AI integration for assessments
-  - [OpenAI Whisper](https://openai.com/research/whisper) – Speech-to-text transcription
   - Hosted on [Vercel](https://vercel.com)
 
 ---
@@ -110,28 +117,29 @@ verbo/
 │  └─ migrations/ # Database migrations
 ├─ src/
 │  ├─ app/ # Next.js App Router pages
-│  │  ├─ (auth)/ # Authentication-related pages
 │  │  ├─ api/ # API routes
 │  │  │  ├─ trpc/[trpc]/ # tRPC handler
 │  │  │  └─ webhooks/ # External service webhooks
 │  │  ├─ recruiter/ # Recruiter dashboard and features
 │  │  ├─ candidate/ # Candidate assessment interface
+│  │  ├─ sign-in/ # Clerk authentication pages
+│  │  ├─ sign-up/ # Clerk authentication pages
 │  │  ├─ layout.tsx # Root layout
 │  │  └─ page.tsx # Landing page
 │  ├─ components/ # React components
+│  │  ├─ ui/ # shadcn/ui components
 │  │  ├─ recruiter/ # Recruiter-specific components
-│  │  ├─ candidate/ # Candidate-specific components
-│  │  └─ ui/ # Shared UI components (shadcn/ui)
+│  │  └─ candidate/ # Candidate-specific components
 │  ├─ lib/ # Utility functions and shared logic
 │  │  ├─ ai.ts # AI integration utilities
+│  │  ├─ prompts/ # LLM prompt templates
 │  │  └─ recording.ts # Audio/screen recording logic
+│  ├─ middleware.ts # Clerk authentication middleware
 │  ├─ server/ # Server-side code
 │  │  └─ api/ # tRPC routers and procedures
 │  ├─ styles/ # Global styles
 │  │  └─ globals.css # Tailwind imports
 │  ├─ trpc/ # tRPC configuration
-│  │  ├─ react.tsx # React hooks provider
-│  │  └─ server.ts # Server configuration
 │  ├─ types/ # TypeScript type definitions
 │  └─ utils/ # Helper functions
 ├─ public/ # Static assets
@@ -158,12 +166,22 @@ Before you begin, ensure you have the following installed and set up:
   npm --version  # Should be v9.x.x or higher
   ```
 
-- **Supabase Account** for database, auth, and storage
+- **Supabase Account** for database and storage
   1. Sign up at [supabase.com](https://supabase.com)
   2. Create a new project
-  3. Get your project URL and API keys
+  3. Set up your database and get your connection URLs
+
+- **Clerk Account** for authentication
+  1. Sign up at [clerk.com](https://clerk.com)
+  2. Create a new application
+  3. Get your API keys from the dashboard
+
 - **OpenAI API Key** for AI features
   1. Sign up at [platform.openai.com](https://platform.openai.com)
+  2. Create an API key in your dashboard
+
+- **Google AI API Key** for generative AI features
+  1. Sign up at [ai.google.dev](https://ai.google.dev)
   2. Create an API key in your dashboard
 
 ---
@@ -187,16 +205,20 @@ Before you begin, ensure you have the following installed and set up:
    Create a `.env` file in the root directory with the following variables:
 
    ```env
-   # Supabase Configuration (Required)
-   NEXT_PUBLIC_SUPABASE_URL="your-supabase-project-url"
-   NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
-   SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
+   # Database Configuration (Required)
+   DATABASE_URL="your-supabase-database-url"
+   DIRECT_URL="your-supabase-direct-connection-url"
+
+   # Clerk Authentication (Required)
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="your-clerk-publishable-key"
+   CLERK_SECRET_KEY="your-clerk-secret-key"
+   CLERK_WEBHOOK_SECRET="your-clerk-webhook-secret"
 
    # OpenAI (Required for AI features)
    OPENAI_API_KEY="your-openai-api-key"
 
    # Google Generative AI (Required for AI features)
-   GOOGLE_GENERATIVE_AI_API_KEY="your-google-generative-ai-api-key"
+   GOOGLE_AI_API_KEY="your-google-ai-api-key"
 
    # Node Environment
    NODE_ENV="development"
@@ -212,8 +234,10 @@ Before you begin, ensure you have the following installed and set up:
    # Generate Prisma Client
    npx prisma generate
 
-   # Run migrations
+   # Run migrations or push schema to database
    npx prisma migrate dev
+   # or
+   npx prisma db push
    ```
 
    c. (Optional) View your database with Prisma Studio:
@@ -234,18 +258,18 @@ Before you begin, ensure you have the following installed and set up:
 
    a. Visit [http://localhost:3000](http://localhost:3000)
 
-   b. Sign up using Supabase authentication
+   b. Sign up using Clerk authentication
 
 7. **Troubleshooting Common Issues**
 
    - If you get database connection errors:
-     - Verify your Supabase configuration
-     - Ensure your database is running
+     - Verify your Supabase database URL configuration
+     - Check that your database is running and accessible
      - Try running `npx prisma db push` to sync schema
 
    - If you get authentication errors:
-     - Verify your Supabase API keys
-     - Ensure all required environment variables are set
+     - Verify your Clerk API keys
+     - Ensure all required Clerk environment variables are set
 
    - If you get TypeScript errors:
      - Run `npm run typecheck` to see detailed errors
@@ -258,7 +282,7 @@ Before you begin, ensure you have the following installed and set up:
 Once the server is running:
 
 - Open <http://localhost:3000> to view the landing page
-- Sign in or sign up (via Supabase auth)
+- Sign in or sign up (via Clerk authentication)
 - Recruiters can create skill assessments, configure challenges, and review candidate performances
 - Candidates can participate in AI-guided interviews and receive immediate feedback
 
@@ -266,13 +290,14 @@ Once the server is running:
 
 ## Authentication
 
-verbo.ai uses [Supabase Auth](https://supabase.com/auth) for authentication and user management. By default, it provides:
+verbo.ai uses [Clerk](https://clerk.com) for authentication and user management. By default, it provides:
 
-- **Secure sign-in** with multiple methods (email, OAuth)
-- **User roles** for recruiters and candidates
-- **Protected endpoints** via Supabase middleware
+- **Secure sign-in** with multiple methods (email, social OAuth)
+- **User management** with roles and permissions
+- **Protected routes** via middleware
+- **WebAuthn** support for passwordless authentication
 
-Ensure you have properly set up your Supabase project and environment variables.
+Ensure you have properly set up your Clerk project and environment variables.
 
 ---
 
@@ -280,13 +305,19 @@ Ensure you have properly set up your Supabase project and environment variables.
 
 The app is deployed on [Vercel](https://vercel.com), and you can access the live version at [verbo-alpha.vercel.app](https://verbo-alpha.vercel.app/).
 
+For deploying your own instance:
+
+1. Set up a Vercel account and connect your repository
+2. Configure the environment variables in Vercel's dashboard
+3. Deploy the application
+
 ---
 
 ## Additional Considerations
 
 1. **AI Integration**  
    - Leverages [Vercel AI SDK](https://sdk.vercel.ai/) for skill assessment and analysis
-   - Uses [OpenAI Whisper](https://openai.com/research/whisper) for speech-to-text
+   - Uses multiple AI models including OpenAI's GPT models and Google's Generative AI
    - Implements streaming responses for real-time AI interaction
 
 2. **Recording & Storage**  
@@ -298,3 +329,20 @@ The app is deployed on [Vercel](https://vercel.com), and you can access the live
    - AI-powered skill evidence extraction
    - Comparative analytics across candidates
    - Customizable assessment criteria
+
+4. **LLM Prompts Management**
+   - All prompt templates stored in `src/lib/prompts/`
+   - Each prompt template in its own file for maintainability
+   - Exposed through `src/lib/prompts/index.ts`
+   - Function parameters for dynamic content injection
+
+## Color Palette
+
+verbo.ai uses a custom color palette defined in `tailwind.config.ts` under the 'verbo' namespace:
+
+- **verbo-green**: #73ea91 - Primary action, success states
+- **verbo-purple**: #872ce5 - Accent color, highlights
+- **verbo-blue**: #53a1e8 - Secondary actions, information
+- **verbo-dark**: #321864 - Text, headers, primary brand color
+
+These colors can be used with Tailwind classes like `text-verbo-dark` or `bg-verbo-purple` and support opacity modifiers.
