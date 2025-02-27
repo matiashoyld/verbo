@@ -260,118 +260,8 @@ export function AssessmentStep({
     }, 200);
   };
 
-  // Custom components for markdown rendering
+  // Custom components for markdown rendering - Using a single styling for both questions and context
   const MarkdownComponents: Components = {
-    // Style headings
-    h1: ({ ...props }) => (
-      <h1 className="mb-3 text-[14px] font-medium text-verbo-dark" {...props} />
-    ),
-    h2: ({ ...props }) => (
-      <h2
-        className="mb-2.5 mt-4 text-[13px] font-medium text-verbo-dark"
-        {...props}
-      />
-    ),
-    h3: ({ ...props }) => (
-      <h3
-        className="mb-2 mt-3 text-[12px] font-medium text-verbo-dark"
-        {...props}
-      />
-    ),
-    h4: ({ ...props }) => (
-      <h4
-        className="mb-2 mt-3 text-[11px] font-medium text-verbo-dark"
-        {...props}
-      />
-    ),
-    h5: ({ ...props }) => (
-      <h5
-        className="mb-1 mt-2 text-[10px] font-medium text-verbo-dark"
-        {...props}
-      />
-    ),
-    h6: ({ ...props }) => (
-      <h6
-        className="mb-1 mt-2 text-xs font-medium text-verbo-dark"
-        {...props}
-      />
-    ),
-    // Style paragraphs
-    p: ({ ...props }) => (
-      <p className="mb-3 text-sm text-verbo-dark/90" {...props} />
-    ),
-    // Style links
-    a: ({ ...props }) => (
-      <a
-        className="text-verbo-blue hover:text-verbo-blue/80 hover:underline"
-        {...props}
-      />
-    ),
-    // Style emphasis and strong
-    em: ({ ...props }) => (
-      <em className="italic text-foreground/80" {...props} />
-    ),
-    strong: ({ ...props }) => (
-      <strong className="font-medium text-foreground/90" {...props} />
-    ),
-    // Style lists
-    ul: ({ ...props }) => (
-      <ul className="mb-3 ml-4 list-disc space-y-0.5 text-sm" {...props} />
-    ),
-    ol: ({ ...props }) => (
-      <ol className="mb-3 ml-4 list-decimal space-y-0.5 text-sm" {...props} />
-    ),
-    li: ({ ...props }) => <li className="text-verbo-dark/90" {...props} />,
-    // Style code blocks
-    code: ({ ...props }) => (
-      <code
-        className="rounded bg-slate-100 px-1 py-0.5 font-mono text-xs text-verbo-dark"
-        {...props}
-      />
-    ),
-    pre: ({ ...props }) => (
-      <pre
-        className="mb-3 overflow-auto rounded-md bg-slate-100 p-2"
-        {...props}
-      />
-    ),
-    // Style blockquotes
-    blockquote: ({ ...props }) => (
-      <blockquote
-        className="mb-3 border-l-2 border-slate-300 pl-3 text-sm italic text-verbo-dark/80"
-        {...props}
-      />
-    ),
-    // Style horizontal rules
-    hr: ({ ...props }) => (
-      <hr className="my-3 border-t border-slate-200" {...props} />
-    ),
-    // Style tables
-    table: ({ ...props }) => (
-      <div className="mb-3 overflow-x-auto">
-        <table className="w-full border-collapse text-sm" {...props} />
-      </div>
-    ),
-    thead: ({ ...props }) => (
-      <thead className="bg-muted/30 text-foreground/90" {...props} />
-    ),
-    tbody: ({ ...props }) => <tbody {...props} />,
-    tr: ({ ...props }) => (
-      <tr className="border-b border-border/30 even:bg-muted/10" {...props} />
-    ),
-    th: ({ ...props }) => (
-      <th
-        className="border border-border/30 p-1 text-[10px] font-medium"
-        {...props}
-      />
-    ),
-    td: ({ ...props }) => (
-      <td className="border border-border/30 p-1 text-[10px]" {...props} />
-    ),
-  };
-
-  // Smaller components for question context and content
-  const QuestionMarkdownComponents: Components = {
     // Style headings
     h1: ({ ...props }) => (
       <h1
@@ -633,7 +523,7 @@ export function AssessmentStep({
                       <div className="mb-2 rounded-md bg-muted/70 p-2 text-xs text-muted-foreground">
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
-                          components={QuestionMarkdownComponents}
+                          components={MarkdownComponents}
                         >
                           {formatMarkdown(question.context)}
                         </ReactMarkdown>
@@ -643,7 +533,7 @@ export function AssessmentStep({
                     <div className="mb-2 text-xs">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
-                        components={QuestionMarkdownComponents}
+                        components={MarkdownComponents}
                       >
                         {formatMarkdown(question.question)}
                       </ReactMarkdown>

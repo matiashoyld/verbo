@@ -503,7 +503,9 @@ export function NewPositionDialog({
                   message={
                     step === 1
                       ? "Analyzing job description and extracting relevant skills..."
-                      : "Generating assessment case based on required skills..."
+                      : step === 2
+                        ? "Generating assessment case based on required skills..."
+                        : "Saving position to database..."
                   }
                 />
               </motion.div>
