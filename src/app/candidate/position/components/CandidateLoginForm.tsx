@@ -1,7 +1,7 @@
 "use client";
 
 import { SignIn } from "@clerk/nextjs";
-import { Briefcase } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 interface CandidateLoginFormProps {
@@ -22,11 +22,11 @@ export function CandidateLoginForm({
   return (
     <div className="flex min-h-screen w-full">
       {/* Left side - Dark with gradient, showing position info */}
-      <div className="hidden w-1/2 bg-gradient-to-br from-verbo-dark to-verbo-purple p-12 lg:block">
+      <div className="hidden w-1/2 bg-gradient-to-br from-black to-gray-900 p-12 lg:block">
         <div className="flex h-full flex-col justify-between">
           <div>
-            <div className="mb-16 flex h-12 w-12 items-center justify-center rounded-full bg-verbo-green text-verbo-dark">
-              <Briefcase className="h-6 w-6" />
+            <div className="mb-16">
+              <Image src="/logo.png" alt="Verbo Logo" width={48} height={48} />
             </div>
             <h1 className="mb-4 text-4xl font-bold tracking-tight text-white">
               {positionTitle}
@@ -49,7 +49,7 @@ export function CandidateLoginForm({
               <p className="text-3xl font-bold text-white">{companyName}</p>
             </div>
 
-            <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
+            <div className="h-px bg-gradient-to-r from-transparent via-gray-800 to-transparent" />
 
             <div>
               <p className="text-sm text-gray-400">
@@ -65,8 +65,8 @@ export function CandidateLoginForm({
       <div className="flex w-full flex-col justify-center px-4 py-12 sm:px-6 lg:w-1/2 lg:px-8">
         <div className="mx-auto w-full max-w-sm">
           <div className="space-y-2 lg:hidden">
-            <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-full bg-verbo-green text-verbo-dark">
-              <Briefcase className="h-6 w-6" />
+            <div className="mb-8">
+              <Image src="/logo.png" alt="Verbo Logo" width={48} height={48} />
             </div>
             <h1 className="text-2xl font-bold">{positionTitle}</h1>
             <p className="text-gray-600">{companyName}</p>
