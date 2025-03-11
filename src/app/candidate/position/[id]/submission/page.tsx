@@ -22,6 +22,10 @@ import {
   simulateExtraction as simulateExtractionUtil,
   uploadRecording as uploadRecordingUtil,
 } from "./components/UploadUtils";
+import {
+  optimizationSettings,
+  optimizeVideoStream,
+} from "./components/VideoOptimizer";
 
 export default function CandidateSubmissionPage() {
   const params = useParams<{ id: string }>();
@@ -99,13 +103,19 @@ export default function CandidateSubmissionPage() {
       });
       audioStreamRef.current = micStream;
 
-      // Then request screen sharing permission
+      // Then request screen sharing permission with optimized constraints
       setPermissionStep("screen");
-      const displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
+      const displayMediaOptions = {
+        video: optimizationSettings.stream.video,
         audio: false,
-      });
-      screenStreamRef.current = displayStream;
+      };
+
+      const displayStream =
+        await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+
+      // Apply additional optimization to the video stream
+      const optimizedStream = await optimizeVideoStream(displayStream);
+      screenStreamRef.current = optimizedStream;
 
       // Successfully granted permissions
       setPermissionsGranted(true);
@@ -114,7 +124,7 @@ export default function CandidateSubmissionPage() {
       setShowPermissionDialog(false);
       setPermissionStep("initial");
 
-      // Start recording for the first question
+      // Start recording for the first question with optimized quality for LLM analysis
       startRecording(
         audioStreamRef,
         screenStreamRef,
@@ -214,7 +224,7 @@ export default function CandidateSubmissionPage() {
       if (nextQuestionId) {
         setActiveQuestionId(nextQuestionId);
 
-        // Start recording for the next question
+        // Start recording for the next question with optimized quality for LLM analysis
         startRecording(
           audioStreamRef,
           screenStreamRef,
@@ -280,12 +290,11 @@ export default function CandidateSubmissionPage() {
 
     // Check if there's a previous question
     if (currentIndex > 0) {
-      // Move to the previous question - use optional chaining and nullish coalescing to handle undefined
       const prevQuestionId = position.questions[currentIndex - 1]?.id;
       if (prevQuestionId) {
         setActiveQuestionId(prevQuestionId);
 
-        // Start recording for the previous question
+        // Start recording for the previous question with optimized quality for LLM analysis
         startRecording(
           audioStreamRef,
           screenStreamRef,

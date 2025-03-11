@@ -1,3 +1,5 @@
+import { optimizationSettings } from './VideoOptimizer';
+
 // Function to generate a unique recording ID for a question
 export const getRecordingIdForQuestion = (
   questionId: string,
@@ -93,8 +95,31 @@ export const startRecording = (
       ...screenStreamRef.current.getVideoTracks(),
     ]);
 
-    // Create a new MediaRecorder instance with appropriate options
-    const options = { mimeType: "video/webm" };
+    // Try different MIME types in order of preference for size efficiency
+    let selectedMimeType = '';
+    
+    // Find the first supported MIME type from our optimization settings
+    for (const mimeType of optimizationSettings.recorder.preferredMimeTypes) {
+      if (MediaRecorder.isTypeSupported(mimeType)) {
+        selectedMimeType = mimeType;
+        console.log(`Using optimized codec: ${mimeType}`);
+        break;
+      }
+    }
+    
+    // If none of our preferred types are supported, fallback to browser default
+    if (!selectedMimeType) {
+      console.warn('None of the preferred MIME types are supported, using browser default');
+      selectedMimeType = 'video/webm';
+    }
+
+    // Create a new MediaRecorder instance with optimized options from our settings
+    const options = { 
+      mimeType: selectedMimeType,
+      videoBitsPerSecond: optimizationSettings.recorder.videoBitsPerSecond,
+      audioBitsPerSecond: optimizationSettings.recorder.audioBitsPerSecond
+    };
+    
     try {
       const mediaRecorder = new MediaRecorder(combinedStream, options);
       mediaRecorderRef.current = mediaRecorder;
@@ -109,11 +134,11 @@ export const startRecording = (
         }
       };
 
-      // Start recording with timeslice to ensure we get regular dataavailable events
-      mediaRecorder.start(1000); // Collect data every second
+      // Start recording with timeslice from our optimization settings
+      mediaRecorder.start(optimizationSettings.recorder.timeslice);
       setIsRecording(true);
     } catch (error) {
-      console.error("Error creating MediaRecorder with video/webm:", error);
+      console.error(`Error creating MediaRecorder with ${selectedMimeType}:`, error);
 
       // Try with basic MediaRecorder as fallback
       try {
@@ -128,7 +153,7 @@ export const startRecording = (
           }
         };
 
-        basicRecorder.start(1000);
+        basicRecorder.start(optimizationSettings.recorder.timeslice);
         setIsRecording(true);
       } catch (fallbackError) {
         console.error(

@@ -1,4 +1,5 @@
 import { useRouter } from "next/navigation";
+import { processVideoBlob } from "./VideoOptimizer";
 
 // Types for tRPC mutations
 type GetUploadUrlMutation = (input: {
@@ -40,12 +41,19 @@ export const uploadRecording = async (
     // Use the appropriate recording ID for this question
     const recordingId = questionRecordingIds[questionId] || questionId;
 
+    // Process the blob to optimize it before upload
+    const optimizedBlob = await processVideoBlob(blob);
+    
+    // Log size reduction
+    const compressionRatio = (1 - (optimizedBlob.size / blob.size)) * 100;
+    console.log(`Recording size: ${(blob.size / 1024 / 1024).toFixed(2)}MB → ${(optimizedBlob.size / 1024 / 1024).toFixed(2)}MB (${compressionRatio.toFixed(1)}% reduction)`);
+
     // Get a signed upload URL
     const uploadUrlResult = await getUploadUrlMutation
       .mutateAsync({
         questionId: recordingId, // Use unique recording ID
         positionId: positionId,
-        contentType: blob.type || "video/webm",
+        contentType: optimizedBlob.type || "video/webm",
         extension: "webm",
       })
       .catch((error) => {
@@ -62,9 +70,9 @@ export const uploadRecording = async (
     const uploadResponse = await fetch(uploadUrlResult.signedUrl, {
       method: "PUT",
       headers: {
-        "Content-Type": blob.type || "video/webm",
+        "Content-Type": optimizedBlob.type || "video/webm",
       },
-      body: blob,
+      body: optimizedBlob, // Use the optimized blob
     }).catch((error) => {
       console.error(
         `Network error uploading to Supabase for ${questionId}:`,
@@ -84,7 +92,7 @@ export const uploadRecording = async (
         positionId: positionId,
         questionId: recordingId, // Use unique recording ID
         filePath: uploadUrlResult.filePath,
-        fileSize: blob.size,
+        fileSize: optimizedBlob.size, // Use the optimized blob size
       })
       .catch((error) => {
         console.error(`Error saving metadata for ${questionId}:`, error);
