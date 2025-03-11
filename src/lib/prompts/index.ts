@@ -1,4 +1,4 @@
 // Export prompt functions
-export { createAssessmentGenerationPrompt } from './assessmentGeneration';
-export { createSkillExtractionPrompt } from './skillExtraction';
+export { createSkillExtractionPrompt } from './extractSkills';
+export { createAssessmentGenerationPrompt } from './generateCase';
 
