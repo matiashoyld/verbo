@@ -60,6 +60,11 @@ export default function CandidateSubmissionPage() {
     new Set(),
   );
 
+  // Add state to store notes for each question
+  const [questionNotes, setQuestionNotes] = useState<Record<string, string>>(
+    {},
+  );
+
   // Add a unique recording ID for each question to avoid confusion
   const [questionRecordingIds, setQuestionRecordingIds] = useState<
     Record<string, string>
@@ -1045,6 +1050,17 @@ export default function CandidateSubmissionPage() {
               <textarea
                 className="w-full flex-1 resize-none p-4 font-mono text-sm text-gray-800 focus:outline-none"
                 placeholder="If you need, you can take notes here..."
+                value={
+                  activeQuestionId ? questionNotes[activeQuestionId] || "" : ""
+                }
+                onChange={(e) => {
+                  if (activeQuestionId) {
+                    setQuestionNotes((prev) => ({
+                      ...prev,
+                      [activeQuestionId]: e.target.value,
+                    }));
+                  }
+                }}
               ></textarea>
             </div>
 

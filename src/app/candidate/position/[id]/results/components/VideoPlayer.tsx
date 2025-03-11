@@ -65,10 +65,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex h-full w-full items-center justify-center rounded-lg bg-black/5">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-verbo-purple" />
-          <p className="text-sm text-muted-foreground">Loading recording...</p>
+      <div className="flex h-48 w-full items-center justify-center rounded-md bg-black/5">
+        <div className="flex flex-col items-center gap-1.5">
+          <Loader2 className="h-6 w-6 animate-spin text-verbo-purple" />
+          <p className="text-xs text-muted-foreground">Loading recording...</p>
         </div>
       </div>
     );
@@ -76,9 +76,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   if (errorMessage) {
     return (
-      <div className="flex h-full w-full items-center justify-center rounded-lg bg-black/5">
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-sm text-muted-foreground">{errorMessage}</p>
+      <div className="flex h-48 w-full items-center justify-center rounded-md bg-black/5">
+        <div className="flex flex-col items-center gap-1.5">
+          <p className="text-xs text-muted-foreground">{errorMessage}</p>
         </div>
       </div>
     );
@@ -86,9 +86,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   if (!videoUrl) {
     return (
-      <div className="flex h-full w-full items-center justify-center rounded-lg bg-black/5">
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-sm text-muted-foreground">
+      <div className="flex h-48 w-full items-center justify-center rounded-md bg-black/5">
+        <div className="flex flex-col items-center gap-1.5">
+          <p className="text-xs text-muted-foreground">
             No recording available
           </p>
         </div>
@@ -98,7 +98,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   return (
     <video
-      className="h-full w-full rounded-lg object-cover"
+      className="h-48 w-full rounded-md object-cover"
       src={videoUrl}
       controls
       onError={(e) => {

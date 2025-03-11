@@ -7,11 +7,12 @@ export function NavbarWrapper() {
   const pathname = usePathname();
 
   // Hide navigation bar on candidate position login pages
-  // but show it on submission pages
+  // but show it on submission and results pages
   const showNav =
     !pathname ||
     !pathname.startsWith("/candidate/position/") ||
-    pathname.includes("/submission");
+    pathname.includes("/submission") ||
+    pathname.includes("/results");
 
   if (!showNav) {
     return null;

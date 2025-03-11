@@ -83,10 +83,10 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
 
   return (
     <div className="animate-fade-in min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl p-4 md:p-6">
-        <header className="mb-8">
-          <h1 className="mb-2 text-3xl font-semibold">Assessment Review</h1>
-          <p className="text-muted-foreground">
+      <div className="mx-auto max-w-7xl px-8 py-6">
+        <header className="mb-6">
+          <h1 className="mb-1 text-2xl font-semibold">Assessment Review</h1>
+          <p className="text-sm text-muted-foreground">
             Review your responses and feedback from the AI analysis
           </p>
         </header>
@@ -94,17 +94,17 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Question selector sidebar (left) - Now with sticky positioning */}
           <div className="lg:col-span-2">
-            <div className="sticky top-6 overflow-hidden rounded-xl border bg-card shadow-sm">
-              <div className="p-5 pb-3">
-                <h2 className="mb-3 text-lg font-medium">Questions</h2>
+            <div className="sticky top-16 overflow-hidden rounded-lg border bg-card shadow-sm">
+              <div className="p-4">
+                <h2 className="mb-2 text-sm font-medium">Questions</h2>
               </div>
 
-              <div className="max-h-[calc(100vh-140px)] space-y-px overflow-y-auto">
+              <div className="max-h-[calc(100vh-160px)] space-y-px overflow-y-auto">
                 {questions.map((question, index) => (
                   <button
                     key={question.id}
                     onClick={() => setActiveQuestionId(question.id)}
-                    className={`w-full p-4 text-left transition-colors ${
+                    className={`w-full p-3 text-left transition-colors ${
                       activeQuestionId === question.id
                         ? "border-l-2 border-verbo-purple bg-verbo-purple/10"
                         : "border-l-2 border-transparent hover:bg-secondary"
@@ -112,7 +112,7 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
                   >
                     <div className="flex items-center">
                       <span
-                        className={`mr-3 flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
+                        className={`mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium ${
                           activeQuestionId === question.id
                             ? "bg-verbo-purple text-white"
                             : "bg-secondary text-muted-foreground"
@@ -120,7 +120,7 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
                       >
                         {index + 1}
                       </span>
-                      <div className="flex-1 truncate text-sm">
+                      <div className="flex-1 truncate text-xs">
                         Question {index + 1}
                       </div>
                     </div>
@@ -133,30 +133,30 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
           {/* Main content area (middle) */}
           <div className="space-y-6 lg:col-span-7">
             {/* Question display with inline navigation buttons */}
-            <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <div className="mb-5">
+            <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+              <div className="p-5">
                 <div className="flex items-center justify-between">
-                  <span className="inline-block rounded-md bg-verbo-purple/10 px-2 py-1 text-xs text-verbo-purple">
+                  <span className="inline-block rounded-md bg-verbo-purple/10 px-2 py-0.5 text-xs text-verbo-purple">
                     Question {currentIndex + 1} of {questions.length}
                   </span>
 
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={handlePrev}
-                      className={`flex items-center rounded-lg px-3 py-1.5 text-sm ${
+                      className={`flex items-center rounded-lg px-2 py-1 text-xs ${
                         currentIndex > 0
                           ? "text-verbo-purple hover:bg-verbo-purple/10"
                           : "cursor-not-allowed text-muted-foreground opacity-50"
                       }`}
                       disabled={currentIndex === 0}
                     >
-                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      <ArrowLeft className="mr-1 h-3 w-3" />
                       Previous
                     </button>
 
                     <button
                       onClick={handleNext}
-                      className={`flex items-center rounded-lg px-3 py-1.5 text-sm ${
+                      className={`flex items-center rounded-lg px-2 py-1 text-xs ${
                         currentIndex < questions.length - 1
                           ? "text-verbo-purple hover:bg-verbo-purple/10"
                           : "cursor-not-allowed text-muted-foreground opacity-50"
@@ -164,51 +164,55 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
                       disabled={currentIndex === questions.length - 1}
                     >
                       Next
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-1 h-3 w-3" />
                     </button>
                   </div>
                 </div>
 
-                <h2 className="mb-2 mt-4 text-xl font-medium">
+                {/* Question context in highlighted area (similar to submission page) */}
+                {currentQuestion?.context && (
+                  <div className="mb-4 mt-4 rounded-md bg-gray-50 p-3">
+                    <p className="text-xs text-muted-foreground">
+                      {currentQuestion.context}
+                    </p>
+                  </div>
+                )}
+
+                <h2 className="text-sm font-medium">
                   {currentQuestion?.question}
                 </h2>
-                {currentQuestion?.context && (
-                  <p className="text-sm text-muted-foreground">
-                    {currentQuestion.context}
-                  </p>
-                )}
               </div>
             </div>
 
             {/* Tabs for video and feedback */}
-            <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+            <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
               <div className="flex border-b">
                 <button
                   onClick={() => setActiveTab("feedback")}
-                  className={`flex items-center px-6 py-4 text-sm font-medium ${
+                  className={`flex items-center px-5 py-4 text-xs font-medium ${
                     activeTab === "feedback"
                       ? "border-b-2 border-verbo-purple text-verbo-purple"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <MessageSquare className="mr-1.5 h-3 w-3" />
                   AI Feedback
                 </button>
 
                 <button
                   onClick={() => setActiveTab("video")}
-                  className={`flex items-center px-6 py-4 text-sm font-medium ${
+                  className={`flex items-center px-5 py-4 text-xs font-medium ${
                     activeTab === "video"
                       ? "border-b-2 border-verbo-purple text-verbo-purple"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <Video className="mr-2 h-4 w-4" />
+                  <Video className="mr-1.5 h-3 w-3" />
                   Your Recording
                 </button>
               </div>
 
-              <div className="bg-gray-50 p-6">
+              <div className="bg-gray-50 p-5">
                 {activeTab === "video" ? (
                   <VideoPlayer
                     questionId={activeQuestionId}
@@ -223,27 +227,27 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
 
           {/* Skills summary sidebar (right) */}
           <div className="lg:col-span-3">
-            <div className="sticky top-6 rounded-xl border bg-card p-5 shadow-sm">
-              <h2 className="mb-4 flex items-center text-lg font-medium">
-                <ListChecks className="mr-2 h-5 w-5 text-verbo-purple/70" />
+            <div className="sticky top-16 rounded-lg border bg-card p-4 shadow-sm">
+              <h2 className="mb-3 flex items-center text-sm font-medium">
+                <ListChecks className="mr-1.5 h-4 w-4 text-verbo-purple/70" />
                 Skills Summary
               </h2>
 
               {sortedSkills.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {sortedSkills.map(([skill, count]) => (
                     <div key={skill} className="group">
                       <div className="mb-1 flex items-center justify-between">
-                        <span className="text-sm font-medium transition-colors group-hover:text-verbo-purple">
+                        <span className="text-xs font-medium transition-colors group-hover:text-verbo-purple">
                           {skill}
                         </span>
-                        <span className="rounded-full bg-verbo-purple/10 px-2 py-0.5 text-xs text-verbo-purple">
+                        <span className="rounded-full bg-verbo-purple/10 px-1.5 py-0.5 text-[10px] text-verbo-purple">
                           {count}×
                         </span>
                       </div>
-                      <div className="h-1.5 w-full rounded-full bg-secondary">
+                      <div className="h-1 w-full rounded-full bg-secondary">
                         <div
-                          className="h-1.5 rounded-full bg-verbo-purple transition-all duration-500 group-hover:opacity-80"
+                          className="h-1 rounded-full bg-verbo-purple transition-all duration-500 group-hover:opacity-80"
                           style={{
                             width: `${(count / questions.length) * 100}%`,
                           }}
@@ -253,7 +257,7 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
                   ))}
                 </div>
               ) : (
-                <div className="py-4 text-center text-sm text-muted-foreground">
+                <div className="py-3 text-center text-xs text-muted-foreground">
                   No skills analysis available yet
                 </div>
               )}

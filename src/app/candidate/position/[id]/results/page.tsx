@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "~/trpc/react";
-import ReviewInterface from "../submission/components/ReviewInterface";
+import ReviewInterface from "./components/ReviewInterface";
 
 // Define types for the recordings
 interface Recording {
