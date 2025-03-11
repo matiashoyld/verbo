@@ -23,53 +23,46 @@ interface RecordingResult {
   blob: Blob;
 }
 
-// Mock feedback until we implement the real AI analysis
-const generateMockFeedback = (questions: any[]) => {
-  const strengths = [
-    "Clear and concise explanation of complex concepts",
-    "Strong understanding of technical fundamentals",
-    "Logical problem-solving approach",
-    "Excellent communication of ideas",
-    "Effective use of examples to illustrate points",
-  ];
+// Define types for the feedback data
+interface FeedbackItem {
+  questionId: string;
+  strengths: string[];
+  areas_for_improvement: string[];
+  skills_demonstrated: string[];
+  overall_assessment: string;
+}
 
-  const areasForImprovement = [
-    "Could elaborate more on practical applications",
-    "Consider discussing alternative approaches",
-    "More detail on implementation challenges would be helpful",
-    "Could strengthen explanation with specific examples",
-  ];
-
-  const skills = [
-    "Technical Knowledge",
-    "Problem Solving",
-    "Critical Thinking",
-    "Communication",
-    "Analytical Skills",
-    "Domain Expertise",
-    "Adaptability",
-    "Strategic Thinking",
-  ];
-
+// Generate mock feedback data for the UI
+const generateMockFeedback = (
+  questions: { id: string; question: string; context: string | null }[],
+): FeedbackItem[] => {
   return questions.map((q) => ({
     questionId: q.id,
-    strengths: strengths
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 2 + Math.floor(Math.random() * 3)),
-    areas_for_improvement: areasForImprovement
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 1 + Math.floor(Math.random() * 2)),
-    skills_demonstrated: skills
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 3 + Math.floor(Math.random() * 3)),
+    strengths: [
+      "Clear and concise communication",
+      "Strong technical knowledge demonstrated",
+      "Well-structured explanation of concepts",
+    ],
+    areas_for_improvement: [
+      "Could provide more specific examples",
+      "Consider elaborating on edge cases",
+    ],
+    skills_demonstrated: [
+      "Problem Solving",
+      "Communication",
+      "Technical Knowledge",
+      "Analytical Thinking",
+      "Attention to Detail",
+      "System Design",
+    ],
     overall_assessment:
-      "The candidate demonstrates solid understanding of the concepts and communicates ideas effectively. Their approach is methodical and shows good problem-solving ability.",
+      "Strong response that demonstrates good understanding of the subject matter. The candidate showed clear thinking and articulated their thoughts well.",
   }));
 };
 
 export default function ResultsPage() {
   const params = useParams<{ id: string }>();
-  const [mockFeedback, setMockFeedback] = useState<any[]>([]);
+  const [mockFeedback, setMockFeedback] = useState<FeedbackItem[]>([]);
 
   // Fetch position data from the database using tRPC
   const { data: position, isLoading } =

@@ -78,13 +78,19 @@ async function createRecordingTables() {
       
       for (const policy of bucketPolicies) {
         console.log(`Creating storage policy: ${policy.name}`);
-        const { error: policyError } = await supabase
-          .storage
-          .from('candidate-recordings')
-          .createPolicy(policy.name, {
-            definition: policy.definition,
-            operation: policy.operation
-          });
+        
+        // Use SQL query to create the policy instead of the unsupported createPolicy method
+        const { error: policyError } = await supabase.rpc(
+          'execute_sql', 
+          { 
+            sql: `
+              CREATE POLICY "${policy.name}"
+              ON storage.objects
+              FOR ${policy.operation}
+              USING (${policy.definition})
+            `
+          }
+        );
           
         if (policyError) {
           console.error(`Error creating policy ${policy.name}:`, policyError);

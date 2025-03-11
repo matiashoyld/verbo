@@ -61,7 +61,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         URL.revokeObjectURL(videoUrl);
       }
     };
-  }, [questionId, recordingBlob]);
+  }, [questionId, recordingBlob, videoUrl]);
 
   if (isLoading) {
     return (

@@ -170,11 +170,6 @@ export default function CandidateSubmissionPage() {
     }
 
     try {
-      console.log("Starting recording with streams:", {
-        audioTracks: audioStreamRef.current.getAudioTracks().length,
-        screenTracks: screenStreamRef.current.getVideoTracks().length,
-      });
-
       // Combine audio and screen streams
       const combinedStream = new MediaStream([
         ...audioStreamRef.current.getAudioTracks(),
@@ -194,93 +189,35 @@ export default function CandidateSubmissionPage() {
         mediaRecorder.ondataavailable = (event) => {
           if (event.data && event.data.size > 0) {
             recordingChunksRef.current.push(event.data);
-            console.log(
-              `Recorded chunk received: ${event.data.size} bytes, total chunks: ${recordingChunksRef.current.length}`,
-            );
-          } else {
-            console.warn("Empty data received in ondataavailable event");
           }
         };
 
         // Start recording with timeslice to ensure we get regular dataavailable events
-        // This is crucial to avoid losing the final recording
         mediaRecorder.start(1000); // Collect data every second
-        console.log("MediaRecorder started with state:", mediaRecorder.state);
-        console.log(
-          "Using timeslice: 1000ms to ensure data is captured regularly",
-        );
         setIsRecording(true);
       } catch (error) {
         console.error("Error creating MediaRecorder with video/webm:", error);
 
-        // Try a fallback MIME type
+        // Try with basic MediaRecorder as fallback
         try {
-          const fallbackOptions = { mimeType: "video/mp4" };
-          const fallbackRecorder = new MediaRecorder(
-            combinedStream,
-            fallbackOptions,
-          );
-          mediaRecorderRef.current = fallbackRecorder;
+          const basicRecorder = new MediaRecorder(combinedStream);
+          mediaRecorderRef.current = basicRecorder;
 
           recordingChunksRef.current = [];
 
-          fallbackRecorder.ondataavailable = (event) => {
+          basicRecorder.ondataavailable = (event) => {
             if (event.data && event.data.size > 0) {
               recordingChunksRef.current.push(event.data);
-              console.log(
-                `Recorded chunk received (fallback): ${event.data.size} bytes`,
-              );
-            } else {
-              console.warn(
-                "Empty data received in ondataavailable event (fallback)",
-              );
             }
           };
 
-          fallbackRecorder.start(1000);
-          console.log(
-            "Fallback MediaRecorder started with state:",
-            fallbackRecorder.state,
-          );
+          basicRecorder.start(1000);
           setIsRecording(true);
         } catch (fallbackError) {
           console.error(
-            "Error creating fallback MediaRecorder:",
+            "Critical error: Cannot create MediaRecorder:",
             fallbackError,
           );
-
-          // Final attempt with no specified MIME type
-          try {
-            const basicRecorder = new MediaRecorder(combinedStream);
-            mediaRecorderRef.current = basicRecorder;
-
-            recordingChunksRef.current = [];
-
-            basicRecorder.ondataavailable = (event) => {
-              if (event.data && event.data.size > 0) {
-                recordingChunksRef.current.push(event.data);
-                console.log(
-                  `Recorded chunk received (basic): ${event.data.size} bytes`,
-                );
-              } else {
-                console.warn(
-                  "Empty data received in ondataavailable event (basic)",
-                );
-              }
-            };
-
-            basicRecorder.start(1000);
-            console.log(
-              "Basic MediaRecorder started with state:",
-              basicRecorder.state,
-            );
-            setIsRecording(true);
-          } catch (basicError) {
-            console.error(
-              "Critical error: Cannot create any MediaRecorder:",
-              basicError,
-            );
-          }
         }
       }
     } catch (err) {
@@ -288,22 +225,14 @@ export default function CandidateSubmissionPage() {
     }
   };
 
-  // Function to stop recording and save for current question - improved to handle edge cases
+  // Function to stop recording and save for current question
   const stopRecording = () => {
     if (!mediaRecorderRef.current || !isRecording) {
-      console.log("stopRecording called but no active recording");
       return Promise.resolve(); // Return a resolved promise if not recording
     }
 
     // Capture the current question ID to ensure we save with the right ID even if it changes during async operation
     const currentQuestionId = activeQuestionId;
-    console.log(
-      `Stopping recording for question ${currentQuestionId || "unknown"}`,
-    );
-
-    if (!currentQuestionId) {
-      console.warn("No active question ID when stopping recording");
-    }
 
     return new Promise<void>((resolve) => {
       // Safety timeout to prevent hanging promises
@@ -311,7 +240,6 @@ export default function CandidateSubmissionPage() {
         console.warn("Recording stop operation timed out after 5 seconds");
         // If we have chunks but the recorder didn't properly stop, try to save what we have
         if (recordingChunksRef.current.length > 0 && currentQuestionId) {
-          console.log("Saving recording chunks despite timeout");
           const recordingBlob = new Blob(recordingChunksRef.current, {
             type: "video/webm",
           });
@@ -319,9 +247,6 @@ export default function CandidateSubmissionPage() {
           if (recordingBlob.size > 0) {
             // Get a unique recording ID for this question
             const recordingId = getRecordingIdForQuestion(currentQuestionId);
-            console.log(
-              `Saving recording due to timeout with ID: ${recordingId}`,
-            );
 
             setQuestionRecordings((prev) => ({
               ...prev,
@@ -337,7 +262,6 @@ export default function CandidateSubmissionPage() {
       const mediaRecorder = mediaRecorderRef.current;
       if (!mediaRecorder) {
         clearTimeout(safetyTimeout);
-        console.warn("MediaRecorder reference lost between checks");
         setIsRecording(false);
         resolve();
         return;
@@ -352,22 +276,10 @@ export default function CandidateSubmissionPage() {
           type: "video/webm",
         });
 
-        console.log(
-          `Recording stopped for question ${currentQuestionId || "unknown"}:`,
-          {
-            blobSize: recordingBlob.size,
-            blobType: recordingBlob.type,
-            chunksCount: recordingChunksRef.current.length,
-          },
-        );
-
         // Save the recording for the current question
         if (currentQuestionId && recordingBlob.size > 0) {
-          console.log(`Saving recording for question ID: ${currentQuestionId}`);
-
           // Get a unique recording ID for this question
           const recordingId = getRecordingIdForQuestion(currentQuestionId);
-          console.log(`Using unique recording ID: ${recordingId}`);
 
           // Make sure to save this synchronously to avoid race conditions
           const updatedRecordings = {
@@ -375,20 +287,7 @@ export default function CandidateSubmissionPage() {
             [recordingId]: recordingBlob,
           };
 
-          // Log immediately before updating state
-          console.log(
-            `Recording saved with ID ${recordingId}, size: ${recordingBlob.size} bytes`,
-          );
-          console.log("Updated recordings:", Object.keys(updatedRecordings));
-
           setQuestionRecordings(updatedRecordings);
-        } else {
-          if (!currentQuestionId) {
-            console.warn("No active question ID when saving recording");
-          }
-          if (recordingBlob.size === 0) {
-            console.warn("Recording blob is empty (size: 0)");
-          }
         }
 
         // Reset recording state
@@ -412,9 +311,6 @@ export default function CandidateSubmissionPage() {
         if (mediaRecorder.state === "recording") {
           mediaRecorder.stop();
         } else {
-          console.warn(
-            `MediaRecorder in unexpected state: ${mediaRecorder.state}`,
-          );
           setIsRecording(false);
           resolve();
         }
@@ -512,386 +408,6 @@ export default function CandidateSubmissionPage() {
 
       // Don't automatically start extraction - let the user click Submit
       console.log("Last question completed. User should click Submit.");
-    }
-  };
-
-  // Update the handleSubmitAssessment function for more robust recording management
-  const handleSubmitAssessment = async () => {
-    console.log("Starting handleSubmitAssessment");
-
-    // Add an indicator to prevent multiple execution
-    if (isExtracting) {
-      console.log("Already extracting, skipping duplicate submission");
-      return;
-    }
-
-    try {
-      // First, properly stop the current recording with our promise-based function
-      console.log("Stopping current recording with stopRecording()");
-
-      // Capture the active question ID before stopping recording
-      const currentQuestionId = activeQuestionId;
-      console.log(
-        `Current active question before stopping: ${currentQuestionId}`,
-      );
-
-      await stopRecording();
-
-      // Wait a moment to ensure React state updates have propagated
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Double-check that we have a recording for the current question
-      if (currentQuestionId) {
-        const recordingId =
-          questionRecordingIds[currentQuestionId] || currentQuestionId;
-        const hasRecording = !!questionRecordings[recordingId];
-
-        if (!hasRecording) {
-          console.warn(
-            `Recording for last question ${currentQuestionId} not found after stopRecording`,
-          );
-
-          // Look for recordings with keys containing the question ID
-          const possibleKeys = Object.keys(questionRecordings).filter((key) =>
-            key.includes(currentQuestionId),
-          );
-
-          if (possibleKeys.length > 0) {
-            console.log(
-              `Found possible recordings for question ${currentQuestionId}:`,
-              possibleKeys,
-            );
-          } else {
-            console.error(
-              `No recordings found for question ${currentQuestionId}`,
-            );
-
-            // Manually retry creating recording ID and checking again
-            const newRecordingId = `${currentQuestionId}_${Date.now()}`;
-            console.log(
-              `Explicitly creating new recording ID: ${newRecordingId}`,
-            );
-
-            // Force add to questionRecordingIds map
-            setQuestionRecordingIds((prev) => ({
-              ...prev,
-              [currentQuestionId]: newRecordingId,
-            }));
-
-            // Check media recorder state
-            if (mediaRecorderRef.current) {
-              console.log(
-                `MediaRecorder state: ${mediaRecorderRef.current.state}`,
-              );
-              console.log(
-                `Recording chunks available: ${recordingChunksRef.current.length}`,
-              );
-
-              // If we have chunks but no recording stored, try to save them
-              if (recordingChunksRef.current.length > 0) {
-                const emergencyBlob = new Blob(recordingChunksRef.current, {
-                  type: "video/webm",
-                });
-                console.log(
-                  `Created emergency blob with size: ${emergencyBlob.size}`,
-                );
-
-                if (emergencyBlob.size > 0) {
-                  console.log(
-                    `Saving emergency recording with ID: ${newRecordingId}`,
-                  );
-                  setQuestionRecordings((prev) => ({
-                    ...prev,
-                    [newRecordingId]: emergencyBlob,
-                  }));
-                }
-              }
-            }
-          }
-        } else {
-          console.log(
-            `Confirmed recording exists for question ${currentQuestionId} with ID ${recordingId}`,
-          );
-        }
-      }
-
-      // Then perform emergency cleanup of any remaining media resources
-      console.log("Performing emergency cleanup of media resources");
-      emergencyStopAllRecording();
-
-      // Log the current recordings we have
-      console.log(
-        "Current recordings before extraction:",
-        Object.keys(questionRecordings).map((id) => ({
-          id,
-          size: questionRecordings[id]?.size || 0,
-        })),
-      );
-
-      // Prevent any new recordings from starting
-      setPermissionsGranted(false);
-
-      // Start extraction
-      console.log("Setting isExtracting to true");
-      setIsExtracting(true);
-
-      // Run extraction with a small delay to ensure state updates
-      setTimeout(() => {
-        simulateExtraction();
-      }, 300);
-    } catch (error) {
-      console.error("Error in handleSubmitAssessment:", error);
-      // Fallback to emergency stop and extraction
-      emergencyStopAllRecording();
-      setIsExtracting(true);
-      simulateExtraction();
-    }
-  };
-
-  // Improve emergencyStopAllRecording for more thorough cleanup
-  const emergencyStopAllRecording = () => {
-    try {
-      console.log("EMERGENCY STOP: Killing all recording processes");
-
-      // 1. Stop the MediaRecorder if it exists
-      if (mediaRecorderRef.current) {
-        try {
-          if (mediaRecorderRef.current.state === "recording") {
-            console.log("EMERGENCY STOP: Stopping active MediaRecorder");
-            mediaRecorderRef.current.stop();
-          } else {
-            console.log(
-              "EMERGENCY STOP: MediaRecorder not in recording state:",
-              mediaRecorderRef.current.state,
-            );
-          }
-        } catch (e) {
-          console.error("Error stopping MediaRecorder:", e);
-        }
-        mediaRecorderRef.current = null;
-      } else {
-        console.log("EMERGENCY STOP: No MediaRecorder reference");
-      }
-
-      // 2. Stop all tracks in the audio stream
-      if (audioStreamRef.current) {
-        try {
-          const audioTracks = audioStreamRef.current.getTracks();
-          console.log(
-            `EMERGENCY STOP: Stopping ${audioTracks.length} audio tracks`,
-          );
-          audioTracks.forEach((track) => {
-            track.stop();
-          });
-        } catch (e) {
-          console.error("Error stopping audio tracks:", e);
-        }
-        audioStreamRef.current = null;
-      }
-
-      // 3. Stop all tracks in the screen stream
-      if (screenStreamRef.current) {
-        try {
-          const screenTracks = screenStreamRef.current.getTracks();
-          console.log(
-            `EMERGENCY STOP: Stopping ${screenTracks.length} screen tracks`,
-          );
-          screenTracks.forEach((track) => {
-            track.stop();
-          });
-        } catch (e) {
-          console.error("Error stopping screen tracks:", e);
-        }
-        screenStreamRef.current = null;
-      }
-
-      // 4. Reset all recording state
-      setIsRecording(false);
-      recordingChunksRef.current = [];
-    } catch (e) {
-      console.error("Critical error stopping recording:", e);
-    }
-  };
-
-  // Function to upload a recording to Supabase
-  const uploadRecording = async (questionId: string, blob: Blob) => {
-    if (!blob || blob.size === 0) {
-      console.warn(
-        `No valid recording blob for question ${questionId}, size: ${blob?.size || 0}`,
-      );
-      return false;
-    }
-
-    try {
-      console.log(
-        `Starting upload for question ${questionId}, size: ${blob.size} bytes, type: ${blob.type}`,
-      );
-
-      // Use the appropriate recording ID for this question
-      const recordingId = questionRecordingIds[questionId] || questionId;
-      console.log(`Using recording ID for upload: ${recordingId}`);
-
-      // Get a signed upload URL
-      console.log(`Requesting signed URL for ${questionId}...`);
-      const uploadUrlResult = await getUploadUrlMutation
-        .mutateAsync({
-          questionId: recordingId, // Use unique recording ID
-          positionId: params.id,
-          contentType: blob.type || "video/webm",
-          extension: "webm",
-        })
-        .catch((error) => {
-          console.error(`Error getting signed URL for ${questionId}:`, error);
-          return null;
-        });
-
-      if (!uploadUrlResult?.signedUrl) {
-        console.error(`Failed to get upload URL for ${questionId}`);
-        return false;
-      }
-
-      console.log(
-        `Got signed URL for question ${questionId} → ${uploadUrlResult.filePath}`,
-      );
-
-      // Upload directly to Supabase
-      console.log(`Uploading blob to Supabase for ${questionId}...`);
-      const uploadResponse = await fetch(uploadUrlResult.signedUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": blob.type || "video/webm",
-        },
-        body: blob,
-      }).catch((error) => {
-        console.error(
-          `Network error uploading to Supabase for ${questionId}:`,
-          error,
-        );
-        return null;
-      });
-
-      if (!uploadResponse || !uploadResponse.ok) {
-        console.error(
-          `Error uploading to Supabase for ${questionId}:`,
-          uploadResponse ? uploadResponse.statusText : "No response",
-        );
-        return false;
-      }
-
-      console.log(
-        `Successfully uploaded recording for question ${questionId} to Supabase`,
-      );
-
-      // Save metadata with the unique recording ID
-      console.log(`Saving metadata for ${questionId}...`);
-      await saveMetadataMutation
-        .mutateAsync({
-          positionId: params.id,
-          questionId: recordingId, // Use unique recording ID
-          filePath: uploadUrlResult.filePath,
-          fileSize: blob.size,
-        })
-        .catch((error) => {
-          console.error(`Error saving metadata for ${questionId}:`, error);
-          throw error; // Let the caller handle this
-        });
-
-      console.log(`Successfully saved metadata for question ${questionId}`);
-      return true;
-    } catch (error) {
-      console.error(
-        `Error in uploadRecording for question ${questionId}:`,
-        error,
-      );
-
-      // Try to determine where the error occurred
-      if (error instanceof Error) {
-        console.error(`Error details: ${error.message}`);
-        console.error(`Error stack: ${error.stack}`);
-      }
-
-      return false;
-    }
-  };
-
-  // Function to simulate the extraction process
-  const simulateExtraction = async () => {
-    console.log("Starting extraction process...");
-
-    // Reset progress
-    setExtractionProgress(0);
-
-    try {
-      // Get the final question ID for excluding
-      const finalQuestionId = activeQuestionId;
-
-      // Log all recordings before upload
-      console.log(
-        "Preparing to upload recordings:",
-        Object.keys(questionRecordings).map((id) => ({
-          id,
-          size: questionRecordings[id]?.size || 0,
-          isFinalQuestion:
-            id === finalQuestionId || id.startsWith(`${finalQuestionId}_`),
-        })),
-      );
-
-      // Add a slight delay to ensure all recordings are saved
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Create a list of promises to upload each recording
-      const uploadPromises = Object.entries(questionRecordings).map(
-        ([recordingId, blob]) => {
-          // If this is a unique recording ID (contains underscore), extract the original question ID
-          const originalQuestionId = recordingId.includes("_")
-            ? recordingId.split("_")[0]
-            : recordingId;
-
-          // Skip the final question since we already uploaded it directly
-          if (originalQuestionId === finalQuestionId) {
-            console.log(
-              `Skipping upload for final question ${finalQuestionId} - already handled directly`,
-            );
-            return Promise.resolve(true);
-          }
-
-          // Make sure we have a valid question ID
-          if (!originalQuestionId) {
-            console.error(`Invalid recording ID: ${recordingId}`);
-            return Promise.resolve(false);
-          }
-
-          console.log(
-            `Uploading recording for question ${originalQuestionId} with ID ${recordingId}, size: ${blob.size} bytes`,
-          );
-          return uploadRecording(originalQuestionId, blob);
-        },
-      );
-
-      // Start progress simulation in parallel with uploads
-      const incrementProgressInterval = setInterval(() => {
-        setExtractionProgress((current) => {
-          const newProgress = current + Math.random() * 3; // Random increment between 0-3%
-          return newProgress >= 100 ? 100 : newProgress;
-        });
-      }, 300); // Update every 300ms
-
-      // Handle all uploads and only redirect after they're complete
-      const results = await Promise.all(uploadPromises);
-      const allSucceeded = results.every((result) => result);
-      console.log(`Upload complete. All succeeded: ${allSucceeded}`);
-
-      // Clear the interval and set progress to 100%
-      clearInterval(incrementProgressInterval);
-      setExtractionProgress(100);
-
-      // After a short delay, redirect to results page
-      setTimeout(() => {
-        router.push(`/candidate/position/${params.id}/results`);
-      }, 1500);
-    } catch (error) {
-      console.error("Error in extraction process:", error);
-      setIsExtracting(false);
     }
   };
 
@@ -1134,15 +650,14 @@ export default function CandidateSubmissionPage() {
     );
   }
 
-  // Get the current question index for display
-  const currentQuestionIndex = position.questions.findIndex(
-    (q) => q.id === currentQuestion.id,
-  );
+  // Find the index of the current question
+  const currentQuestionIndex =
+    position?.questions.findIndex((q) => q.id === activeQuestionId) ?? -1;
 
-  // Determine if this is the last question
+  // Flag to check if this is the last question
   const isLastQuestion =
-    position.questions &&
-    currentQuestionIndex === position.questions.length - 1;
+    currentQuestionIndex !== -1 &&
+    currentQuestionIndex === (position?.questions.length ?? 0) - 1;
 
   // If extraction is in progress, show the loading screen as a full-page overlay
   if (isExtracting && position) {
@@ -1155,6 +670,183 @@ export default function CandidateSubmissionPage() {
       </div>
     );
   }
+
+  // Function to stop all recording processes
+  const emergencyStopAllRecording = () => {
+    try {
+      // Stop the MediaRecorder if it exists
+      if (mediaRecorderRef.current) {
+        try {
+          if (mediaRecorderRef.current.state === "recording") {
+            mediaRecorderRef.current.stop();
+          }
+        } catch (e) {
+          console.error("Error stopping MediaRecorder:", e);
+        }
+        mediaRecorderRef.current = null;
+      }
+
+      // Stop all tracks in the audio stream
+      if (audioStreamRef.current) {
+        try {
+          const audioTracks = audioStreamRef.current.getTracks();
+          audioTracks.forEach((track) => {
+            track.stop();
+          });
+        } catch (e) {
+          console.error("Error stopping audio tracks:", e);
+        }
+        audioStreamRef.current = null;
+      }
+
+      // Stop all tracks in the screen stream
+      if (screenStreamRef.current) {
+        try {
+          const screenTracks = screenStreamRef.current.getTracks();
+          screenTracks.forEach((track) => {
+            track.stop();
+          });
+        } catch (e) {
+          console.error("Error stopping screen tracks:", e);
+        }
+        screenStreamRef.current = null;
+      }
+
+      // Reset all recording state
+      setIsRecording(false);
+      recordingChunksRef.current = [];
+    } catch (e) {
+      console.error("Critical error stopping recording:", e);
+    }
+  };
+
+  // Function to upload a recording to Supabase
+  const uploadRecording = async (questionId: string, blob: Blob) => {
+    if (!blob || blob.size === 0) {
+      console.warn(`No valid recording blob for question ${questionId}`);
+      return false;
+    }
+
+    try {
+      // Use the appropriate recording ID for this question
+      const recordingId = questionRecordingIds[questionId] || questionId;
+
+      // Get a signed upload URL
+      const uploadUrlResult = await getUploadUrlMutation
+        .mutateAsync({
+          questionId: recordingId, // Use unique recording ID
+          positionId: params.id,
+          contentType: blob.type || "video/webm",
+          extension: "webm",
+        })
+        .catch((error) => {
+          console.error(`Error getting signed URL for ${questionId}:`, error);
+          return null;
+        });
+
+      if (!uploadUrlResult?.signedUrl) {
+        console.error(`Failed to get upload URL for ${questionId}`);
+        return false;
+      }
+
+      // Upload directly to Supabase
+      const uploadResponse = await fetch(uploadUrlResult.signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": blob.type || "video/webm",
+        },
+        body: blob,
+      }).catch((error) => {
+        console.error(
+          `Network error uploading to Supabase for ${questionId}:`,
+          error,
+        );
+        return null;
+      });
+
+      if (!uploadResponse || !uploadResponse.ok) {
+        console.error(`Error uploading to Supabase for ${questionId}`);
+        return false;
+      }
+
+      // Save metadata with the unique recording ID
+      await saveMetadataMutation
+        .mutateAsync({
+          positionId: params.id,
+          questionId: recordingId, // Use unique recording ID
+          filePath: uploadUrlResult.filePath,
+          fileSize: blob.size,
+        })
+        .catch((error) => {
+          console.error(`Error saving metadata for ${questionId}:`, error);
+          throw error; // Let the caller handle this
+        });
+
+      return true;
+    } catch (error) {
+      console.error(
+        `Error in uploadRecording for question ${questionId}:`,
+        error,
+      );
+      return false;
+    }
+  };
+
+  // Function to simulate the extraction process
+  const simulateExtraction = async () => {
+    // Reset progress
+    setExtractionProgress(0);
+
+    try {
+      // Get the final question ID for excluding
+      const finalQuestionId = activeQuestionId;
+
+      // Create a list of promises to upload each recording
+      const uploadPromises = Object.entries(questionRecordings).map(
+        ([recordingId, blob]) => {
+          // If this is a unique recording ID (contains underscore), extract the original question ID
+          const originalQuestionId = recordingId.includes("_")
+            ? recordingId.split("_")[0]
+            : recordingId;
+
+          // Skip the final question since we already uploaded it directly
+          if (originalQuestionId === finalQuestionId) {
+            return Promise.resolve(true);
+          }
+
+          // Make sure we have a valid question ID
+          if (!originalQuestionId) {
+            return Promise.resolve(false);
+          }
+
+          return uploadRecording(originalQuestionId, blob);
+        },
+      );
+
+      // Start progress simulation in parallel with uploads
+      const incrementProgressInterval = setInterval(() => {
+        setExtractionProgress((current) => {
+          const newProgress = current + Math.random() * 3; // Random increment between 0-3%
+          return newProgress >= 100 ? 100 : newProgress;
+        });
+      }, 300); // Update every 300ms
+
+      // Handle all uploads and only redirect after they're complete
+      const results = await Promise.all(uploadPromises);
+
+      // Clear the interval and set progress to 100%
+      clearInterval(incrementProgressInterval);
+      setExtractionProgress(100);
+
+      // After a short delay, redirect to results page
+      setTimeout(() => {
+        router.push(`/candidate/position/${params.id}/results`);
+      }, 1500);
+    } catch (error) {
+      console.error("Error in extraction process:", error);
+      setIsExtracting(false);
+    }
+  };
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col overflow-hidden bg-gray-50">
@@ -1395,10 +1087,6 @@ export default function CandidateSubmissionPage() {
                   <button
                     onClick={async () => {
                       try {
-                        console.log(
-                          "Submit Assessment clicked for last question",
-                        );
-
                         // Prevent multiple submissions
                         if (isExtracting) {
                           console.log(
@@ -1415,12 +1103,9 @@ export default function CandidateSubmissionPage() {
                           return;
                         }
 
-                        console.log(`Final question ID: ${activeQuestionId}`);
-
-                        // 1. Stop recording and get the blob directly instead of relying on state updates
+                        // 1. Stop recording and get the blob directly
                         const recordingBlob = await new Promise<Blob | null>(
                           async (resolve) => {
-                            // First try normal stop
                             if (
                               mediaRecorderRef.current &&
                               mediaRecorderRef.current.state === "recording"
@@ -1429,21 +1114,18 @@ export default function CandidateSubmissionPage() {
                                 "Stopping active recording for final question",
                               );
 
-                              // We'll collect chunks ourselves
+                              // Collect chunks
                               const chunks: BlobPart[] = [
                                 ...recordingChunksRef.current,
                               ];
 
-                              // Set up a handler for remaining data
+                              // Set up handler for remaining data
                               const originalHandler =
                                 mediaRecorderRef.current.ondataavailable;
                               mediaRecorderRef.current.ondataavailable = (
                                 event,
                               ) => {
-                                if (event.data.size > 0) {
-                                  console.log(
-                                    `Got final chunk: ${event.data.size} bytes`,
-                                  );
+                                if (event.data && event.data.size > 0) {
                                   chunks.push(event.data);
                                 }
 
@@ -1454,10 +1136,10 @@ export default function CandidateSubmissionPage() {
                                 }
                               };
 
-                              // Stop recording to trigger final dataavailable event
+                              // Stop recording
                               mediaRecorderRef.current.stop();
 
-                              // Wait for the recorder to actually stop
+                              // Wait for the recorder to stop
                               await new Promise<void>((stopResolve) => {
                                 const checkInterval = setInterval(() => {
                                   if (
@@ -1477,22 +1159,16 @@ export default function CandidateSubmissionPage() {
                                 }, 2000);
                               });
 
-                              // Create blob from all chunks
+                              // Create blob from chunks
                               if (chunks.length > 0) {
                                 const blob = new Blob(chunks, {
                                   type: "video/webm",
                                 });
-                                console.log(
-                                  `Created final recording blob: ${blob.size} bytes`,
-                                );
 
-                                // Save it to state for good measure
+                                // Save it to state
                                 if (activeQuestionId) {
                                   const recordingId =
                                     getRecordingIdForQuestion(activeQuestionId);
-                                  console.log(
-                                    `Saving final recording with ID: ${recordingId}`,
-                                  );
                                   setQuestionRecordings((prev) => ({
                                     ...prev,
                                     [recordingId]: blob,
@@ -1501,15 +1177,9 @@ export default function CandidateSubmissionPage() {
 
                                 resolve(blob);
                               } else {
-                                console.warn(
-                                  "No chunks available for final recording",
-                                );
                                 resolve(null);
                               }
                             } else {
-                              console.warn(
-                                "No active recording when trying to save final question",
-                              );
                               resolve(null);
                             }
                           },
@@ -1539,12 +1209,8 @@ export default function CandidateSubmissionPage() {
                             .forEach((track) => track.stop());
                         }
 
-                        // 5. If we got a recording blob, upload it directly without relying on state
+                        // 5. Upload the final recording directly
                         if (recordingBlob && recordingBlob.size > 0) {
-                          console.log(
-                            `Uploading final recording directly, size: ${recordingBlob.size} bytes`,
-                          );
-
                           try {
                             // Get a signed upload URL
                             const uploadUrlResult =
@@ -1555,11 +1221,7 @@ export default function CandidateSubmissionPage() {
                                 extension: "webm",
                               });
 
-                            if (!uploadUrlResult?.signedUrl) {
-                              console.error(
-                                "Failed to get upload URL for final recording",
-                              );
-                            } else {
+                            if (uploadUrlResult?.signedUrl) {
                               // Upload directly to Supabase
                               const uploadResponse = await fetch(
                                 uploadUrlResult.signedUrl,
@@ -1573,16 +1235,7 @@ export default function CandidateSubmissionPage() {
                                 },
                               );
 
-                              if (!uploadResponse.ok) {
-                                console.error(
-                                  "Error uploading final recording:",
-                                  uploadResponse.statusText,
-                                );
-                              } else {
-                                console.log(
-                                  "Successfully uploaded final recording directly",
-                                );
-
+                              if (uploadResponse.ok) {
                                 // Save metadata
                                 await saveMetadataMutation.mutateAsync({
                                   positionId: params.id,
@@ -1590,10 +1243,6 @@ export default function CandidateSubmissionPage() {
                                   filePath: uploadUrlResult.filePath,
                                   fileSize: recordingBlob.size,
                                 });
-
-                                console.log(
-                                  "Successfully saved metadata for final recording",
-                                );
                               }
                             }
                           } catch (error) {
@@ -1604,19 +1253,14 @@ export default function CandidateSubmissionPage() {
                           }
                         }
 
-                        // 6. Now process all other recordings
+                        // 6. Process all other recordings
                         await simulateExtraction();
                       } catch (error) {
-                        console.error(
-                          "Critical error in submit button:",
-                          error,
-                        );
+                        console.error("Error in submit button:", error);
                         // Try to ensure extraction still starts
                         if (!isExtracting) {
                           setIsExtracting(true);
-                          simulateExtraction().catch((e) =>
-                            console.error("Error in fallback extraction:", e),
-                          );
+                          simulateExtraction();
                         }
                       }
                     }}
