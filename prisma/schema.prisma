@@ -33,15 +33,15 @@ model Category {
 }
 
 model Skill {
-  id         String      @id @default(uuid()) @db.Uuid
-  name       String
-  categoryId String      @map("category_id") @db.Uuid
-  created_at DateTime    @default(now()) @db.Timestamptz(6)
-  updated_at DateTime    @updatedAt @db.Timestamptz(6)
-  numId      Int?        @unique @map("num_id")
-  category   Category    @relation(fields: [categoryId], references: [id])
+  id           String       @id @default(uuid()) @db.Uuid
+  name         String
+  categoryId   String       @map("category_id") @db.Uuid
+  created_at   DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime     @updatedAt @db.Timestamptz(6)
+  numId        Int?         @unique @map("num_id")
   competencies Competency[]
-  challenges Challenge[] @relation("ChallengeToSkill")
+  category     Category     @relation(fields: [categoryId], references: [id])
+  challenges   Challenge[]  @relation("ChallengeToSkill")
 
   @@unique([categoryId, name])
   @@map("Skill")
@@ -54,8 +54,8 @@ model Competency {
   created_at        DateTime             @default(now()) @db.Timestamptz(6)
   updated_at        DateTime             @updatedAt @db.Timestamptz(6)
   numId             Int?                 @unique @map("num_id")
-  criteria          Criterion[]
   skill             Skill                @relation(fields: [skillId], references: [id])
+  criteria          Criterion[]
   questionRelations QuestionCompetency[]
 
   @@unique([skillId, name])
@@ -63,12 +63,12 @@ model Competency {
 }
 
 model Criterion {
-  id          String   @id @default(uuid()) @db.Uuid
-  description String
-  competencyId String   @map("competency_id") @db.Uuid
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime @updatedAt @db.Timestamptz(6)
-  competency  Competency @relation(fields: [competencyId], references: [id])
+  id           String     @id @default(uuid()) @db.Uuid
+  description  String
+  competencyId String     @map("competency_id") @db.Uuid
+  created_at   DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime   @updatedAt @db.Timestamptz(6)
+  competency   Competency @relation(fields: [competencyId], references: [id])
 
   @@map("Criterion")
 }
@@ -135,14 +135,14 @@ model Position {
 }
 
 model PositionQuestion {
-  id             String   @id @default(uuid()) @db.Uuid
-  positionId     String   @map("position_id") @db.Uuid
-  question       String
-  context        String?
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  position       Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
-  competencies   QuestionCompetency[]
+  id           String               @id @default(uuid()) @db.Uuid
+  positionId   String               @map("position_id") @db.Uuid
+  question     String
+  context      String?
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  position     Position             @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  competencies QuestionCompetency[]
 
   @@map("PositionQuestion")
 }
@@ -152,12 +152,28 @@ model QuestionCompetency {
   questionId   String           @map("question_id") @db.Uuid
   competencyId String           @map("competency_id") @db.Uuid
   createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6) 
-  question     PositionQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
   competency   Competency       @relation(fields: [competencyId], references: [id])
+  question     PositionQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@unique([questionId, competencyId])
   @@map("QuestionCompetency")
+}
+
+model RecordingMetadata {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  candidateId     String
+  positionId      String
+  questionId      String
+  filePath        String
+  fileSize        Int?
+  durationSeconds Float?
+  processed       Boolean  @default(false)
+
+  @@index([candidateId, positionId])
+  @@index([questionId])
 }
 
 enum UserRole {

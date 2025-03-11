@@ -1,8 +1,9 @@
 import { challengeRouter } from "~/server/api/routers/challenge";
-import { positionsRouter } from "~/server/api/routers/positions";
 import { submissionRouter } from "~/server/api/routers/submission";
 import { userRouter } from "~/server/api/routers/user";
 import { createTRPCRouter } from "~/server/api/trpc";
+import { positionsRouter } from "./routers/positions";
+import { recordingsRouter } from "./routers/recordings";
 import { skillsRouter } from "./routers/skills";
 
 /**
@@ -16,6 +17,7 @@ export const appRouter = createTRPCRouter({
   skills: skillsRouter,
   positions: positionsRouter,
   user: userRouter,
+  recordings: recordingsRouter,
 });
 
 // export type definition of API
