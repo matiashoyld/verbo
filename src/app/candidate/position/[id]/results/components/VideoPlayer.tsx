@@ -98,7 +98,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   return (
     <video
-      className="h-48 w-full rounded-md object-cover"
+      className="w-full rounded-md object-cover"
       src={videoUrl}
       controls
       onError={(e) => {

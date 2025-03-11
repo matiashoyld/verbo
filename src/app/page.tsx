@@ -543,12 +543,9 @@ export default function Page() {
             </p>
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
               <Link href="/sign-up">
-                <InteractiveHoverButton className="bg-verbo-green text-black hover:bg-verbo-green/90">
+                <InteractiveHoverButton className="bg-verbo-purple text-white hover:bg-verbo-purple/90">
                   Get Started
                 </InteractiveHoverButton>
-              </Link>
-              <Link href="/sign-in">
-                <Button variant="outline">Sign In</Button>
               </Link>
             </div>
           </div>
