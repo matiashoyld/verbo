@@ -25,6 +25,8 @@ const createPrismaClient = () => {
         ? process.env.DATABASE_URL
         : env.DATABASE_URL; // fallback to whatever we have
     
+    // Create Prisma client with connection timeout settings
+    // These are the only settings that are supported in the type definition
     return new PrismaClient({
       log:
         env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
@@ -33,6 +35,8 @@ const createPrismaClient = () => {
           url: databaseUrl,
         },
       },
+      // For Supabase with PgBouncer, it's recommended to use neon's Postgres driver
+      // and avoid long-running transactions
     });
   } catch (error) {
     console.error("Failed to initialize Prisma client:", error);

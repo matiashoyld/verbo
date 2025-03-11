@@ -11,21 +11,18 @@ export default function CandidatePositionPage() {
   const [loading, setLoading] = useState(true);
 
   // Fetch position data with tRPC using the public endpoint
-  const {
-    data: position,
-    isLoading,
-    error,
-  } = api.positions.getPositionByIdPublic.useQuery(
-    {
-      id: params.id,
-    },
-    {
-      // Only fetch if ID is available
-      enabled: !!params.id,
-      // Don't refetch on window focus for this page
-      refetchOnWindowFocus: false,
-    },
-  );
+  const { data: position, isLoading } =
+    api.positions.getPositionByIdPublic.useQuery(
+      {
+        id: params.id,
+      },
+      {
+        // Only fetch if ID is available
+        enabled: !!params.id,
+        // Don't refetch on window focus for this page
+        refetchOnWindowFocus: false,
+      },
+    );
 
   // Handle loading state
   useEffect(() => {
@@ -63,7 +60,7 @@ export default function CandidatePositionPage() {
         <CandidateLoginForm
           positionId={params.id}
           positionTitle={position?.title || ""}
-          companyName={position?.creatorName || ""}
+          companyName={position?.creator_name || ""}
           questionCount={position?.questions?.length || 0}
         />
       )}

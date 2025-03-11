@@ -4,7 +4,7 @@ import { SignOutButton, useUser } from "@clerk/nextjs";
 import { LogOut, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { cn } from "~/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
@@ -20,7 +20,6 @@ import { Separator } from "./separator";
 
 export function MainNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
 
   // Generate avatar content
@@ -150,7 +149,7 @@ export function MainNav() {
                   }}
                   className="cursor-pointer"
                 >
-                  <SignOutButton signOutCallback={() => router.push("/")}>
+                  <SignOutButton redirectUrl="/">
                     <div className="flex items-center">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Logout</span>

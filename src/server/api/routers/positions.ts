@@ -745,66 +745,67 @@ export const positionsRouter = createTRPCRouter({
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       try {
-        // Fetch the position with creator information
-        const position = await ctx.db.$queryRaw<Array<{
-          id: string;
-          title: string;
-          job_description: string;
-          context: string;
-          created_at: Date;
-          creator_id: string;
-          creator_name: string | null;
-        }>>`
-          SELECT 
-            p.id, 
-            p.title, 
-            p."jobDescription" as job_description, 
-            p.context, 
-            p.created_at,
-            p.creator_id,
-            u.name as creator_name
-          FROM "Position" p
-          LEFT JOIN "User" u ON p.creator_id = u.id
-          WHERE p.id = ${input.id}::uuid
-        `;
+        // Instead of using $queryRaw, use standard Prisma queries which handle connection pooling better
+        const position = await ctx.db.position.findUnique({
+          where: {
+            id: input.id,
+          },
+          select: {
+            id: true,
+            title: true,
+            jobDescription: true,
+            context: true,
+            createdAt: true,
+            creatorId: true,
+            creator: {
+              select: {
+                name: true,
+              },
+            },
+            questions: {
+              select: {
+                id: true,
+                question: true,
+                context: true,
+                competencies: {
+                  select: {
+                    competency: {
+                      select: {
+                        id: true,
+                        name: true,
+                        skill: {
+                          select: {
+                            name: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
 
-        if (!position || position.length === 0) {
-          return null; // Return null instead of throwing an error
+        if (!position) {
+          console.error(`Position not found: ${input.id}`);
+          return null;
         }
 
-        // Now we know position[0] exists
-        const positionData = position[0]!;
-
-        // Fetch the questions for this position
-        const questions = await ctx.db.$queryRaw<Array<{
-          id: string;
-          question: string;
-          context: string;
-        }>>`
-          SELECT id, question, context
-          FROM "PositionQuestion"
-          WHERE position_id = ${input.id}::uuid
-          ORDER BY created_at ASC
-        `;
-
-        // Return formatted position data
+        // Transform the data to match the expected format
         return {
-          id: positionData.id,
-          title: positionData.title,
-          jobDescription: positionData.job_description,
-          context: positionData.context,
-          createdAt: positionData.created_at.toISOString(),
-          creatorId: positionData.creator_id,
-          creatorName: positionData.creator_name,
-          questions: questions.map(q => ({
-            id: q.id,
-            question: q.question,
-            context: q.context,
-          })),
+          id: position.id,
+          title: position.title,
+          job_description: position.jobDescription,
+          context: position.context,
+          created_at: position.createdAt,
+          creator_id: position.creatorId,
+          creator_name: position.creator?.name || null,
+          questions: position.questions,
         };
       } catch (error) {
-        console.error("Error fetching position by ID (public):", error);
-        return null;
+        console.error(`Error fetching position by ID (public):`, error);
+        throw error;
       }
     }),
 });

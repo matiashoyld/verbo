@@ -16,11 +16,13 @@ const handler = async (req: NextRequest) => {
       router: appRouter,
       createContext: async () => {
         try {
-          // Get headers as an object to avoid iteration issues
-          const headersObject = Object.fromEntries(req.headers);
+          // Get headers in a way that avoids iteration issues
+          // First convert to a plain object
+          const headersObj = Object.fromEntries(req.headers);
           
+          // Then create a new Headers instance from that object
           return await createTRPCContext({
-            headers: new Headers(headersObject),
+            headers: new Headers(headersObj),
           });
         } catch (ctxError) {
           console.error("Error creating TRPC context:", ctxError);

@@ -16,7 +16,7 @@ type SaveMetadataMutation = (input: {
   questionId: string;
   filePath: string;
   fileSize: number;
-}) => Promise<any>;
+}) => Promise<{ success: boolean } | null>;
 
 // Function to upload a recording to Supabase
 export const uploadRecording = async (
@@ -145,7 +145,7 @@ export const simulateExtraction = async (
     }, 300); // Update every 300ms
 
     // Handle all uploads and only redirect after they're complete
-    const results = await Promise.all(uploadPromises);
+    await Promise.all(uploadPromises);
 
     // Clear the interval and set progress to 100%
     clearInterval(incrementProgressInterval);

@@ -6,11 +6,11 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { currentUser } from "@clerk/nextjs/server";
 import { TRPCError, initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import { currentUser } from "@clerk/nextjs/server";
 import { db } from "~/server/db";
 
 /**
@@ -50,17 +50,28 @@ export const createInnerTRPCContext = async (opts: CreateContextOptions) => {
  * @see https://trpc.io/docs/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  // Make sure we await the headers before using them
+  // Make sure we await the headers properly before using them
+  // Convert Headers to a plain object to avoid iteration issues
   const headersObject = Object.fromEntries(opts.headers);
   
-  // Get the current user after we've handled the headers
-  const user = await currentUser();
-  
-  return {
-    db,
-    userId: user?.id,
-    headers: headersObject,
-  };
+  try {
+    // Get the current user after we've safely handled the headers
+    // currentUser is now fully async in Clerk v6
+    const user = await currentUser();
+    
+    return {
+      db,
+      userId: user?.id,
+      headers: headersObject,
+    };
+  } catch (error) {
+    console.error("Error in createTRPCContext:", error);
+    // Return a context without user information if there's an error
+    return {
+      db,
+      headers: headersObject,
+    };
+  }
 };
 
 /**

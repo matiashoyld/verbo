@@ -27,7 +27,7 @@
     "setup-supabase-storage": "tsx scripts/setup-supabase-storage.ts"
   },
   "dependencies": {
-    "@clerk/nextjs": "^4.29.9",
+    "@clerk/nextjs": "^6.12.4",
     "@google/generative-ai": "^0.22.0",
     "@hookform/resolvers": "^4.1.1",
     "@paralleldrive/cuid2": "^2.2.2",
