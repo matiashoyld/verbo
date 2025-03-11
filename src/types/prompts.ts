@@ -42,6 +42,16 @@ export interface FormattedSkill {
   }>;
 }
 
+/**
+ * Response structure from video analysis
+ */
+export interface VideoAnalysisResult {
+  overall_assessment: string;
+  strengths: string[];
+  areas_for_improvement: string[];
+  skills_demonstrated: string[];
+}
+
 // Types from gemini.ts
 
 /**

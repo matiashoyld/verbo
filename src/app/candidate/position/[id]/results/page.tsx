@@ -32,8 +32,19 @@ interface FeedbackItem {
   overall_assessment: string;
 }
 
-// Generate mock feedback data for the UI
-const generateMockFeedback = (
+// Define types for the analysis results
+interface AnalysisResult {
+  id: string;
+  questionId: string;
+  overall_assessment: string;
+  strengths: string[];
+  areas_for_improvement: string[];
+  skills_demonstrated: string[];
+  createdAt: string | Date;
+}
+
+// Generate fallback feedback data if AI analysis is not available
+const generateFallbackFeedback = (
   questions: { id: string; question: string; context: string | null }[],
 ): FeedbackItem[] => {
   return questions.map((q) => ({
@@ -62,7 +73,8 @@ const generateMockFeedback = (
 
 export default function ResultsPage() {
   const params = useParams<{ id: string }>();
-  const [mockFeedback, setMockFeedback] = useState<FeedbackItem[]>([]);
+  const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([]);
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(true);
 
   // Fetch position data from the database using tRPC
   const { data: position, isLoading } =
@@ -77,16 +89,67 @@ export default function ResultsPage() {
     { enabled: !!params.id && !!position, refetchOnWindowFocus: false },
   );
 
+  // Fetch AI analysis results using the tRPC API
+  const { data: analysisData } = api.recordings.getAnalysisResults.useQuery(
+    { positionId: params.id },
+    { enabled: !!params.id && !!position, refetchOnWindowFocus: false },
+  );
+
   // State to store processed recording blobs
   const [recordings, setRecordings] = useState<Record<string, Blob>>({});
 
+  // Process feedback data when analysis results are available
+  useEffect(() => {
+    setIsLoadingFeedback(true);
+
+    if (position?.questions) {
+      if (analysisData?.results && analysisData.results.length > 0) {
+        // Map the analysis results to feedback items
+        const mappedFeedback = position.questions.map((question) => {
+          // Find the analysis for this question
+          const analysis = analysisData.results.find(
+            (a: AnalysisResult) => a.questionId === question.id,
+          );
+
+          if (analysis) {
+            // Return the real analysis data
+            return {
+              questionId: question.id,
+              strengths: analysis.strengths,
+              areas_for_improvement: analysis.areas_for_improvement,
+              skills_demonstrated: analysis.skills_demonstrated,
+              overall_assessment: analysis.overall_assessment,
+            };
+          } else {
+            // Return fallback data for questions without analysis
+            return {
+              questionId: question.id,
+              strengths: [
+                "Analysis not yet available",
+                "Recording processed successfully",
+              ],
+              areas_for_improvement: [
+                "Check back later for complete AI analysis",
+              ],
+              skills_demonstrated: ["Technical Assessment Pending"],
+              overall_assessment:
+                "The AI is still processing your response. Please check back later for a complete analysis.",
+            };
+          }
+        });
+
+        setFeedbackItems(mappedFeedback);
+      } else {
+        // If no analysis data, use fallback
+        setFeedbackItems(generateFallbackFeedback(position.questions));
+      }
+
+      setIsLoadingFeedback(false);
+    }
+  }, [position, analysisData]);
+
   // Load recordings from Supabase URLs
   useEffect(() => {
-    // Generate mock feedback when position data is available
-    if (position?.questions) {
-      setMockFeedback(generateMockFeedback(position.questions));
-    }
-
     // Skip if recordings data is not available yet
     if (!recordingsData?.recordings || recordingsData.recordings.length === 0) {
       return;
@@ -156,7 +219,7 @@ export default function ResultsPage() {
     void processRecordings();
   }, [position, recordingsData]);
 
-  if (isLoading) {
+  if (isLoading || isLoadingFeedback) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -182,7 +245,7 @@ export default function ResultsPage() {
   return (
     <ReviewInterface
       questions={position.questions}
-      feedback={mockFeedback}
+      feedback={feedbackItems}
       recordings={recordings}
     />
   );

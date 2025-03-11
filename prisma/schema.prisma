@@ -161,7 +161,7 @@ model QuestionCompetency {
 }
 
 model RecordingMetadata {
-  id              String   @id @default(cuid())
+  id              String   @id @default(uuid())
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   candidateId     String
@@ -169,11 +169,26 @@ model RecordingMetadata {
   questionId      String
   filePath        String
   fileSize        Int?
-  durationSeconds Float?
+  durationSeconds Int?
   processed       Boolean  @default(false)
 
-  @@index([candidateId, positionId])
-  @@index([questionId])
+  @@map("RecordingMetadata")
+}
+
+model VideoAnalysis {
+  id                   String   @id @default(uuid())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  candidateId          String
+  positionId           String
+  questionId           String
+  overall_assessment   String
+  strengths            String[]
+  areas_for_improvement String[]
+  skills_demonstrated  String[]
+
+  @@unique([candidateId, positionId, questionId])
+  @@map("VideoAnalysis")
 }
 
 enum UserRole {

@@ -35,6 +35,8 @@ export default function CandidateSubmissionPage() {
   // Define tRPC mutations
   const getUploadUrlMutation = api.recordings.getUploadUrl.useMutation();
   const saveMetadataMutation = api.recordings.saveMetadata.useMutation();
+  const saveAnalysisMutation = api.recordings.saveAnalysis.useMutation();
+  const analyzeVideoMutation = api.recordings.analyzeVideo.useMutation();
 
   // Track the active question index
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -322,7 +324,7 @@ export default function CandidateSubmissionPage() {
 
   // Function to upload a recording to Supabase
   const uploadRecording = async (questionId: string, blob: Blob) => {
-    return uploadRecordingUtil(
+    const result = await uploadRecordingUtil(
       questionId,
       blob,
       params.id,
@@ -330,20 +332,17 @@ export default function CandidateSubmissionPage() {
       saveMetadataMutation,
       questionRecordingIds,
     );
+
+    // Return the full result object that includes file path
+    return result;
   };
 
   // Handle submission of the assessment
   const handleSubmitAssessment = async () => {
+    setIsExtracting(true);
+    setExtractionProgress(0);
+
     try {
-      // Prevent multiple submissions
-      if (isExtracting) {
-        console.log("Already extracting, ignoring duplicate click");
-        return;
-      }
-
-      // Disable further submissions immediately
-      setIsExtracting(true);
-
       if (!position || !activeQuestionId) {
         console.error("No active question when submitting");
         return;
@@ -438,22 +437,88 @@ export default function CandidateSubmissionPage() {
       }
 
       // 5. Upload the final recording directly
+      let finalRecordingFilePath: string | undefined;
       if (recordingBlob && recordingBlob.size > 0) {
         try {
-          await uploadRecording(activeQuestionId, recordingBlob);
+          const uploadResult = await uploadRecording(
+            activeQuestionId,
+            recordingBlob,
+          );
+          finalRecordingFilePath = uploadResult.filePath;
+
+          // 5b. Analyze the final recording directly
+          if (
+            uploadResult.success &&
+            uploadResult.filePath &&
+            analyzeVideoMutation &&
+            saveAnalysisMutation
+          ) {
+            const currentQuestion = position.questions.find(
+              (q) => q.id === activeQuestionId,
+            );
+            if (currentQuestion) {
+              console.log(
+                `Analyzing final question recording: ${activeQuestionId}`,
+              );
+
+              // Wait a moment to ensure the metadata has been saved
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+
+              // Analyze the video
+              const analysisResult = await analyzeVideoMutation.mutateAsync({
+                videoUrl: uploadResult.filePath,
+                question: currentQuestion.question,
+                context: currentQuestion.context || position.context,
+                positionId: params.id,
+                questionId: activeQuestionId,
+              });
+
+              console.log(`Final question analysis completed`);
+
+              // Save the analysis results
+              if (analysisResult) {
+                await saveAnalysisMutation.mutateAsync({
+                  positionId: params.id,
+                  questionId: activeQuestionId,
+                  overall_assessment: analysisResult.overall_assessment,
+                  strengths: analysisResult.strengths,
+                  areas_for_improvement: analysisResult.areas_for_improvement,
+                  skills_demonstrated: analysisResult.skills_demonstrated,
+                });
+              }
+            }
+          }
         } catch (error) {
-          console.error("Error in direct upload of final recording:", error);
+          console.error(
+            "Error in direct upload/analysis of final recording:",
+            error,
+          );
         }
       }
 
       // 6. Process all other recordings
       await simulateExtractionUtil(
         questionRecordings,
-        activeQuestionId,
+        activeQuestionId, // We already handled the analysis for this question
         params.id,
         uploadRecording,
         setExtractionProgress,
         router,
+        position
+          ? {
+              questions: position.questions.map((q) => ({
+                id: q.id,
+                question: q.question,
+                context: q.context,
+              })),
+              context: position.context,
+            }
+          : {
+              questions: [],
+              context: null,
+            },
+        saveAnalysisMutation,
+        analyzeVideoMutation,
       );
     } catch (error) {
       console.error("Error in submit button:", error);
@@ -467,6 +532,21 @@ export default function CandidateSubmissionPage() {
           uploadRecording,
           setExtractionProgress,
           router,
+          position
+            ? {
+                questions: position.questions.map((q) => ({
+                  id: q.id,
+                  question: q.question,
+                  context: q.context,
+                })),
+                context: position.context,
+              }
+            : {
+                questions: [],
+                context: null,
+              },
+          saveAnalysisMutation,
+          analyzeVideoMutation,
         );
       }
     }

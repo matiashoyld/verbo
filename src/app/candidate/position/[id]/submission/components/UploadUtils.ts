@@ -1,4 +1,5 @@
 import { useRouter } from "next/navigation";
+import { VideoAnalysisResult } from "~/types/prompts";
 import { processVideoBlob } from "./VideoOptimizer";
 
 // Types for tRPC mutations
@@ -19,6 +20,36 @@ type SaveMetadataMutation = (input: {
   fileSize: number;
 }) => Promise<{ success: boolean } | null>;
 
+type SaveAnalysisMutation = (input: {
+  positionId: string;
+  questionId: string;
+  overall_assessment: string;
+  strengths: string[];
+  areas_for_improvement: string[];
+  skills_demonstrated: string[];
+}) => Promise<{ success: boolean } | null>;
+
+// Add a new type for the analyzeVideo mutation
+type AnalyzeVideoMutation = (input: {
+  videoUrl?: string;
+  question: string;
+  context: string | null;
+  positionId: string;
+  questionId: string;
+}) => Promise<VideoAnalysisResult | null>;
+
+// Add a type for the recording data
+type RecordingData = {
+  id: string;
+  questionId: string;
+  recordingId?: string;
+  url: string | null;
+  filePath: string;
+  fileSize: number | null;
+  durationSeconds: number | null;
+  createdAt: Date;
+};
+
 // Function to upload a recording to Supabase
 export const uploadRecording = async (
   questionId: string,
@@ -31,10 +62,10 @@ export const uploadRecording = async (
     mutateAsync: SaveMetadataMutation;
   },
   questionRecordingIds: Record<string, string>,
-) => {
+): Promise<{ success: boolean; filePath?: string }> => {
   if (!blob || blob.size === 0) {
     console.warn(`No valid recording blob for question ${questionId}`);
-    return false;
+    return { success: false };
   }
 
   try {
@@ -63,7 +94,7 @@ export const uploadRecording = async (
 
     if (!uploadUrlResult?.signedUrl) {
       console.error(`Failed to get upload URL for ${questionId}`);
-      return false;
+      return { success: false };
     }
 
     // Upload directly to Supabase
@@ -83,15 +114,17 @@ export const uploadRecording = async (
 
     if (!uploadResponse || !uploadResponse.ok) {
       console.error(`Error uploading to Supabase for ${questionId}`);
-      return false;
+      return { success: false };
     }
+
+    const filePath = uploadUrlResult.filePath;
 
     // Save metadata with the unique recording ID
     await saveMetadataMutation
       .mutateAsync({
         positionId: positionId,
         questionId: recordingId, // Use unique recording ID
-        filePath: uploadUrlResult.filePath,
+        filePath: filePath,
         fileSize: optimizedBlob.size, // Use the optimized blob size
       })
       .catch((error) => {
@@ -99,64 +132,148 @@ export const uploadRecording = async (
         throw error; // Let the caller handle this
       });
 
-    return true;
+    return { success: true, filePath };
   } catch (error) {
     console.error(
       `Error in uploadRecording for question ${questionId}:`,
       error,
     );
-    return false;
+    return { success: false };
   }
 };
 
-// Function to simulate the extraction process
+// Function to process the extraction and analysis of recordings
 export const simulateExtraction = async (
   questionRecordings: Record<string, Blob>,
   finalQuestionId: string | null,
   positionId: string,
-  uploadRecording: (questionId: string, blob: Blob) => Promise<boolean>,
+  uploadRecordingFn: (questionId: string, blob: Blob) => Promise<{ success: boolean; filePath?: string }>,
   setExtractionProgress: React.Dispatch<React.SetStateAction<number>>,
   router: ReturnType<typeof useRouter>,
+  position: {
+    questions: Array<{
+      id: string;
+      question: string;
+      context: string | null;
+    }>;
+    context: string | null;
+  },
+  saveAnalysisMutation?: {
+    mutateAsync: SaveAnalysisMutation;
+  },
+  analyzeVideoMutation?: {
+    mutateAsync: AnalyzeVideoMutation;
+  },
 ) => {
   // Reset progress
   setExtractionProgress(0);
 
   try {
-    // Create a list of promises to upload each recording
-    const uploadPromises = Object.entries(questionRecordings).map(
-      ([recordingId, blob]) => {
-        // If this is a unique recording ID (contains underscore), extract the original question ID
-        const originalQuestionId = recordingId.includes("_")
-          ? recordingId.split("_")[0]
-          : recordingId;
+    // Create a list of promises to process each recording
+    const totalRecordings = Object.keys(questionRecordings).length;
+    let processedCount = 0;
 
-        // Skip the final question since we already uploaded it directly
-        if (originalQuestionId === finalQuestionId) {
-          return Promise.resolve(true);
+    // Process recordings one by one to avoid overwhelming the server
+    for (const [recordingId, blob] of Object.entries(questionRecordings)) {
+      // If this is a unique recording ID (contains underscore), extract the original question ID
+      const originalQuestionId = recordingId.includes("_")
+        ? recordingId.split("_")[0]
+        : recordingId;
+
+      // Skip the final question if we already uploaded it directly
+      if (originalQuestionId === finalQuestionId && finalQuestionId !== null) {
+        processedCount++;
+        setExtractionProgress((processedCount / totalRecordings) * 100);
+        continue;
+      }
+
+      // Make sure we have a valid question ID
+      if (!originalQuestionId) {
+        processedCount++;
+        setExtractionProgress((processedCount / totalRecordings) * 100);
+        continue;
+      }
+
+      // Find the question details
+      const questionData = position.questions.find(q => q.id === originalQuestionId);
+      
+      if (!questionData) {
+        console.warn(`Question data not found for ID: ${originalQuestionId}`);
+        processedCount++;
+        setExtractionProgress((processedCount / totalRecordings) * 100);
+        continue;
+      }
+
+      try {
+        // Update progress to show we're starting this question
+        setExtractionProgress(((processedCount + 0.1) / totalRecordings) * 100);
+        
+        // FIRST: Upload the recording to Supabase
+        console.log(`Uploading recording for question ${originalQuestionId}...`);
+        const uploadResult = await uploadRecordingFn(originalQuestionId, blob);
+        console.log(`Upload completed for question ${originalQuestionId}: ${uploadResult.success ? 'Success' : 'Failed'}${uploadResult.filePath ? `, Path: ${uploadResult.filePath.substring(0, 20)}...` : ''}`);
+        
+        // Update progress after upload
+        setExtractionProgress(((processedCount + 0.3) / totalRecordings) * 100);
+        
+        // Analyze the video with Gemini if uploadResult was successful, includes a filePath, and analysis mutations are available
+        let analysisResult: VideoAnalysisResult | null = null;
+        
+        if (uploadResult.success && uploadResult.filePath && analyzeVideoMutation && saveAnalysisMutation) {
+          try {
+            console.log(`Starting AI analysis for question: ${questionData.question}`);
+            
+            // Wait a moment to ensure the metadata has been saved in the database
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Use the filePath directly from the upload result
+            console.log(`Using direct file path from upload: ${uploadResult.filePath.substring(0, 30)}...`);
+            
+            // Call the tRPC procedure to analyze the video
+            analysisResult = await analyzeVideoMutation.mutateAsync({
+              videoUrl: uploadResult.filePath, // Use the file path from the upload result
+              question: questionData.question,
+              context: questionData.context || position.context,
+              positionId: positionId,
+              questionId: originalQuestionId,
+            });
+            
+            console.log(`AI analysis completed for question: ${originalQuestionId}`);
+            
+            // Update progress to show analysis is complete
+            setExtractionProgress(((processedCount + 0.7) / totalRecordings) * 100);
+            
+            // Save the analysis results to the database
+            if (analysisResult) {
+              await saveAnalysisMutation.mutateAsync({
+                positionId: positionId,
+                questionId: originalQuestionId,
+                overall_assessment: analysisResult.overall_assessment,
+                strengths: analysisResult.strengths,
+                areas_for_improvement: analysisResult.areas_for_improvement,
+                skills_demonstrated: analysisResult.skills_demonstrated,
+              });
+            }
+          } catch (error) {
+            console.error("Error during video analysis:", error);
+          }
+        } else if (!uploadResult.filePath) {
+          console.error(`No file path available for question ${originalQuestionId}`);
         }
+        
+        // Update progress to show the question is fully processed
+        processedCount++;
+        setExtractionProgress((processedCount / totalRecordings) * 100);
+        
+      } catch (error) {
+        console.error(`Error processing question ${originalQuestionId}:`, error);
+        // Continue with other recordings even if one fails
+        processedCount++;
+        setExtractionProgress((processedCount / totalRecordings) * 100);
+      }
+    }
 
-        // Make sure we have a valid question ID
-        if (!originalQuestionId) {
-          return Promise.resolve(false);
-        }
-
-        return uploadRecording(originalQuestionId, blob);
-      },
-    );
-
-    // Start progress simulation in parallel with uploads
-    const incrementProgressInterval = setInterval(() => {
-      setExtractionProgress((current) => {
-        const newProgress = current + Math.random() * 3; // Random increment between 0-3%
-        return newProgress >= 100 ? 100 : newProgress;
-      });
-    }, 300); // Update every 300ms
-
-    // Handle all uploads and only redirect after they're complete
-    await Promise.all(uploadPromises);
-
-    // Clear the interval and set progress to 100%
-    clearInterval(incrementProgressInterval);
+    // Ensure progress is at 100% when complete
     setExtractionProgress(100);
 
     // After a short delay, redirect to results page
@@ -165,6 +282,9 @@ export const simulateExtraction = async (
     }, 1500);
   } catch (error) {
     console.error("Error in extraction process:", error);
-    throw error;
+    setExtractionProgress(100); // Set to 100% to allow navigation
+    setTimeout(() => {
+      router.push(`/candidate/position/${positionId}/results`);
+    }, 1500);
   }
 }; 

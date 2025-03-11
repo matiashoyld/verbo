@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
+import { TRPCError } from "@trpc/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
+import { analyzeVideoResponse } from "~/lib/gemini/analyzeVideo";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 // Supabase client for storage operations
@@ -82,6 +84,46 @@ export const recordingsRouter = createTRPCRouter({
       }
     }),
 
+  // Save AI analysis results for a video response
+  saveAnalysis: protectedProcedure
+    .input(
+      z.object({
+        positionId: z.string(),
+        questionId: z.string(),
+        overall_assessment: z.string(),
+        strengths: z.array(z.string()),
+        areas_for_improvement: z.array(z.string()),
+        skills_demonstrated: z.array(z.string()),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Create a new video analysis record using raw SQL since the Prisma model is having issues
+        await ctx.db.$executeRaw`
+          INSERT INTO "VideoAnalysis" (
+            "id", "createdAt", "updatedAt", "candidateId", "positionId", "questionId",
+            "overall_assessment", "strengths", "areas_for_improvement", "skills_demonstrated"
+          )
+          VALUES (
+            ${randomUUID()}, NOW(), NOW(), ${ctx.userId}, ${input.positionId}, ${input.questionId},
+            ${input.overall_assessment}, ${input.strengths}, ${input.areas_for_improvement}, ${input.skills_demonstrated}
+          )
+          ON CONFLICT ("candidateId", "positionId", "questionId") 
+          DO UPDATE SET
+            "overall_assessment" = ${input.overall_assessment},
+            "strengths" = ${input.strengths},
+            "areas_for_improvement" = ${input.areas_for_improvement},
+            "skills_demonstrated" = ${input.skills_demonstrated},
+            "updatedAt" = NOW()
+        `;
+
+        return { success: true };
+      } catch (error) {
+        console.error("Error saving video analysis:", error);
+        throw new Error("Failed to save video analysis");
+      }
+    }),
+
   // Get recordings for a specific position by the current user
   getRecordings: protectedProcedure
     .input(
@@ -155,6 +197,178 @@ export const recordingsRouter = createTRPCRouter({
       } catch (error) {
         console.error("Error fetching recordings:", error);
         throw new Error("Failed to fetch recordings");
+      }
+    }),
+
+  // Get analysis results for recordings
+  getAnalysisResults: protectedProcedure
+    .input(
+      z.object({
+        positionId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        // Define the return type for clarity
+        type AnalysisResult = {
+          id: string;
+          questionId: string; 
+          overall_assessment: string;
+          strengths: string[];
+          areas_for_improvement: string[];
+          skills_demonstrated: string[];
+          createdAt: Date;
+        };
+        
+        // Get all analysis results for this user and position using raw SQL
+        const analysisResults = await ctx.db.$queryRaw<AnalysisResult[]>`
+          SELECT 
+            "id", "questionId", "overall_assessment", 
+            "strengths", "areas_for_improvement", "skills_demonstrated", 
+            "createdAt"
+          FROM "VideoAnalysis"
+          WHERE "candidateId" = ${ctx.userId}
+          AND "positionId" = ${input.positionId}
+          ORDER BY "updatedAt" DESC
+        `;
+
+        return { 
+          results: analysisResults.map((result: AnalysisResult) => {
+            // Extract original question ID if the stored ID has our special format (contains underscore)
+            const originalQuestionId = result.questionId.includes('_') 
+              ? result.questionId.split('_')[0] 
+              : result.questionId;
+            
+            return {
+              id: result.id,
+              questionId: originalQuestionId,
+              overall_assessment: result.overall_assessment,
+              strengths: result.strengths,
+              areas_for_improvement: result.areas_for_improvement,
+              skills_demonstrated: result.skills_demonstrated,
+              createdAt: result.createdAt
+            };
+          })
+        };
+      } catch (error) {
+        console.error("Error fetching analysis results:", error);
+        throw new Error("Failed to fetch analysis results");
+      }
+    }),
+
+  // Analyze a video recording using Gemini AI
+  analyzeVideo: protectedProcedure
+    .input(
+      z.object({
+        videoUrl: z.string().optional(),
+        question: z.string(),
+        context: z.string().nullable(),
+        positionId: z.string(),
+        questionId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        console.log(`Attempting to analyze video for question ${input.questionId}`);
+        console.log(`Video URL: ${input.videoUrl ? input.videoUrl.substring(0, 30) + '...' : 'Not provided'}`);
+        
+        let videoData: Uint8Array | null = null;
+
+        // If videoUrl was provided, try to download it directly
+        if (input.videoUrl) {
+          console.log(`Attempting direct download with provided videoUrl...`);
+          const downloadResult = await supabase.storage
+            .from(BUCKET_NAME)
+            .download(input.videoUrl);
+          
+          if (downloadResult.error || !downloadResult.data) {
+            console.error("Error downloading video:", downloadResult.error);
+            console.log(`Direct download failed, will try fallback method...`);
+          } else {
+            console.log(`Direct download successful! Got ${downloadResult.data.size} bytes`);
+            videoData = new Uint8Array(await downloadResult.data.arrayBuffer());
+          }
+        }
+
+        // If direct download failed or no videoUrl was provided, try to find the recording based on user, position, and question
+        if (!videoData) {
+          console.log("Searching for recording in database...");
+          
+          // Log the search parameters
+          console.log(`Search params - userId: ${ctx.userId}, positionId: ${input.positionId}, questionId: ${input.questionId}`);
+          
+          try {
+            // Find the recording metadata for this user, position, and question
+            const recording = await ctx.db.$queryRaw`
+              SELECT "filePath" FROM "RecordingMetadata"
+              WHERE "candidateId" = ${ctx.userId}
+              AND "positionId" = ${input.positionId}
+              AND "questionId" = ${input.questionId}
+              ORDER BY "createdAt" DESC
+              LIMIT 1
+            `;
+            
+            console.log(`Database query result:`, recording);
+            
+            // Check if we have a valid recording
+            const filePath = Array.isArray(recording) && recording.length > 0 
+              ? recording[0].filePath 
+              : null;
+
+            if (!filePath) {
+              console.error(`No recording found in database for question ${input.questionId}`);
+              throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "No recording found for this question",
+              });
+            }
+
+            console.log(`Found recording in database with path: ${filePath.substring(0, 30)}...`);
+
+            // Try to download using the filePath from the database
+            const downloadResult = await supabase.storage
+              .from(BUCKET_NAME)
+              .download(filePath);
+            
+            if (downloadResult.error || !downloadResult.data) {
+              console.error("Error downloading video from database path:", downloadResult.error);
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to download the video recording",
+              });
+            }
+
+            console.log(`Successfully downloaded video from database path, size: ${downloadResult.data.size} bytes`);
+            videoData = new Uint8Array(await downloadResult.data.arrayBuffer());
+          } catch (dbError) {
+            console.error("Error querying database for recording:", dbError);
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to retrieve recording from database",
+            });
+          }
+        }
+
+        // Convert to blob
+        const videoBlob = new Blob([videoData as Uint8Array], { type: "video/webm" });
+        console.log(`Created video blob, size: ${videoBlob.size} bytes`);
+
+        // Analyze the video
+        console.log(`Starting video analysis with Gemini...`);
+        const analysisResult = await analyzeVideoResponse(
+          videoBlob, 
+          input.question, 
+          input.context
+        );
+        console.log(`Analysis completed successfully!`);
+
+        return analysisResult;
+      } catch (error) {
+        console.error("Error analyzing video:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to analyze the video recording",
+        });
       }
     }),
 }); 

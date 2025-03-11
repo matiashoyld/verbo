@@ -5,6 +5,7 @@ export { model } from './client';
 export { generateFallbackId } from './utils';
 
 // Export main functions
+export { analyzeVideoResponse } from './analyzeVideo';
 export { extractSkillsFromJobDescription } from './extractSkills';
 export { generateAssessmentCase } from './generateCase';
 
