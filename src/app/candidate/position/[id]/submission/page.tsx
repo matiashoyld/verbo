@@ -322,6 +322,55 @@ export default function CandidateSubmissionPage() {
     });
   };
 
+  // Function to stop all recording processes
+  const emergencyStopAllRecording = () => {
+    try {
+      // Stop the MediaRecorder if it exists
+      if (mediaRecorderRef.current) {
+        try {
+          if (mediaRecorderRef.current.state === "recording") {
+            mediaRecorderRef.current.stop();
+          }
+        } catch (e) {
+          console.error("Error stopping MediaRecorder:", e);
+        }
+        mediaRecorderRef.current = null;
+      }
+
+      // Stop all tracks in the audio stream
+      if (audioStreamRef.current) {
+        try {
+          const audioTracks = audioStreamRef.current.getTracks();
+          audioTracks.forEach((track) => {
+            track.stop();
+          });
+        } catch (e) {
+          console.error("Error stopping audio tracks:", e);
+        }
+        audioStreamRef.current = null;
+      }
+
+      // Stop all tracks in the screen stream
+      if (screenStreamRef.current) {
+        try {
+          const screenTracks = screenStreamRef.current.getTracks();
+          screenTracks.forEach((track) => {
+            track.stop();
+          });
+        } catch (e) {
+          console.error("Error stopping screen tracks:", e);
+        }
+        screenStreamRef.current = null;
+      }
+
+      // Reset all recording state
+      setIsRecording(false);
+      recordingChunksRef.current = [];
+    } catch (e) {
+      console.error("Critical error stopping recording:", e);
+    }
+  };
+
   // Fetch position data from the database using tRPC
   const { data: position, isLoading } =
     api.positions.getPositionByIdPublic.useQuery(
@@ -670,55 +719,6 @@ export default function CandidateSubmissionPage() {
       </div>
     );
   }
-
-  // Function to stop all recording processes
-  const emergencyStopAllRecording = () => {
-    try {
-      // Stop the MediaRecorder if it exists
-      if (mediaRecorderRef.current) {
-        try {
-          if (mediaRecorderRef.current.state === "recording") {
-            mediaRecorderRef.current.stop();
-          }
-        } catch (e) {
-          console.error("Error stopping MediaRecorder:", e);
-        }
-        mediaRecorderRef.current = null;
-      }
-
-      // Stop all tracks in the audio stream
-      if (audioStreamRef.current) {
-        try {
-          const audioTracks = audioStreamRef.current.getTracks();
-          audioTracks.forEach((track) => {
-            track.stop();
-          });
-        } catch (e) {
-          console.error("Error stopping audio tracks:", e);
-        }
-        audioStreamRef.current = null;
-      }
-
-      // Stop all tracks in the screen stream
-      if (screenStreamRef.current) {
-        try {
-          const screenTracks = screenStreamRef.current.getTracks();
-          screenTracks.forEach((track) => {
-            track.stop();
-          });
-        } catch (e) {
-          console.error("Error stopping screen tracks:", e);
-        }
-        screenStreamRef.current = null;
-      }
-
-      // Reset all recording state
-      setIsRecording(false);
-      recordingChunksRef.current = [];
-    } catch (e) {
-      console.error("Critical error stopping recording:", e);
-    }
-  };
 
   // Function to upload a recording to Supabase
   const uploadRecording = async (questionId: string, blob: Blob) => {

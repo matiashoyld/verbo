@@ -1,5 +1,5 @@
 import { Loader2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface VideoPlayerProps {
   questionId: string;
@@ -13,30 +13,27 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const urlRef = useRef<string | null>(null);
 
-  // Debug logging
+  // Handle blob changes and create URL only when questionId or recordingBlob change
   useEffect(() => {
-    if (recordingBlob) {
-      console.log(
-        `Recording blob received for question ${questionId}:`,
-        recordingBlob.size,
-        recordingBlob.type,
-      );
-    } else {
-      console.log(`No recording blob for question ${questionId}`);
-    }
-  }, [questionId, recordingBlob]);
-
-  // Create URL from blob or simulate loading when question changes
-  useEffect(() => {
+    // Reset state when input changes
     setIsLoading(true);
     setErrorMessage(null);
+
+    // Clean up previous URL if it exists
+    if (urlRef.current) {
+      URL.revokeObjectURL(urlRef.current);
+      urlRef.current = null;
+      setVideoUrl(null);
+    }
 
     if (recordingBlob) {
       try {
         // Create a URL from the blob
         const url = URL.createObjectURL(recordingBlob);
         console.log(`Created URL for question ${questionId}: ${url}`);
+        urlRef.current = url;
         setVideoUrl(url);
         setIsLoading(false);
       } catch (error) {
@@ -54,14 +51,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       return () => clearTimeout(timer);
     }
 
-    // Clean up the URL when component unmounts or question changes
+    // Cleanup function for when component unmounts or dependencies change
     return () => {
-      if (videoUrl) {
-        console.log(`Revoking URL for question ${questionId}: ${videoUrl}`);
-        URL.revokeObjectURL(videoUrl);
+      if (urlRef.current) {
+        console.log(
+          `Cleanup: Revoking URL for question ${questionId}: ${urlRef.current}`,
+        );
+        URL.revokeObjectURL(urlRef.current);
+        urlRef.current = null;
       }
     };
-  }, [questionId, recordingBlob, videoUrl]);
+  }, [questionId, recordingBlob]); // videoUrl is NOT a dependency
 
   if (isLoading) {
     return (
