@@ -102,11 +102,14 @@ export function ViewPositionDialog({
         evaluationCriteria: [],
         description: position.jobDescription || "",
         context: position.context || "",
-        questions: position.questions.map((q) => ({
-          id: q.id,
+        questions: (position?.questions || []).map((q) => ({
+          id: q.id || "",
           context: q.context || "",
           question: q.question || "",
-          skills_assessed: q.skills || [],
+          skills_assessed: (q.competencies || []).map((comp) => ({
+            numId: null, // Since we no longer have numId in the new structure
+            name: comp.name || comp.skillName || "",
+          })),
         })),
       };
 

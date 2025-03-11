@@ -91,24 +91,25 @@ export const recordingsRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       try {
-        // Define a type for the recording records
-        type RecordingRecord = {
-          id: string;
-          filePath: string;
-          questionId: string;
-          fileSize: number | null;
-          durationSeconds: number | null;
-          createdAt: Date;
-        };
-
-        // Get all recordings for this user and position using raw SQL
-        const recordings = await ctx.db.$queryRaw<RecordingRecord[]>`
-          SELECT id, "filePath", "questionId", "fileSize", "durationSeconds", "createdAt" 
-          FROM "RecordingMetadata"
-          WHERE "candidateId" = ${ctx.userId}
-          AND "positionId" = ${input.positionId}
-          ORDER BY "updatedAt" DESC
-        `;
+        // Get all recordings for this user and position using standard Prisma query
+        // This replaces the raw SQL query to avoid connection pooling issues
+        const recordings = await ctx.db.recordingMetadata.findMany({
+          where: {
+            candidateId: ctx.userId,
+            positionId: input.positionId,
+          },
+          select: {
+            id: true,
+            filePath: true,
+            questionId: true,
+            fileSize: true,
+            durationSeconds: true,
+            createdAt: true,
+          },
+          orderBy: {
+            updatedAt: 'desc',
+          },
+        });
 
         // For each recording, generate a signed URL for downloading
         const recordingsWithUrls = await Promise.all(

@@ -41,10 +41,12 @@ export const positionsRouter = createTRPCRouter({
   }),
 
   getCommonPositions: publicProcedure.query(async ({ ctx }) => {
-    // Use direct SQL query to avoid Prisma model capitalization issues
-    const positions = await ctx.db.$queryRaw`
-      SELECT * FROM "CommonPosition" ORDER BY title ASC
-    `;
+    // Use standard Prisma query instead of raw SQL
+    const positions = await ctx.db.commonPosition.findMany({
+      orderBy: {
+        title: 'asc',
+      },
+    });
     return positions;
   }),
 
@@ -358,40 +360,43 @@ export const positionsRouter = createTRPCRouter({
         
         console.log("Using creator ID:", creatorId);
         
-        // Create the position record using SQL with proper type casting
-        const positionResult = await ctx.db.$queryRaw<Array<{id: string}>>`
-          INSERT INTO "Position" (
-            id, title, "jobDescription", context, openings, "creator_id", "created_at", "updated_at"
-          ) VALUES (
-            gen_random_uuid(), ${input.title}, ${input.jobDescription}, 
-            ${input.assessment.context}, 1, ${creatorId}, NOW(), NOW()
-          ) RETURNING id
-        `;
+        // Create the position record using standard Prisma client
+        const position = await ctx.db.position.create({
+          data: {
+            title: input.title,
+            jobDescription: input.jobDescription,
+            context: input.assessment.context,
+            openings: 1,
+            creatorId: creatorId,
+          },
+          select: {
+            id: true
+          }
+        });
         
-        // Add null check and provide an explicit error
-        if (!positionResult || positionResult.length === 0) {
-          throw new Error("Failed to create position record");
-        }
-        
-        // Define a default ID in case of error
-        const positionId = positionResult[0]?.id || (() => { 
-          throw new Error("Failed to get position ID after creation"); 
-        })();
+        const positionId = position.id;
+        console.log("Created position:", positionId);
         
         // Create position questions and associate competencies
         for (const question of input.assessment.questions) {
-          // Insert the question without the skills_assessed field
-          const questionResult = await ctx.db.$queryRaw<Array<{id: string}>>`
-            INSERT INTO "PositionQuestion" (
-              id, "position_id", question, context, "created_at", "updated_at"
-            ) VALUES (
-              gen_random_uuid(), ${positionId}::uuid, ${question.question}, ${question.context}, 
-              NOW(), NOW()
-            ) RETURNING id
-          `;
+          // Insert the question using standard Prisma client
+          const questionRecord = await ctx.db.positionQuestion.create({
+            data: {
+              position: {
+                connect: {
+                  id: positionId
+                }
+              },
+              question: question.question,
+              context: question.context
+            },
+            select: {
+              id: true
+            }
+          });
           
-          if (questionResult && questionResult.length > 0 && questionResult[0]) {
-            const questionId = questionResult[0].id;
+          if (questionRecord) {
+            const questionId = questionRecord.id;
             
             // Process skills for the question
             try {
@@ -416,13 +421,18 @@ export const positionsRouter = createTRPCRouter({
                         continue;
                       }
                       
-                      // Look up the competency by its numId (which should match the Competency.num_id column)
-                      const competencies = await ctx.db.$queryRaw<[{ id: string }]>`
-                        SELECT id FROM "Competency" WHERE "num_id" = ${skill.numId}::int LIMIT 1
-                      `;
+                      // Look up the competency by its numId using standard Prisma client
+                      const competency = await ctx.db.competency.findFirst({
+                        where: {
+                          numId: skill.numId,
+                        },
+                        select: {
+                          id: true
+                        }
+                      });
                       
-                      if (competencies && competencies.length > 0 && competencies[0]) {
-                        competencyId = competencies[0].id;
+                      if (competency) {
+                        competencyId = competency.id;
                         directMatches++;
                         console.log(`✓ Direct numId match for "${skill.name}" using numId: ${skill.numId}`);
                       } else {
@@ -474,31 +484,27 @@ export const positionsRouter = createTRPCRouter({
 
   getPositions: protectedProcedure.query(async ({ ctx }) => {
     try {
-      // Use raw SQL query to avoid Prisma model capitalization issue
-      const positions = await ctx.db.$queryRaw<Array<{
-        id: string;
-        title: string;
-        created_at: Date;
-        question_count: number;
-      }>>`
-        SELECT 
-          p.id, 
-          p.title, 
-          p.created_at,
-          COUNT(pq.id) as question_count
-        FROM "Position" p
-        LEFT JOIN "PositionQuestion" pq ON p.id = pq.position_id
-        GROUP BY p.id, p.title, p.created_at
-        ORDER BY p.created_at DESC
-      `;
+      // Use standard Prisma query with include for relationships
+      const positions = await ctx.db.position.findMany({
+        include: {
+          _count: {
+            select: {
+              questions: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
 
       // Transform the results to match the expected interface
       return positions.map(position => ({
         id: position.id,
         title: position.title,
-        created: formatRelativeTime(position.created_at),
-        createdAt: position.created_at.toISOString(),
-        questionCount: Number(position.question_count)
+        created: formatRelativeTime(position.createdAt),
+        createdAt: position.createdAt.toISOString(),
+        questionCount: position._count.questions,
       }));
     } catch (error) {
       console.error("Error fetching positions:", error);
@@ -552,68 +558,75 @@ export const positionsRouter = createTRPCRouter({
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       try {
-        // Fetch the position
-        const position = await ctx.db.$queryRaw<Array<{
-          id: string;
-          title: string;
-          job_description: string;
-          context: string;
-          created_at: Date;
-        }>>`
-          SELECT id, title, "jobDescription" as job_description, context, created_at
-          FROM "Position" 
-          WHERE id = ${input.id}::uuid
-        `;
+        // Fetch the position using standard Prisma
+        const positionData = await ctx.db.position.findUnique({
+          where: {
+            id: input.id,
+          },
+          select: {
+            id: true,
+            title: true,
+            jobDescription: true,
+            context: true,
+            createdAt: true,
+            questions: {
+              select: {
+                id: true,
+                question: true,
+                context: true,
+                competencies: {
+                  select: {
+                    competencyId: true,
+                    competency: {
+                      select: {
+                        id: true,
+                        name: true,
+                        skill: {
+                          select: {
+                            id: true,
+                            name: true,
+                            category: {
+                              select: {
+                                id: true,
+                                name: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
 
-        if (!position || position.length === 0) {
+        if (!positionData) {
           throw new Error("Position not found");
         }
 
-        // Now we know position[0] exists
-        const positionData = position[0]!;
-
-        // Fetch the questions for this position
-        const questions = await ctx.db.$queryRaw<Array<{
-          id: string;
-          question: string;
-          context: string;
-        }>>`
-          SELECT id, question, context
-          FROM "PositionQuestion"
-          WHERE position_id = ${input.id}::uuid
-          ORDER BY created_at ASC
-        `;
-
-        // For each question, fetch associated skills/competencies
-        const questionsWithSkills = await Promise.all(
-          questions.map(async (question) => {
-            const skills = await ctx.db.$queryRaw<Array<{
-              name: string;
-              num_id: number | null;
-            }>>`
-              SELECT ss.name, ss.num_id
-              FROM "QuestionCompetency" qc
-              JOIN "Competency" ss ON qc.competency_id = ss.id
-              WHERE qc.question_id = ${question.id}::uuid
-            `;
-
-            return {
-              ...question,
-              skills: skills.map(skill => ({
-                name: skill.name,
-                numId: skill.num_id
-              }))
-            };
-          })
-        );
-
+        // Transform the data to match what the frontend expects
         return {
           id: positionData.id,
           title: positionData.title,
-          jobDescription: positionData.job_description,
-          context: positionData.context || "",
-          createdAt: positionData.created_at.toISOString(),
-          questions: questionsWithSkills
+          jobDescription: positionData.jobDescription,
+          context: positionData.context,
+          createdAt: positionData.createdAt.toISOString(),
+          questions: positionData.questions.map(q => ({
+            id: q.id,
+            question: q.question,
+            context: q.context,
+            // Map competencies with their skills
+            competencies: q.competencies.map(c => ({
+              id: c.competency.id,
+              name: c.competency.name,
+              skillId: c.competency.skill.id,
+              skillName: c.competency.skill.name,
+              categoryId: c.competency.skill.category.id,
+              categoryName: c.competency.skill.category.name,
+            })),
+          })),
         };
       } catch (error) {
         console.error("Error fetching position by ID:", error);
