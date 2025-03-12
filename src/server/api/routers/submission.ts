@@ -3,38 +3,27 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const createInput = z.object({
-  challengeId: z.string(),
-  audioUrl: z.string().optional(),
-  screenUrl: z.string().optional(),
-  transcript: z.string().optional(),
+  positionId: z.string(),
 });
 
 const updateInput = z.object({
   id: z.string(),
-  audioUrl: z.string().optional(),
-  screenUrl: z.string().optional(),
-  transcript: z.string().optional(),
-  feedback: z.any().optional(),
   status: z.enum(["IN_PROGRESS", "COMPLETED", "FAILED"]).optional(),
   completedAt: z.date().optional(),
 });
 
 const defaultSubmissionSelect = {
   id: true,
-  audioUrl: true,
-  screenUrl: true,
-  transcript: true,
-  feedback: true,
   status: true,
   startedAt: true,
   completedAt: true,
   createdAt: true,
   updatedAt: true,
-  challenge: {
+  position: {
     select: {
       id: true,
       title: true,
-      createdBy: {
+      creator: {
         select: {
           id: true,
           name: true,
@@ -71,7 +60,7 @@ export const submissionRouter = createTRPCRouter({
         OR: [
           { candidateId: ctx.userId },
           {
-            challenge: {
+            position: {
               creatorId: ctx.userId,
             },
           },
@@ -93,13 +82,10 @@ export const submissionRouter = createTRPCRouter({
   update: protectedProcedure
     .input(updateInput)
     .mutation(async ({ ctx, input }) => {
-      const { id, feedback, ...updateData } = input;
+      const { id, ...updateData } = input;
       return ctx.db.submission.update({
         where: { id },
-        data: {
-          ...updateData,
-          ...(feedback && { feedback }),
-        },
+        data: updateData,
         select: defaultSubmissionSelect,
       });
     }),

@@ -64,20 +64,107 @@ export const recordingsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        // Since we're having issues with the model naming, let's create a direct query
-        // This is a temporary workaround - in production, you'd want to use the proper Prisma model
-        const result = await ctx.db.$executeRaw`
+        console.log(`Saving metadata for recording: ${input.filePath}`);
+        
+        // First, find the submission for this position and user
+        const submissionResult = await ctx.db.$queryRaw`
+          SELECT "id" FROM "Submission"
+          WHERE "candidate_id" = ${ctx.userId}
+          AND "position_id" = ${input.positionId}
+          LIMIT 1
+        `;
+        
+        let submissionId: string;
+        
+        if (!Array.isArray(submissionResult) || submissionResult.length === 0) {
+          console.log("No submission found, creating a new one");
+          
+          // Create a new submission
+          await ctx.db.$executeRaw`
+            INSERT INTO "Submission" (
+              "id", "candidate_id", "position_id", "status", 
+              "started_at", "created_at", "updated_at"
+            )
+            VALUES (
+              ${randomUUID()}, ${ctx.userId}, ${input.positionId}, 'IN_PROGRESS',
+              NOW(), NOW(), NOW()
+            )
+          `;
+          
+          // Get the newly created submission
+          const newSubmissionResult = await ctx.db.$queryRaw`
+            SELECT "id" FROM "Submission"
+            WHERE "candidate_id" = ${ctx.userId}
+            AND "position_id" = ${input.positionId}
+            ORDER BY "created_at" DESC
+            LIMIT 1
+          `;
+          
+          if (!Array.isArray(newSubmissionResult) || newSubmissionResult.length === 0) {
+            throw new Error("Failed to create submission");
+          }
+          
+          submissionId = newSubmissionResult[0].id;
+        } else {
+          submissionId = submissionResult[0].id;
+        }
+        
+        console.log(`Using submission ID: ${submissionId}`);
+        
+        // Check if a SubmissionQuestion already exists for this submission and question
+        const submissionQuestionResult = await ctx.db.$queryRaw`
+          SELECT "id" FROM "SubmissionQuestion"
+          WHERE "submission_id" = ${submissionId}
+          AND "position_question_id" = ${input.questionId}
+          LIMIT 1
+        `;
+        
+        let submissionQuestionId: string;
+        
+        if (!Array.isArray(submissionQuestionResult) || submissionQuestionResult.length === 0) {
+          console.log("No submission question found, creating a new one");
+          
+          // Create a new submission question
+          const newSubmissionQuestionId = randomUUID();
+          await ctx.db.$executeRaw`
+            INSERT INTO "SubmissionQuestion" (
+              "id", "submission_id", "position_question_id", 
+              "created_at", "updated_at"
+            )
+            VALUES (
+              ${newSubmissionQuestionId}, ${submissionId}, ${input.questionId},
+              NOW(), NOW()
+            )
+          `;
+          
+          submissionQuestionId = newSubmissionQuestionId;
+        } else {
+          submissionQuestionId = submissionQuestionResult[0].id;
+        }
+        
+        console.log(`Using submission question ID: ${submissionQuestionId}`);
+        
+        // Create the recording metadata record and link it to the SubmissionQuestion
+        await ctx.db.$executeRaw`
           INSERT INTO "RecordingMetadata" (
             "id", "createdAt", "updatedAt", "candidateId", "positionId", 
-            "questionId", "filePath", "fileSize", "durationSeconds", "processed"
+            "questionId", "filePath", "fileSize", "durationSeconds", "processed",
+            "submission_question_id"
           ) 
           VALUES (
             ${randomUUID()}, NOW(), NOW(), ${ctx.userId}, ${input.positionId}, 
-            ${input.questionId}, ${input.filePath}, ${input.fileSize || null}, ${input.durationSeconds || null}, false
+            ${input.questionId}, ${input.filePath}, ${input.fileSize || null}, ${input.durationSeconds || null}, false,
+            ${submissionQuestionId}
           )
+          ON CONFLICT ("submission_question_id") 
+          DO UPDATE SET
+            "filePath" = ${input.filePath}, 
+            "fileSize" = ${input.fileSize || null}, 
+            "durationSeconds" = ${input.durationSeconds || null},
+            "updatedAt" = NOW()
         `;
 
-        return { success: true };
+        return { success: true, submissionQuestionId };
       } catch (error) {
         console.error("Error saving recording metadata:", error);
         throw new Error("Failed to save recording metadata");
@@ -98,25 +185,76 @@ export const recordingsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        // Create a new video analysis record using raw SQL since the Prisma model is having issues
+        // Use a direct SQL query to avoid Prisma typing issues during transition
+        console.log(`Finding submission for position ${input.positionId} and user ${ctx.userId}`);
+        
+        // First, find the submission ID for this position and user
+        const submissionResult = await ctx.db.$queryRaw`
+          SELECT "id" FROM "Submission"
+          WHERE "candidate_id" = ${ctx.userId}
+          AND "position_id" = ${input.positionId}
+          LIMIT 1
+        `;
+        
+        let submissionId: string;
+        
+        if (!Array.isArray(submissionResult) || submissionResult.length === 0) {
+          console.log("No submission found, creating a new one");
+          
+          // Create a new submission if none exists
+          const newSubmission = await ctx.db.$executeRaw`
+            INSERT INTO "Submission" (
+              "id", "candidate_id", "position_id", "status", 
+              "started_at", "created_at", "updated_at"
+            )
+            VALUES (
+              ${randomUUID()}, ${ctx.userId}, ${input.positionId}, 'IN_PROGRESS',
+              NOW(), NOW(), NOW()
+            )
+            RETURNING "id"
+          `;
+          
+          // Get the ID of the newly created submission
+          const newSubmissionResult = await ctx.db.$queryRaw`
+            SELECT "id" FROM "Submission"
+            WHERE "candidate_id" = ${ctx.userId}
+            AND "position_id" = ${input.positionId}
+            ORDER BY "created_at" DESC
+            LIMIT 1
+          `;
+          
+          if (!Array.isArray(newSubmissionResult) || newSubmissionResult.length === 0) {
+            throw new Error("Failed to create submission");
+          }
+          
+          submissionId = newSubmissionResult[0].id;
+        } else {
+          submissionId = submissionResult[0].id;
+        }
+        
+        console.log(`Using submission ID: ${submissionId}`);
+        
+        // Now create or update the submission question
         await ctx.db.$executeRaw`
-          INSERT INTO "VideoAnalysis" (
-            "id", "createdAt", "updatedAt", "candidateId", "positionId", "questionId",
-            "overall_assessment", "strengths", "areas_for_improvement", "skills_demonstrated"
+          INSERT INTO "SubmissionQuestion" (
+            "id", "submission_id", "position_question_id", 
+            "overall_assessment", "strengths", "areas_of_improvement", "skills_demonstrated",
+            "created_at", "updated_at"
           )
           VALUES (
-            ${randomUUID()}, NOW(), NOW(), ${ctx.userId}, ${input.positionId}, ${input.questionId},
-            ${input.overall_assessment}, ${input.strengths}, ${input.areas_for_improvement}, ${input.skills_demonstrated}
+            ${randomUUID()}, ${submissionId}, ${input.questionId},
+            ${input.overall_assessment}, ${input.strengths}, ${input.areas_for_improvement}, ${input.skills_demonstrated},
+            NOW(), NOW()
           )
-          ON CONFLICT ("candidateId", "positionId", "questionId") 
+          ON CONFLICT ("submission_id", "position_question_id") 
           DO UPDATE SET
             "overall_assessment" = ${input.overall_assessment},
             "strengths" = ${input.strengths},
-            "areas_for_improvement" = ${input.areas_for_improvement},
+            "areas_of_improvement" = ${input.areas_for_improvement},
             "skills_demonstrated" = ${input.skills_demonstrated},
-            "updatedAt" = NOW()
+            "updated_at" = NOW()
         `;
-
+        
         return { success: true };
       } catch (error) {
         console.error("Error saving video analysis:", error);
@@ -212,43 +350,36 @@ export const recordingsRouter = createTRPCRouter({
         // Define the return type for clarity
         type AnalysisResult = {
           id: string;
-          questionId: string; 
-          overall_assessment: string;
+          position_question_id: string;
+          overall_assessment: string | null;
           strengths: string[];
-          areas_for_improvement: string[];
+          areas_of_improvement: string[];
           skills_demonstrated: string[];
-          createdAt: Date;
+          created_at: Date;
         };
         
-        // Get all analysis results for this user and position using raw SQL
+        // Use raw SQL to fetch the analysis results to avoid Prisma typing issues
         const analysisResults = await ctx.db.$queryRaw<AnalysisResult[]>`
-          SELECT 
-            "id", "questionId", "overall_assessment", 
-            "strengths", "areas_for_improvement", "skills_demonstrated", 
-            "createdAt"
-          FROM "VideoAnalysis"
-          WHERE "candidateId" = ${ctx.userId}
-          AND "positionId" = ${input.positionId}
-          ORDER BY "updatedAt" DESC
+          SELECT sq."id", sq."position_question_id", sq."overall_assessment", 
+                 sq."strengths", sq."areas_of_improvement", sq."skills_demonstrated", 
+                 sq."created_at"
+          FROM "SubmissionQuestion" sq
+          JOIN "Submission" s ON sq."submission_id" = s."id"
+          WHERE s."candidate_id" = ${ctx.userId}
+          AND s."position_id" = ${input.positionId}
+          ORDER BY sq."updated_at" DESC
         `;
-
+        
         return { 
-          results: analysisResults.map((result: AnalysisResult) => {
-            // Extract original question ID if the stored ID has our special format (contains underscore)
-            const originalQuestionId = result.questionId.includes('_') 
-              ? result.questionId.split('_')[0] 
-              : result.questionId;
-            
-            return {
-              id: result.id,
-              questionId: originalQuestionId,
-              overall_assessment: result.overall_assessment,
-              strengths: result.strengths,
-              areas_for_improvement: result.areas_for_improvement,
-              skills_demonstrated: result.skills_demonstrated,
-              createdAt: result.createdAt
-            };
-          })
+          results: analysisResults.map((result: AnalysisResult) => ({
+            id: result.id,
+            questionId: result.position_question_id,
+            overall_assessment: result.overall_assessment || "",
+            strengths: result.strengths || [],
+            areas_for_improvement: result.areas_of_improvement || [],
+            skills_demonstrated: result.skills_demonstrated || [],
+            createdAt: result.created_at
+          }))
         };
       } catch (error) {
         console.error("Error fetching analysis results:", error);
@@ -298,10 +429,14 @@ export const recordingsRouter = createTRPCRouter({
           try {
             // Find recording associated with this questionId and positionId
             const recording = await ctx.db.$queryRaw`
-              SELECT * FROM Recording
-              WHERE "questionId" = ${input.questionId}
-              AND "positionId" = ${input.positionId}
-              ORDER BY "createdAt" DESC
+              SELECT rm.* 
+              FROM "RecordingMetadata" rm
+              JOIN "SubmissionQuestion" sq ON rm."submission_question_id" = sq."id"
+              JOIN "Submission" s ON sq."submission_id" = s."id"
+              WHERE s."candidate_id" = ${ctx.userId}
+              AND s."position_id" = ${input.positionId}
+              AND sq."position_question_id" = ${input.questionId}
+              ORDER BY rm."createdAt" DESC
               LIMIT 1
             `;
             

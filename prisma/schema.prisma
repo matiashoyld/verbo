@@ -88,7 +88,6 @@ model Challenge {
   created_at   DateTime     @default(now()) @db.Timestamptz(6)
   updated_at   DateTime     @updatedAt @db.Timestamptz(6)
   createdBy    User         @relation("CreatedChallenges", fields: [creatorId], references: [id])
-  submissions  Submission[]
   skills       Skill[]      @relation("ChallengeToSkill")
 
   @@map("Challenge")
@@ -96,19 +95,16 @@ model Challenge {
 
 model Submission {
   id          String           @id @default(uuid()) @db.Uuid
-  challengeId String           @map("challenge_id") @db.Uuid
   candidateId String           @map("candidate_id")
-  audioUrl    String?          @map("audio_url")
-  screenUrl   String?          @map("screen_url")
-  transcript  String?
-  feedback    Json?
+  positionId  String           @map("position_id") @db.Uuid
   status      SubmissionStatus @default(IN_PROGRESS)
   startedAt   DateTime         @default(now()) @map("started_at") @db.Timestamptz(6)
   completedAt DateTime?        @map("completed_at") @db.Timestamptz(6)
   created_at  DateTime         @default(now()) @db.Timestamptz(6)
   updated_at  DateTime         @updatedAt @db.Timestamptz(6)
   candidate   User             @relation(fields: [candidateId], references: [id])
-  challenge   Challenge        @relation(fields: [challengeId], references: [id])
+  position    Position         @relation(fields: [positionId], references: [id])
+  questions   SubmissionQuestion[]
 
   @@map("Submission")
 }
@@ -135,6 +131,7 @@ model Position {
   updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
   creator        User               @relation(fields: [creatorId], references: [id])
   questions      PositionQuestion[]
+  submissions    Submission[]
 
   @@map("Position")
 }
@@ -148,6 +145,7 @@ model PositionQuestion {
   updatedAt    DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
   position     Position             @relation(fields: [positionId], references: [id], onDelete: Cascade)
   competencies QuestionCompetency[]
+  submissions  SubmissionQuestion[]
 
   @@map("PositionQuestion")
 }
@@ -166,34 +164,38 @@ model QuestionCompetency {
 }
 
 model RecordingMetadata {
-  id              String   @id @default(uuid())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  candidateId     String
-  positionId      String
-  questionId      String
-  filePath        String
-  fileSize        Int?
-  durationSeconds Int?
-  processed       Boolean  @default(false)
+  id                 String             @id @default(uuid())
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  candidateId        String
+  positionId         String
+  questionId         String
+  filePath           String
+  fileSize           Int?
+  durationSeconds    Int?
+  processed          Boolean            @default(false)
+  submissionQuestionId String            @unique @map("submission_question_id") @db.Uuid
+  submissionQuestion SubmissionQuestion @relation(fields: [submissionQuestionId], references: [id], onDelete: Cascade)
 
   @@map("RecordingMetadata")
 }
 
-model VideoAnalysis {
-  id                   String   @id @default(uuid())
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  candidateId          String
-  positionId           String
-  questionId           String
-  overall_assessment   String
-  strengths            String[]
-  areas_for_improvement String[]
-  skills_demonstrated  String[]
+model SubmissionQuestion {
+  id                 String           @id @default(uuid()) @db.Uuid
+  submissionId       String           @map("submission_id") @db.Uuid
+  positionQuestionId String           @map("position_question_id") @db.Uuid
+  overall_assessment String?
+  strengths          String[]
+  areas_of_improvement String[]
+  skills_demonstrated String[]
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  submission         Submission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  positionQuestion   PositionQuestion @relation(fields: [positionQuestionId], references: [id], onDelete: Cascade)
+  recordingMetadata  RecordingMetadata?
 
-  @@unique([candidateId, positionId, questionId])
-  @@map("VideoAnalysis")
+  @@unique([submissionId, positionQuestionId])
+  @@map("SubmissionQuestion")
 }
 
 enum UserRole {

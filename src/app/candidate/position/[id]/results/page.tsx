@@ -108,7 +108,7 @@ export default function ResultsPage() {
         const mappedFeedback = position.questions.map((question) => {
           // Find the analysis for this question
           const analysis = analysisData.results.find(
-            (a: AnalysisResult) => a.questionId === question.id,
+            (a) => a.questionId === question.id,
           );
 
           if (analysis) {
@@ -121,19 +121,16 @@ export default function ResultsPage() {
               overall_assessment: analysis.overall_assessment,
             };
           } else {
-            // Return fallback data for questions without analysis
+            // Return a fallback item if no analysis is found
             return {
               questionId: question.id,
-              strengths: [
-                "Analysis not yet available",
-                "Recording processed successfully",
-              ],
+              strengths: ["Recording processed successfully"],
               areas_for_improvement: [
                 "Check back later for complete AI analysis",
               ],
-              skills_demonstrated: ["Technical Assessment Pending"],
+              skills_demonstrated: [],
               overall_assessment:
-                "The AI is still processing your response. Please check back later for a complete analysis.",
+                "Your recording has been processed, but detailed AI analysis is still being generated.",
             };
           }
         });
