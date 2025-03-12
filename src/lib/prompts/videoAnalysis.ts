@@ -32,7 +32,7 @@ export function createVideoAnalysisPrompt(
     ${question}
     </question>
     
-    # Competencies Being Assessed:
+    <competencies_to_assess>
     ${competencies.length > 0 ? 
       competencies.map(comp => `
       ## ${comp.name} (ID: ${comp.id})
@@ -44,7 +44,7 @@ export function createVideoAnalysisPrompt(
       : 
       "No specific competencies defined for evaluation."
     }
-    
+    </competencies_to_assess>
     # About The Video:
     The video recording shows the candidate's screen and captures their audio as they work through the technical question. They may be writing code, creating SQL queries, drawing diagrams, or explaining their thought process verbally.
     
@@ -78,7 +78,7 @@ export function createVideoAnalysisPrompt(
           "competency_id": "123", // Use the EXACT numeric ID number shown next to the competency name above
           "competency_name": "Name of the competency",
           "level": 3, // A number from 1 to 5 indicating the assessed level
-          "rationale": "A detailed explanation of why this level was assigned, including specific quotes and timestamps from the video as evidence (e.g., 'At 2:15, the candidate said...')"
+          "rationale": "A detailed explanation of why this level was assigned, including specific quotes and timestamps from the video as evidence (e.g., 'At 2:15, the candidate said/wrote/did...')"
         },
         // Additional competencies...
       ]
