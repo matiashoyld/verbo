@@ -34,15 +34,23 @@ interface CodeProps {
   children?: React.ReactNode;
 }
 
+// Define the DBSkillData interface locally
+interface DBSkillData {
+  skillName: string;
+  skillNumId: number | null;
+  categoryName: string;
+  categoryNumId: number | null;
+  competencies?: Array<{ name: string; numId: number | null }>;
+}
+
 interface AssessmentQuestion {
   context: string;
   question: string;
-  competencies_assessed?: Array<{
+  skills_assessed: Array<{
     numId: number | null;
     name: string;
-    skillNumId?: number | null;
   }>;
-  skills_assessed?: Array<{
+  competencies_assessed?: Array<{
     numId: number | null;
     name: string;
     skillNumId?: number | null;
@@ -115,8 +123,11 @@ export function AssessmentStep({
     const newQuestionObj: AssessmentQuestion = {
       context: newQuestionContext || "",
       question: newQuestion,
-      competencies_assessed: competenciesData,
-      skills_assessed: competenciesData, // Include both for backward compatibility
+      skills_assessed: competenciesData.map((comp) => ({
+        name: comp.name,
+        numId: comp.numId,
+      })),
+      competencies_assessed: competenciesData, // Include competencies_assessed for backward compatibility
     };
 
     const updatedQuestions = [...assessment.questions, newQuestionObj];
@@ -142,17 +153,19 @@ export function AssessmentStep({
     const competencies: CompetencyOption[] = [];
 
     // Flatten the skills data to get all competencies with their context
-    dbSkillsData.forEach((skillData: any) => {
+    dbSkillsData.forEach((skillData: DBSkillData) => {
       if (skillData.competencies && skillData.competencies.length > 0) {
-        skillData.competencies.forEach((comp: any) => {
-          competencies.push({
-            numId: comp.numId,
-            name: comp.name,
-            skillName: skillData.skillName,
-            skillNumId: skillData.skillNumId,
-            categoryName: skillData.categoryName,
-          });
-        });
+        skillData.competencies.forEach(
+          (comp: { name: string; numId: number | null }) => {
+            competencies.push({
+              numId: comp.numId,
+              name: comp.name,
+              skillName: skillData.skillName,
+              skillNumId: skillData.skillNumId,
+              categoryName: skillData.categoryName,
+            });
+          },
+        );
       }
     });
 
@@ -428,8 +441,7 @@ export function AssessmentStep({
     };
   };
 
-  // Add a helper function at the top of the component to safely get competencies
-  // This helps avoid type errors by providing a consistent way to access competencies
+  // Helper function to get competencies from a question
   const getCompetenciesFromQuestion = (
     question: AssessmentQuestion,
   ): Array<{
@@ -437,7 +449,14 @@ export function AssessmentStep({
     name: string;
     skillNumId?: number | null;
   }> => {
-    return question.competencies_assessed || question.skills_assessed || [];
+    return (
+      question.competencies_assessed ||
+      question.skills_assessed.map((skill) => ({
+        ...skill,
+        skillNumId: null,
+      })) ||
+      []
+    );
   };
 
   return (
