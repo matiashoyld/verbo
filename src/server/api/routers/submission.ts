@@ -17,8 +17,8 @@ const defaultSubmissionSelect = {
   status: true,
   startedAt: true,
   completedAt: true,
-  createdAt: true,
-  updatedAt: true,
+  created_at: true,
+  updated_at: true,
   position: {
     select: {
       id: true,
@@ -36,6 +36,80 @@ const defaultSubmissionSelect = {
       id: true,
       name: true,
       email: true,
+    },
+  },
+} as const;
+
+// Enhanced selection with questions and competency assessments
+const detailedSubmissionSelect = {
+  ...defaultSubmissionSelect,
+  position: {
+    select: {
+      id: true,
+      title: true,
+      questions: {
+        select: {
+          id: true,
+        },
+      },
+      creator: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  },
+  questions: {
+    select: {
+      id: true,
+      overall_assessment: true,
+      createdAt: true,
+      updatedAt: true,
+      skills_demonstrated: true,
+      strengths: true,
+      areas_of_improvement: true,
+      positionQuestion: {
+        select: {
+          id: true,
+          question: true,
+          context: true,
+        },
+      },
+      competencyAssessments: {
+        select: {
+          id: true,
+          level: true,
+          rationale: true,
+          questionCompetency: {
+            select: {
+              id: true,
+              competency: {
+                select: {
+                  id: true,
+                  name: true,
+                  skillId: true,
+                  skill: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      recordingMetadata: {
+        select: {
+          id: true,
+          filePath: true,
+          fileSize: true,
+          durationSeconds: true,
+          processed: true,
+        },
+      },
     },
   },
 } as const;
@@ -70,12 +144,27 @@ export const submissionRouter = createTRPCRouter({
     });
   }),
 
+  // New procedure to get all submissions for a recruiter 
+  getAllForRecruiter: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db.submission.findMany({
+      where: {
+        position: {
+          creatorId: ctx.userId,
+        },
+      },
+      select: detailedSubmissionSelect,
+      orderBy: {
+        startedAt: 'desc',
+      },
+    });
+  }),
+
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       return ctx.db.submission.findUnique({
         where: { id: input.id },
-        select: defaultSubmissionSelect,
+        select: detailedSubmissionSelect,
       });
     }),
 

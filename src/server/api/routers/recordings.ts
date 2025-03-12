@@ -922,4 +922,39 @@ export const recordingsRouter = createTRPCRouter({
         throw new Error("Failed to analyze video");
       }
     }),
+
+  // Get a signed URL for an existing file
+  getSignedUrl: protectedProcedure
+    .input(z.object({
+      filePath: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        console.log(`Getting signed URL for: ${input.filePath}`);
+        
+        // Generate a signed URL with a 1 hour expiry
+        const { data, error } = await supabase.storage
+          .from(BUCKET_NAME)
+          .createSignedUrl(input.filePath, 3600);
+
+        if (error) {
+          console.error("Error creating signed URL:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to generate signed URL",
+          });
+        }
+
+        return { 
+          url: data.signedUrl,
+          success: true
+        };
+      } catch (error) {
+        console.error("Error in getSignedUrl:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR", 
+          message: "Failed to generate signed URL"
+        });
+      }
+    }),
 }); 

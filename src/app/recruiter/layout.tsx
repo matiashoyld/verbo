@@ -14,6 +14,27 @@ export default function RecruiterLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
+  // Check if this is a submission detail page
+  const isSubmissionDetailPage =
+    pathname.includes("/recruiter/submissions/") &&
+    !pathname.endsWith("/submissions");
+
+  // Use a different layout for submission detail pages
+  if (isSubmissionDetailPage) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <div className="w-full flex-1">
+          <main className="flex w-full flex-col overflow-hidden">
+            {children}
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular layout with sidebar for other pages
   return (
     <div className="flex min-h-screen flex-col">
       <div className="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
