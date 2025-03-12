@@ -87,15 +87,18 @@ const QuestionFeedback: React.FC<FeedbackProps> = ({ question }) => {
       {/* Key strengths section */}
       {question.strengths && question.strengths.length > 0 && (
         <div className="rounded-md bg-white p-4 shadow-sm">
-          <h3 className="mb-2 text-sm font-medium text-green-600">
-            Key Strengths
+          <h3 className="mb-2 text-sm font-medium text-verbo-dark">
+            KEY STRENGTHS
           </h3>
           <ul className="space-y-2">
             {question.strengths.map((strength, index) => (
-              <li key={index} className="flex text-sm">
-                <span className="mr-2 mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
-                  <Check className="h-3 w-3" />
-                </span>
+              <li
+                key={index}
+                className="flex items-start gap-2 text-xs text-gray-800"
+              >
+                <div className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-verbo-green/10">
+                  <Check className="h-2.5 w-2.5 text-verbo-green" />
+                </div>
                 <span>{strength}</span>
               </li>
             ))}
@@ -107,15 +110,18 @@ const QuestionFeedback: React.FC<FeedbackProps> = ({ question }) => {
       {question.areas_of_improvement &&
         question.areas_of_improvement.length > 0 && (
           <div className="rounded-md bg-white p-4 shadow-sm">
-            <h3 className="mb-2 text-sm font-medium text-amber-600">
-              Areas for Improvement
+            <h3 className="mb-2 text-sm font-medium text-verbo-dark">
+              AREAS FOR IMPROVEMENT
             </h3>
             <ul className="space-y-2">
               {question.areas_of_improvement.map((area, index) => (
-                <li key={index} className="flex text-sm">
-                  <span className="mr-2 mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-                    <ChevronRight className="h-3 w-3" />
-                  </span>
+                <li
+                  key={index}
+                  className="flex items-start gap-2 text-xs text-gray-800"
+                >
+                  <div className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-verbo-purple/10">
+                    <ChevronRight className="h-2.5 w-2.5 text-verbo-purple" />
+                  </div>
                   <span>{area}</span>
                 </li>
               ))}
@@ -124,38 +130,6 @@ const QuestionFeedback: React.FC<FeedbackProps> = ({ question }) => {
         )}
 
       {/* Competency assessments section */}
-      {question.competencyAssessments &&
-        question.competencyAssessments.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-verbo-dark">
-              Competency Assessments
-            </h3>
-            {question.competencyAssessments.map((assessment) => (
-              <div
-                key={assessment.id}
-                className="rounded-md bg-white p-4 shadow-sm"
-              >
-                <div className="mb-2 flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-medium">
-                      {assessment.questionCompetency.competency.name}
-                    </h4>
-                    <p className="text-xs text-muted-foreground">
-                      {assessment.questionCompetency.competency.skill.name}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <SkillLevel level={assessment.level} maxLevel={5} />
-                    <span className="text-xs font-medium text-verbo-purple">
-                      Level {assessment.level}/5
-                    </span>
-                  </div>
-                </div>
-                <p className="text-sm">{assessment.rationale}</p>
-              </div>
-            ))}
-          </div>
-        )}
 
       {/* No feedback available fallback */}
       {!question.overall_assessment &&

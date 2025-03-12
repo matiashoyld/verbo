@@ -366,7 +366,7 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({ submission }) => {
                   }`}
                 >
                   <MessageSquare className="mr-1.5 h-3 w-3" />
-                  AI Feedback
+                  Overall Feedback
                 </button>
 
                 <button
@@ -378,7 +378,7 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({ submission }) => {
                   }`}
                 >
                   <ListChecks className="mr-1.5 h-3 w-3" />
-                  Competency Assessments
+                  Competencies
                 </button>
 
                 <button
