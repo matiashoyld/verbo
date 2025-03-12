@@ -75,6 +75,8 @@ async function seedSkillTaxonomy() {
   // Clear existing data to avoid conflicts
   console.log('Clearing existing data...');
   await prisma.criterion.deleteMany({});
+  // Delete QuestionCompetency records first to resolve foreign key constraints
+  await prisma.questionCompetency.deleteMany({});
   await prisma.competency.deleteMany({});
   await prisma.skill.deleteMany({});
   await prisma.category.deleteMany({});
