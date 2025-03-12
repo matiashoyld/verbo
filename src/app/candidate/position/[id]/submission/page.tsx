@@ -468,7 +468,8 @@ export default function CandidateSubmissionPage() {
               const analysisResult = await analyzeVideoMutation.mutateAsync({
                 videoUrl: uploadResult.filePath,
                 question: currentQuestion.question,
-                context: currentQuestion.context || position.context,
+                context: position.context,
+                questionContext: currentQuestion.context,
                 positionId: params.id,
                 questionId: activeQuestionId,
               });

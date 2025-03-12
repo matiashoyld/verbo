@@ -34,6 +34,7 @@ type AnalyzeVideoMutation = (input: {
   videoUrl?: string;
   question: string;
   context: string | null;
+  questionContext?: string | null;
   positionId: string;
   questionId: string;
 }) => Promise<VideoAnalysisResult | null>;
@@ -233,7 +234,8 @@ export const simulateExtraction = async (
             analysisResult = await analyzeVideoMutation.mutateAsync({
               videoUrl: uploadResult.filePath, // Use the file path from the upload result
               question: questionData.question,
-              context: questionData.context || position.context,
+              context: position.context,
+              questionContext: questionData.context,
               positionId: positionId,
               questionId: originalQuestionId,
             });

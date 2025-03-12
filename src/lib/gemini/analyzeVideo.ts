@@ -16,11 +16,13 @@ const isServer = typeof window === 'undefined';
  * @param videoBlob The video recording to analyze
  * @param question The question the candidate is answering
  * @param context The context of the technical case (optional)
+ * @param questionContext The context specific to the question (optional)
  */
 export async function analyzeVideoResponse(
   videoBlob: Blob,
   question: string,
-  context: string | null
+  context: string | null,
+  questionContext: string | null = null
 ): Promise<VideoAnalysisResult> {
   // Make sure this function only runs on the server
   if (!isServer) {
@@ -94,12 +96,12 @@ export async function analyzeVideoResponse(
         temperature: 0.2, // Lower temperature for more factual responses
         topP: 0.95,
         topK: 64,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 65536,
       }
     });
     
     // Generate the analysis prompt
-    const analysisPrompt = createVideoAnalysisPrompt("", question, context);
+    const analysisPrompt = createVideoAnalysisPrompt(question, context, questionContext);
     
     // Start a chat session
     const chatSession = model.startChat({

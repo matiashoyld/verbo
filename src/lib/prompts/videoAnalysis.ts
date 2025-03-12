@@ -2,20 +2,26 @@
  * Prompt for analyzing candidate video responses using Gemini AI
  */
 export function createVideoAnalysisPrompt(
-  videoContent: string,
   question: string,
-  context: string | null
+  context: string | null,
+  questionContext: string | null = null
 ): string {
   return `
     You are an expert technical interviewer and skills evaluator. You are analyzing a video recording of a candidate's technical assessment response.
     
     # Context and Question Information:
     
-    ## Technical Case Context:
-    ${context || "No context provided."}
+    <technical_case_context>
+    ${context || "No case context provided."}
+    </technical_case_context>
     
-    ## Question Being Answered:
+    <question_context>
+    ${questionContext || "No specific question context provided."}
+    </question_context>
+    
+    <question>
     ${question}
+    </question>
     
     # About The Video:
     The video recording shows the candidate's screen and captures their audio as they work through the technical question. They may be writing code, creating SQL queries, drawing diagrams, or explaining their thought process verbally.

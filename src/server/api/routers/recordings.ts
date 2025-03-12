@@ -263,6 +263,7 @@ export const recordingsRouter = createTRPCRouter({
         videoUrl: z.string().optional(),
         question: z.string(),
         context: z.string().nullable(),
+        questionContext: z.string().nullable().optional(),
         positionId: z.string(),
         questionId: z.string(),
       })
@@ -290,42 +291,41 @@ export const recordingsRouter = createTRPCRouter({
           }
         }
 
-        // If direct download failed or no videoUrl was provided, try to find the recording based on user, position, and question
+        // If we still don't have video data, try to find it in the database
         if (!videoData) {
-          console.log("Searching for recording in database...");
-          
-          // Log the search parameters
-          console.log(`Search params - userId: ${ctx.userId}, positionId: ${input.positionId}, questionId: ${input.questionId}`);
+          console.log(`Looking up recording in database by questionId: ${input.questionId}`);
           
           try {
-            // Find the recording metadata for this user, position, and question
+            // Find recording associated with this questionId and positionId
             const recording = await ctx.db.$queryRaw`
-              SELECT "filePath" FROM "RecordingMetadata"
-              WHERE "candidateId" = ${ctx.userId}
+              SELECT * FROM Recording
+              WHERE "questionId" = ${input.questionId}
               AND "positionId" = ${input.positionId}
-              AND "questionId" = ${input.questionId}
               ORDER BY "createdAt" DESC
               LIMIT 1
             `;
             
-            console.log(`Database query result:`, recording);
-            
-            // Check if we have a valid recording
-            const filePath = Array.isArray(recording) && recording.length > 0 
-              ? recording[0].filePath 
-              : null;
-
-            if (!filePath) {
-              console.error(`No recording found in database for question ${input.questionId}`);
+            if (!Array.isArray(recording) || recording.length === 0) {
+              console.error(`No recording found for question ${input.questionId}`);
               throw new TRPCError({
                 code: "NOT_FOUND",
-                message: "No recording found for this question",
+                message: `No recording found for question ${input.questionId}`,
               });
             }
-
-            console.log(`Found recording in database with path: ${filePath.substring(0, 30)}...`);
-
-            // Try to download using the filePath from the database
+            
+            console.log(`Found recording: ${JSON.stringify(recording[0], null, 2)}`);
+            const filePath = recording[0].filePath;
+            
+            if (!filePath) {
+              console.error(`No file path found for question ${input.questionId}`);
+              throw new TRPCError({
+                code: "NOT_FOUND", 
+                message: `No file path found for question ${input.questionId}`,
+              });
+            }
+            
+            // Now we need to download the file from supabase storage
+            console.log(`Downloading video from storage, path: ${filePath}`);
             const downloadResult = await supabase.storage
               .from(BUCKET_NAME)
               .download(filePath);
@@ -358,7 +358,8 @@ export const recordingsRouter = createTRPCRouter({
         const analysisResult = await analyzeVideoResponse(
           videoBlob, 
           input.question, 
-          input.context
+          input.context,
+          input.questionContext
         );
         console.log(`Analysis completed successfully!`);
 

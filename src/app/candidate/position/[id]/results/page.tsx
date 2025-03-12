@@ -35,7 +35,7 @@ interface FeedbackItem {
 // Define types for the analysis results
 interface AnalysisResult {
   id: string;
-  questionId: string;
+  questionId: string | undefined;
   overall_assessment: string;
   strengths: string[];
   areas_for_improvement: string[];
