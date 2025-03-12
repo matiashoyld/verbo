@@ -13,5 +13,5 @@ ADD COLUMN     "strengths" TEXT[],
 DROP COLUMN "areas_of_improvement",
 ADD COLUMN     "areas_of_improvement" TEXT[];
 
--- DropTable
-DROP TABLE "VideoAnalysis";
+-- DropTable (if exists)
+DROP TABLE IF EXISTS "VideoAnalysis";
