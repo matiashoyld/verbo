@@ -17,12 +17,22 @@ const isServer = typeof window === 'undefined';
  * @param question The question the candidate is answering
  * @param context The context of the technical case (optional)
  * @param questionContext The context specific to the question (optional)
+ * @param competencies The competencies to assess (optional)
  */
 export async function analyzeVideoResponse(
   videoBlob: Blob,
   question: string,
   context: string | null,
-  questionContext: string | null = null
+  questionContext: string | null = null,
+  competencies: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    rubric: Array<{
+      level: number;
+      description: string;
+    }>;
+  }> = []
 ): Promise<VideoAnalysisResult> {
   // Make sure this function only runs on the server
   if (!isServer) {
@@ -101,7 +111,12 @@ export async function analyzeVideoResponse(
     });
     
     // Generate the analysis prompt
-    const analysisPrompt = createVideoAnalysisPrompt(question, context, questionContext);
+    const analysisPrompt = createVideoAnalysisPrompt(question, context, questionContext, competencies);
+    
+    // Log the prompt for debugging
+    console.log("==== ANALYSIS PROMPT ====");
+    console.log(analysisPrompt);
+    console.log("========================");
     
     // Start a chat session
     const chatSession = model.startChat({
@@ -130,6 +145,11 @@ export async function analyzeVideoResponse(
     const result = await chatSession.sendMessage("Based on the video recording and the question provided, please analyze the candidate's response using the format specified in the previous message.");
     const text = result.response.text();
     
+    // Log the response for debugging
+    console.log("==== RAW RESPONSE ====");
+    console.log(text);
+    console.log("=====================");
+    
     // Clean up the uploaded file
     try {
       await fileManager.deleteFile(file.name);
@@ -146,8 +166,19 @@ export async function analyzeVideoResponse(
     
     const jsonString = jsonMatch[0];
     
+    // Log the extracted JSON for debugging
+    console.log("==== EXTRACTED JSON ====");
+    console.log(jsonString);
+    console.log("======================");
+    
     // Parse the response
     const parsedResponse = JSON.parse(jsonString) as VideoAnalysisResult;
+    
+    // Ensure competency_assessments is always an array
+    if (!parsedResponse.competency_assessments) {
+      console.warn("competency_assessments missing in response, adding empty array");
+      parsedResponse.competency_assessments = [];
+    }
     
     console.log("Analysis completed successfully.");
     return parsedResponse;
@@ -159,7 +190,7 @@ export async function analyzeVideoResponse(
       overall_assessment: "Unable to analyze the video. The analysis service encountered an error.",
       strengths: ["Recording was processed successfully"],
       areas_for_improvement: ["Technical issue with the video analysis service"],
-      skills_demonstrated: ["Technical Assessment Pending"]
+      competency_assessments: []
     };
   }
 } 

@@ -484,7 +484,7 @@ export default function CandidateSubmissionPage() {
                   overall_assessment: analysisResult.overall_assessment,
                   strengths: analysisResult.strengths,
                   areas_for_improvement: analysisResult.areas_for_improvement,
-                  skills_demonstrated: analysisResult.skills_demonstrated,
+                  competency_assessments: analysisResult.competency_assessments,
                 });
               }
             }

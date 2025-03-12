@@ -151,13 +151,14 @@ model PositionQuestion {
 }
 
 model QuestionCompetency {
-  id           String           @id @default(uuid()) @db.Uuid
-  questionId   String           @map("question_id") @db.Uuid
-  competencyId String           @map("competency_id") @db.Uuid
-  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  competency   Competency       @relation(fields: [competencyId], references: [id])
-  question     PositionQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  id                        String                       @id @default(uuid()) @db.Uuid
+  questionId                String                       @map("question_id") @db.Uuid
+  competencyId              String                       @map("competency_id") @db.Uuid
+  createdAt                 DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime                     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  competency                Competency                   @relation(fields: [competencyId], references: [id])
+  question                  PositionQuestion             @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  submissionCompetencyAssessments SubmissionQuestionCompetency[]
 
   @@unique([questionId, competencyId])
   @@map("QuestionCompetency")
@@ -181,21 +182,37 @@ model RecordingMetadata {
 }
 
 model SubmissionQuestion {
-  id                   String             @id @default(uuid()) @db.Uuid
-  submissionId         String             @map("submission_id") @db.Uuid
-  positionQuestionId   String             @map("position_question_id") @db.Uuid
+  id                   String                       @id @default(uuid()) @db.Uuid
+  submissionId         String                       @map("submission_id") @db.Uuid
+  positionQuestionId   String                       @map("position_question_id") @db.Uuid
   overall_assessment   String?
-  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdAt            DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime                     @updatedAt @map("updated_at") @db.Timestamptz(6)
   skills_demonstrated  String[]
   strengths            String[]
   areas_of_improvement String[]
   recordingMetadata    RecordingMetadata?
-  positionQuestion     PositionQuestion   @relation(fields: [positionQuestionId], references: [id], onDelete: Cascade)
-  submission           Submission         @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  positionQuestion     PositionQuestion             @relation(fields: [positionQuestionId], references: [id], onDelete: Cascade)
+  submission           Submission                   @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  competencyAssessments SubmissionQuestionCompetency[]
 
   @@unique([submissionId, positionQuestionId])
   @@map("SubmissionQuestion")
+}
+
+model SubmissionQuestionCompetency {
+  id                   String             @id @default(uuid()) @db.Uuid
+  submissionQuestionId String             @map("submission_question_id") @db.Uuid
+  questionCompetencyId String             @map("question_competency_id") @db.Uuid
+  level                Int                @db.Integer
+  rationale            String
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  submissionQuestion   SubmissionQuestion @relation(fields: [submissionQuestionId], references: [id], onDelete: Cascade)
+  questionCompetency   QuestionCompetency @relation(fields: [questionCompetencyId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionQuestionId, questionCompetencyId])
+  @@map("SubmissionQuestionCompetency")
 }
 
 enum UserRole {

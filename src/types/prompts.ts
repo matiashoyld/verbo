@@ -43,13 +43,23 @@ export interface FormattedSkill {
 }
 
 /**
+ * Competency assessment result from video analysis
+ */
+export interface CompetencyAssessment {
+  competency_id: string;
+  competency_name: string;
+  level: number; // 1-5 based on rubric
+  rationale: string; // Explanation with timestamps and quotes
+}
+
+/**
  * Response structure from video analysis
  */
 export interface VideoAnalysisResult {
   overall_assessment: string;
   strengths: string[];
   areas_for_improvement: string[];
-  skills_demonstrated: string[];
+  competency_assessments: CompetencyAssessment[];
 }
 
 // Types from gemini.ts

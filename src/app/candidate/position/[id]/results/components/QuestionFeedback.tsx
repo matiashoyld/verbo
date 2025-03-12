@@ -1,12 +1,37 @@
 import { Check, ChevronRight } from "lucide-react";
 import React from "react";
 
+interface SkillLevelProps {
+  level: number;
+  maxLevel: number;
+}
+
+export function SkillLevel({ level, maxLevel }: SkillLevelProps) {
+  return (
+    <div className="flex h-2 gap-1">
+      {Array.from({ length: maxLevel }).map((_, i) => (
+        <div
+          key={i}
+          className={`h-full w-8 rounded-full ${
+            i < level ? "bg-verbo-purple" : "bg-gray-200 dark:bg-gray-700"
+          } transition-colors`}
+        />
+      ))}
+    </div>
+  );
+}
+
 interface FeedbackProps {
   feedback?: {
     questionId: string;
     strengths: string[];
     areas_for_improvement: string[];
-    skills_demonstrated: string[];
+    competency_assessments: Array<{
+      competency_id: string;
+      competency_name: string;
+      level: number;
+      rationale: string;
+    }>;
     overall_assessment: string;
   };
 }
@@ -54,7 +79,7 @@ const QuestionFeedback: React.FC<FeedbackProps> = ({ feedback }) => {
           </ul>
         </div>
 
-        <div className="rounded-md border bg-white p-4">
+        <div className="mb-4 rounded-md border bg-white p-4">
           <h3 className="mb-2 text-xs font-medium uppercase text-gray-500">
             AREAS FOR IMPROVEMENT
           </h3>
@@ -73,6 +98,36 @@ const QuestionFeedback: React.FC<FeedbackProps> = ({ feedback }) => {
             ))}
           </ul>
         </div>
+
+        {feedback.competency_assessments &&
+          feedback.competency_assessments.length > 0 && (
+            <div className="rounded-md border bg-white p-4">
+              <h3 className="mb-4 text-xs font-medium uppercase text-gray-500">
+                COMPETENCY ASSESSMENTS
+              </h3>
+
+              <div className="space-y-4">
+                {feedback.competency_assessments.map((assessment, index) => (
+                  <div
+                    key={index}
+                    className="border-b border-gray-100 pb-4 last:border-0 last:pb-0"
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <h4 className="font-medium text-verbo-dark">
+                        {assessment.competency_name}
+                      </h4>
+                      <div className="flex flex-col items-end gap-1">
+                        <SkillLevel level={assessment.level} maxLevel={5} />
+                      </div>
+                    </div>
+                    <p className="text-xs leading-relaxed text-gray-700">
+                      {assessment.rationale}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
       </div>
     </div>
   );

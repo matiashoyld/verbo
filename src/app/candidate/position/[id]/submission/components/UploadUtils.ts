@@ -26,7 +26,12 @@ type SaveAnalysisMutation = (input: {
   overall_assessment: string;
   strengths: string[];
   areas_for_improvement: string[];
-  skills_demonstrated: string[];
+  competency_assessments?: Array<{
+    competency_id: string;
+    competency_name: string;
+    level: number;
+    rationale: string;
+  }>;
 }) => Promise<{ success: boolean } | null>;
 
 // Add a new type for the analyzeVideo mutation
@@ -253,7 +258,7 @@ export const simulateExtraction = async (
                 overall_assessment: analysisResult.overall_assessment,
                 strengths: analysisResult.strengths,
                 areas_for_improvement: analysisResult.areas_for_improvement,
-                skills_demonstrated: analysisResult.skills_demonstrated,
+                competency_assessments: analysisResult.competency_assessments,
               });
             }
           } catch (error) {

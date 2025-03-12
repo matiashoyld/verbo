@@ -28,8 +28,13 @@ interface FeedbackItem {
   questionId: string;
   strengths: string[];
   areas_for_improvement: string[];
-  skills_demonstrated: string[];
   overall_assessment: string;
+  competency_assessments: Array<{
+    competency_id: string;
+    competency_name: string;
+    level: number; // 1-5 based on rubric
+    rationale: string;
+  }>;
 }
 
 // Define types for the analysis results
@@ -39,7 +44,12 @@ interface AnalysisResult {
   overall_assessment: string;
   strengths: string[];
   areas_for_improvement: string[];
-  skills_demonstrated: string[];
+  competency_assessments: Array<{
+    competency_id: string;
+    competency_name: string;
+    level: number;
+    rationale: string;
+  }>;
   createdAt: string | Date;
 }
 
@@ -58,16 +68,9 @@ const generateFallbackFeedback = (
       "Could provide more specific examples",
       "Consider elaborating on edge cases",
     ],
-    skills_demonstrated: [
-      "Problem Solving",
-      "Communication",
-      "Technical Knowledge",
-      "Analytical Thinking",
-      "Attention to Detail",
-      "System Design",
-    ],
     overall_assessment:
       "Strong response that demonstrates good understanding of the subject matter. The candidate showed clear thinking and articulated their thoughts well.",
+    competency_assessments: [],
   }));
 };
 
@@ -117,7 +120,7 @@ export default function ResultsPage() {
               questionId: question.id,
               strengths: analysis.strengths,
               areas_for_improvement: analysis.areas_for_improvement,
-              skills_demonstrated: analysis.skills_demonstrated,
+              competency_assessments: analysis.competency_assessments,
               overall_assessment: analysis.overall_assessment,
             };
           } else {
@@ -128,7 +131,7 @@ export default function ResultsPage() {
               areas_for_improvement: [
                 "Check back later for complete AI analysis",
               ],
-              skills_demonstrated: [],
+              competency_assessments: [],
               overall_assessment:
                 "Your recording has been processed, but detailed AI analysis is still being generated.",
             };

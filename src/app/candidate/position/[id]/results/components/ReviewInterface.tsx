@@ -19,7 +19,12 @@ interface Feedback {
   questionId: string;
   strengths: string[];
   areas_for_improvement: string[];
-  skills_demonstrated: string[];
+  competency_assessments: Array<{
+    competency_id: string;
+    competency_name: string;
+    level: number;
+    rationale: string;
+  }>;
   overall_assessment: string;
 }
 
@@ -62,24 +67,72 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
     }
   };
 
-  // Calculate skills summary across all questions
-  const allSkills =
+  // Calculate competency summary across all questions
+  type CompetencyRecord = {
+    competency_id: string;
+    competency_name: string;
+    level: number;
+    rationale: string;
+  };
+
+  // Safely extract all competency assessments
+  const allCompetencies: CompetencyRecord[] =
     feedback && feedback.length > 0
-      ? feedback.flatMap((f) => f.skills_demonstrated || [])
+      ? feedback.flatMap((f) =>
+          f.competency_assessments && Array.isArray(f.competency_assessments)
+            ? f.competency_assessments.filter(
+                (c) =>
+                  c &&
+                  typeof c.competency_id === "string" &&
+                  typeof c.competency_name === "string" &&
+                  typeof c.level === "number",
+              )
+            : [],
+        )
       : [];
 
-  const skillsCount = allSkills.reduce(
-    (acc, skill) => {
-      acc[skill] = (acc[skill] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
+  // Group competencies by name and calculate average level
+  type CompetencySummary = {
+    name: string;
+    competency_id: string;
+    averageLevel: number;
+    count: number;
+  };
 
-  // Sort skills by frequency
-  const sortedSkills = Object.entries(skillsCount)
-    .sort(([, countA], [, countB]) => countB - countA)
-    .slice(0, 6); // Show only top 6 skills
+  const competencySummaries: CompetencySummary[] = [];
+
+  // Aggregate by competency name
+  const competencyMap = new Map<
+    string,
+    { total: number; count: number; id: string }
+  >();
+
+  for (const comp of allCompetencies) {
+    const existing = competencyMap.get(comp.competency_name);
+    if (existing) {
+      existing.total += comp.level;
+      existing.count += 1;
+    } else {
+      competencyMap.set(comp.competency_name, {
+        total: comp.level,
+        count: 1,
+        id: comp.competency_id,
+      });
+    }
+  }
+
+  // Calculate averages and sort
+  for (const [name, data] of competencyMap.entries()) {
+    competencySummaries.push({
+      name,
+      competency_id: data.id,
+      averageLevel: Number((data.total / data.count).toFixed(1)),
+      count: data.count,
+    });
+  }
+
+  // Sort by highest average level
+  competencySummaries.sort((a, b) => b.averageLevel - a.averageLevel);
 
   return (
     <div className="animate-fade-in min-h-screen bg-background">
@@ -225,41 +278,39 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
             </div>
           </div>
 
-          {/* Skills summary sidebar (right) */}
+          {/* Competency summary sidebar (right) */}
           <div className="lg:col-span-3">
             <div className="sticky top-16 rounded-lg border bg-card p-4 shadow-sm">
               <h2 className="mb-3 flex items-center text-sm font-medium">
                 <ListChecks className="mr-1.5 h-4 w-4 text-verbo-purple/70" />
-                Skills Summary
+                Competency Summary
               </h2>
 
-              {sortedSkills.length > 0 ? (
-                <div className="space-y-2">
-                  {sortedSkills.map(([skill, count]) => (
-                    <div key={skill} className="group">
+              {competencySummaries.length > 0 ? (
+                <div className="space-y-3">
+                  {competencySummaries.map((comp) => (
+                    <div key={comp.competency_id} className="group">
                       <div className="mb-1 flex items-center justify-between">
                         <span className="text-xs font-medium transition-colors group-hover:text-verbo-purple">
-                          {skill}
+                          {comp.name}
                         </span>
-                        <span className="rounded-full bg-verbo-purple/10 px-1.5 py-0.5 text-[10px] text-verbo-purple">
-                          {count}×
+                        <span className="w-16 rounded-full bg-verbo-purple/10 px-1.5 py-0.5 text-center text-[10px] text-verbo-purple">
+                          Level {comp.averageLevel}/5
                         </span>
                       </div>
-                      <div className="h-1 w-full rounded-full bg-secondary">
+                      <div className="h-2 overflow-hidden rounded-full bg-gray-100">
                         <div
-                          className="h-1 rounded-full bg-verbo-purple transition-all duration-500 group-hover:opacity-80"
-                          style={{
-                            width: `${(count / questions.length) * 100}%`,
-                          }}
+                          className="h-full rounded-full bg-verbo-purple"
+                          style={{ width: `${(comp.averageLevel / 5) * 100}%` }}
                         />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="py-3 text-center text-xs text-muted-foreground">
-                  No skills analysis available yet
-                </div>
+                <p className="text-center text-xs text-muted-foreground">
+                  No competency data available yet
+                </p>
               )}
             </div>
           </div>
