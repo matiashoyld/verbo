@@ -48,20 +48,20 @@ model Skill {
 }
 
 model Competency {
-  id                String               @id @default(uuid()) @db.Uuid
-  name              String
-  skillId           String               @map("skill_id") @db.Uuid
-  created_at        DateTime             @default(now()) @db.Timestamptz(6)
-  updated_at        DateTime             @updatedAt @db.Timestamptz(6)
-  numId             Int?                 @unique @map("num_id")
-  level_5_exceptional String?             @map("level_5_exceptional") 
-  level_4_proficient String?              @map("level_4_proficient")
-  level_3_competent String?               @map("level_3_competent")
-  level_2_needs_guidance String?          @map("level_2_needs_guidance")
-  level_1_inadequate String?              @map("level_1_inadequate")
-  skill             Skill                @relation(fields: [skillId], references: [id])
-  criteria          Criterion[]
-  questionRelations QuestionCompetency[]
+  id                     String               @id @default(uuid()) @db.Uuid
+  name                   String
+  skillId                String               @map("skill_id") @db.Uuid
+  created_at             DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime             @updatedAt @db.Timestamptz(6)
+  numId                  Int?                 @unique @map("num_id")
+  level_1_inadequate     String?              @map("level_1_inadequate")
+  level_2_needs_guidance String?              @map("level_2_needs_guidance")
+  level_3_competent      String?              @map("level_3_competent")
+  level_4_proficient     String?              @map("level_4_proficient")
+  level_5_exceptional    String?              @map("level_5_exceptional")
+  skill                  Skill                @relation(fields: [skillId], references: [id])
+  criteria               Criterion[]
+  questionRelations      QuestionCompetency[]
 
   @@unique([skillId, name])
   @@map("Competency")
@@ -79,31 +79,31 @@ model Criterion {
 }
 
 model Challenge {
-  id           String       @id @default(uuid()) @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
   title        String
   description  String
   instructions String
-  timeLimit    Int?         @map("time_limit")
-  creatorId    String       @map("creator_id")
-  created_at   DateTime     @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime     @updatedAt @db.Timestamptz(6)
-  createdBy    User         @relation("CreatedChallenges", fields: [creatorId], references: [id])
-  skills       Skill[]      @relation("ChallengeToSkill")
+  timeLimit    Int?     @map("time_limit")
+  creatorId    String   @map("creator_id")
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime @updatedAt @db.Timestamptz(6)
+  createdBy    User     @relation("CreatedChallenges", fields: [creatorId], references: [id])
+  skills       Skill[]  @relation("ChallengeToSkill")
 
   @@map("Challenge")
 }
 
 model Submission {
-  id          String           @id @default(uuid()) @db.Uuid
-  candidateId String           @map("candidate_id")
-  positionId  String           @map("position_id") @db.Uuid
-  status      SubmissionStatus @default(IN_PROGRESS)
-  startedAt   DateTime         @default(now()) @map("started_at") @db.Timestamptz(6)
-  completedAt DateTime?        @map("completed_at") @db.Timestamptz(6)
-  created_at  DateTime         @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime         @updatedAt @db.Timestamptz(6)
-  candidate   User             @relation(fields: [candidateId], references: [id])
-  position    Position         @relation(fields: [positionId], references: [id])
+  id          String               @id @default(uuid()) @db.Uuid
+  candidateId String               @map("candidate_id")
+  status      SubmissionStatus     @default(IN_PROGRESS)
+  startedAt   DateTime             @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt DateTime?            @map("completed_at") @db.Timestamptz(6)
+  created_at  DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime             @updatedAt @db.Timestamptz(6)
+  positionId  String               @map("position_id") @db.Uuid
+  candidate   User                 @relation(fields: [candidateId], references: [id])
+  position    Position             @relation(fields: [positionId], references: [id])
   questions   SubmissionQuestion[]
 
   @@map("Submission")
@@ -164,35 +164,35 @@ model QuestionCompetency {
 }
 
 model RecordingMetadata {
-  id                 String             @id @default(uuid())
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  candidateId        String
-  positionId         String
-  questionId         String
-  filePath           String
-  fileSize           Int?
-  durationSeconds    Int?
-  processed          Boolean            @default(false)
-  submissionQuestionId String            @unique @map("submission_question_id") @db.Uuid
-  submissionQuestion SubmissionQuestion @relation(fields: [submissionQuestionId], references: [id], onDelete: Cascade)
+  id                   String             @id @default(uuid())
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  candidateId          String
+  questionId           String
+  filePath             String
+  fileSize             Int?
+  durationSeconds      Int?
+  processed            Boolean            @default(false)
+  submissionQuestionId String             @unique @map("submission_question_id") @db.Uuid
+  positionId           String             @db.Uuid
+  submissionQuestion   SubmissionQuestion @relation(fields: [submissionQuestionId], references: [id], onDelete: Cascade)
 
   @@map("RecordingMetadata")
 }
 
 model SubmissionQuestion {
-  id                 String           @id @default(uuid()) @db.Uuid
-  submissionId       String           @map("submission_id") @db.Uuid
-  positionQuestionId String           @map("position_question_id") @db.Uuid
-  overall_assessment String?
-  strengths          String[]
+  id                   String             @id @default(uuid()) @db.Uuid
+  submissionId         String             @map("submission_id") @db.Uuid
+  positionQuestionId   String             @map("position_question_id") @db.Uuid
+  overall_assessment   String?
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  skills_demonstrated  String[]
+  strengths            String[]
   areas_of_improvement String[]
-  skills_demonstrated String[]
-  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  submission         Submission       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  positionQuestion   PositionQuestion @relation(fields: [positionQuestionId], references: [id], onDelete: Cascade)
-  recordingMetadata  RecordingMetadata?
+  recordingMetadata    RecordingMetadata?
+  positionQuestion     PositionQuestion   @relation(fields: [positionQuestionId], references: [id], onDelete: Cascade)
+  submission           Submission         @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@unique([submissionId, positionQuestionId])
   @@map("SubmissionQuestion")

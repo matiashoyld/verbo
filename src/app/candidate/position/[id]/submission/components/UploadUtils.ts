@@ -31,10 +31,10 @@ type SaveAnalysisMutation = (input: {
 
 // Add a new type for the analyzeVideo mutation
 type AnalyzeVideoMutation = (input: {
-  videoUrl?: string;
+  videoUrl: string;
   question: string;
   context: string | null;
-  questionContext?: string | null;
+  questionContext: string | null;
   positionId: string;
   questionId: string;
 }) => Promise<VideoAnalysisResult | null>;

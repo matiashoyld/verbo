@@ -66,11 +66,18 @@ export const recordingsRouter = createTRPCRouter({
       try {
         console.log(`Saving metadata for recording: ${input.filePath}`);
         
+        // Extract the original question ID if it contains a timestamp
+        const originalQuestionId = input.questionId.includes('_') 
+          ? input.questionId.split('_')[0] 
+          : input.questionId;
+          
+        console.log(`Original question ID: ${originalQuestionId} (from ${input.questionId})`);
+        
         // First, find the submission for this position and user
         const submissionResult = await ctx.db.$queryRaw`
           SELECT "id" FROM "Submission"
           WHERE "candidate_id" = ${ctx.userId}
-          AND "position_id" = ${input.positionId}
+          AND "position_id" = ${input.positionId}::uuid
           LIMIT 1
         `;
         
@@ -80,31 +87,19 @@ export const recordingsRouter = createTRPCRouter({
           console.log("No submission found, creating a new one");
           
           // Create a new submission
+          const newSubmissionId = randomUUID();
           await ctx.db.$executeRaw`
             INSERT INTO "Submission" (
               "id", "candidate_id", "position_id", "status", 
               "started_at", "created_at", "updated_at"
             )
             VALUES (
-              ${randomUUID()}, ${ctx.userId}, ${input.positionId}, 'IN_PROGRESS',
+              ${newSubmissionId}::uuid, ${ctx.userId}, ${input.positionId}::uuid, 'IN_PROGRESS',
               NOW(), NOW(), NOW()
             )
           `;
           
-          // Get the newly created submission
-          const newSubmissionResult = await ctx.db.$queryRaw`
-            SELECT "id" FROM "Submission"
-            WHERE "candidate_id" = ${ctx.userId}
-            AND "position_id" = ${input.positionId}
-            ORDER BY "created_at" DESC
-            LIMIT 1
-          `;
-          
-          if (!Array.isArray(newSubmissionResult) || newSubmissionResult.length === 0) {
-            throw new Error("Failed to create submission");
-          }
-          
-          submissionId = newSubmissionResult[0].id;
+          submissionId = newSubmissionId;
         } else {
           submissionId = submissionResult[0].id;
         }
@@ -113,13 +108,16 @@ export const recordingsRouter = createTRPCRouter({
         
         // Check if a SubmissionQuestion already exists for this submission and question
         const submissionQuestionResult = await ctx.db.$queryRaw`
-          SELECT "id" FROM "SubmissionQuestion"
-          WHERE "submission_id" = ${submissionId}
-          AND "position_question_id" = ${input.questionId}
+          SELECT sq."id", rm."id" as recording_metadata_id
+          FROM "SubmissionQuestion" sq
+          LEFT JOIN "RecordingMetadata" rm ON rm."submission_question_id" = sq."id"
+          WHERE sq."submission_id" = ${submissionId}::uuid
+          AND sq."position_question_id" = ${originalQuestionId}::uuid
           LIMIT 1
         `;
         
         let submissionQuestionId: string;
+        let hasExistingRecordingMetadata = false;
         
         if (!Array.isArray(submissionQuestionResult) || submissionQuestionResult.length === 0) {
           console.log("No submission question found, creating a new one");
@@ -132,7 +130,7 @@ export const recordingsRouter = createTRPCRouter({
               "created_at", "updated_at"
             )
             VALUES (
-              ${newSubmissionQuestionId}, ${submissionId}, ${input.questionId},
+              ${newSubmissionQuestionId}::uuid, ${submissionId}::uuid, ${originalQuestionId}::uuid,
               NOW(), NOW()
             )
           `;
@@ -140,29 +138,42 @@ export const recordingsRouter = createTRPCRouter({
           submissionQuestionId = newSubmissionQuestionId;
         } else {
           submissionQuestionId = submissionQuestionResult[0].id;
+          hasExistingRecordingMetadata = !!submissionQuestionResult[0].recording_metadata_id;
         }
         
         console.log(`Using submission question ID: ${submissionQuestionId}`);
         
-        // Create the recording metadata record and link it to the SubmissionQuestion
-        await ctx.db.$executeRaw`
-          INSERT INTO "RecordingMetadata" (
-            "id", "createdAt", "updatedAt", "candidateId", "positionId", 
-            "questionId", "filePath", "fileSize", "durationSeconds", "processed",
-            "submission_question_id"
-          ) 
-          VALUES (
-            ${randomUUID()}, NOW(), NOW(), ${ctx.userId}, ${input.positionId}, 
-            ${input.questionId}, ${input.filePath}, ${input.fileSize || null}, ${input.durationSeconds || null}, false,
-            ${submissionQuestionId}
-          )
-          ON CONFLICT ("submission_question_id") 
-          DO UPDATE SET
-            "filePath" = ${input.filePath}, 
-            "fileSize" = ${input.fileSize || null}, 
-            "durationSeconds" = ${input.durationSeconds || null},
-            "updatedAt" = NOW()
-        `;
+        // Handle recording metadata based on whether it already exists
+        if (hasExistingRecordingMetadata) {
+          console.log(`Updating existing recording metadata for submission question ${submissionQuestionId}`);
+          
+          // Update the existing record
+          await ctx.db.$executeRaw`
+            UPDATE "RecordingMetadata"
+            SET 
+              "filePath" = ${input.filePath}, 
+              "fileSize" = ${input.fileSize || null}, 
+              "durationSeconds" = ${input.durationSeconds || null},
+              "updatedAt" = NOW()
+            WHERE "submission_question_id" = ${submissionQuestionId}::uuid
+          `;
+        } else {
+          console.log(`Creating new recording metadata for submission question ${submissionQuestionId}`);
+          
+          // Create a new recording metadata record
+          await ctx.db.$executeRaw`
+            INSERT INTO "RecordingMetadata" (
+              "id", "createdAt", "updatedAt", "candidateId", "positionId", 
+              "questionId", "filePath", "fileSize", "durationSeconds", "processed",
+              "submission_question_id"
+            ) 
+            VALUES (
+              ${randomUUID()}, NOW(), NOW(), ${ctx.userId}, ${input.positionId}::uuid, 
+              ${input.questionId}, ${input.filePath}, ${input.fileSize || null}, ${input.durationSeconds || null}, false,
+              ${submissionQuestionId}::uuid
+            )
+          `;
+        }
 
         return { success: true, submissionQuestionId };
       } catch (error) {
@@ -185,6 +196,13 @@ export const recordingsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
+        // Extract the original question ID if it contains a timestamp
+        const originalQuestionId = input.questionId.includes('_') 
+          ? input.questionId.split('_')[0] 
+          : input.questionId;
+        
+        console.log(`Original question ID: ${originalQuestionId} (from ${input.questionId})`);
+        
         // Use a direct SQL query to avoid Prisma typing issues during transition
         console.log(`Finding submission for position ${input.positionId} and user ${ctx.userId}`);
         
@@ -192,7 +210,7 @@ export const recordingsRouter = createTRPCRouter({
         const submissionResult = await ctx.db.$queryRaw`
           SELECT "id" FROM "Submission"
           WHERE "candidate_id" = ${ctx.userId}
-          AND "position_id" = ${input.positionId}
+          AND "position_id" = ${input.positionId}::uuid
           LIMIT 1
         `;
         
@@ -202,60 +220,74 @@ export const recordingsRouter = createTRPCRouter({
           console.log("No submission found, creating a new one");
           
           // Create a new submission if none exists
-          const newSubmission = await ctx.db.$executeRaw`
+          const newSubmissionId = randomUUID();
+          await ctx.db.$executeRaw`
             INSERT INTO "Submission" (
               "id", "candidate_id", "position_id", "status", 
               "started_at", "created_at", "updated_at"
             )
             VALUES (
-              ${randomUUID()}, ${ctx.userId}, ${input.positionId}, 'IN_PROGRESS',
+              ${newSubmissionId}::uuid, ${ctx.userId}, ${input.positionId}::uuid, 'IN_PROGRESS',
               NOW(), NOW(), NOW()
             )
-            RETURNING "id"
           `;
           
-          // Get the ID of the newly created submission
-          const newSubmissionResult = await ctx.db.$queryRaw`
-            SELECT "id" FROM "Submission"
-            WHERE "candidate_id" = ${ctx.userId}
-            AND "position_id" = ${input.positionId}
-            ORDER BY "created_at" DESC
-            LIMIT 1
-          `;
-          
-          if (!Array.isArray(newSubmissionResult) || newSubmissionResult.length === 0) {
-            throw new Error("Failed to create submission");
-          }
-          
-          submissionId = newSubmissionResult[0].id;
+          submissionId = newSubmissionId;
         } else {
           submissionId = submissionResult[0].id;
         }
         
         console.log(`Using submission ID: ${submissionId}`);
         
-        // Now create or update the submission question
-        await ctx.db.$executeRaw`
-          INSERT INTO "SubmissionQuestion" (
-            "id", "submission_id", "position_question_id", 
-            "overall_assessment", "strengths", "areas_of_improvement", "skills_demonstrated",
-            "created_at", "updated_at"
-          )
-          VALUES (
-            ${randomUUID()}, ${submissionId}, ${input.questionId},
-            ${input.overall_assessment}, ${input.strengths}, ${input.areas_for_improvement}, ${input.skills_demonstrated},
-            NOW(), NOW()
-          )
-          ON CONFLICT ("submission_id", "position_question_id") 
-          DO UPDATE SET
-            "overall_assessment" = ${input.overall_assessment},
-            "strengths" = ${input.strengths},
-            "areas_of_improvement" = ${input.areas_for_improvement},
-            "skills_demonstrated" = ${input.skills_demonstrated},
-            "updated_at" = NOW()
+        // Check if a SubmissionQuestion already exists for this submission and question
+        const submissionQuestionResult = await ctx.db.$queryRaw`
+          SELECT "id" FROM "SubmissionQuestion"
+          WHERE "submission_id" = ${submissionId}::uuid
+          AND "position_question_id" = ${originalQuestionId}::uuid
+          LIMIT 1
         `;
         
-        return { success: true };
+        let submissionQuestionId: string;
+        let isNewQuestion = false;
+        
+        if (!Array.isArray(submissionQuestionResult) || submissionQuestionResult.length === 0) {
+          console.log("No submission question found, creating a new one");
+          
+          // Create a new submission question
+          submissionQuestionId = randomUUID();
+          await ctx.db.$executeRaw`
+            INSERT INTO "SubmissionQuestion" (
+              "id", "submission_id", "position_question_id", 
+              "overall_assessment", "strengths", "areas_of_improvement", "skills_demonstrated",
+              "created_at", "updated_at"
+            )
+            VALUES (
+              ${submissionQuestionId}::uuid, ${submissionId}::uuid, ${originalQuestionId}::uuid,
+              ${input.overall_assessment}, ${input.strengths}, ${input.areas_for_improvement}, ${input.skills_demonstrated},
+              NOW(), NOW()
+            )
+          `;
+          isNewQuestion = true;
+        } else {
+          submissionQuestionId = submissionQuestionResult[0].id;
+          
+          // Update the existing submission question
+          await ctx.db.$executeRaw`
+            UPDATE "SubmissionQuestion" SET
+              "overall_assessment" = ${input.overall_assessment},
+              "strengths" = ${input.strengths},
+              "areas_of_improvement" = ${input.areas_for_improvement},
+              "skills_demonstrated" = ${input.skills_demonstrated},
+              "updated_at" = NOW()
+            WHERE "id" = ${submissionQuestionId}::uuid
+          `;
+        }
+        
+        return { 
+          success: true,
+          submissionQuestionId,
+          isNewQuestion
+        };
       } catch (error) {
         console.error("Error saving video analysis:", error);
         throw new Error("Failed to save video analysis");
@@ -366,7 +398,7 @@ export const recordingsRouter = createTRPCRouter({
           FROM "SubmissionQuestion" sq
           JOIN "Submission" s ON sq."submission_id" = s."id"
           WHERE s."candidate_id" = ${ctx.userId}
-          AND s."position_id" = ${input.positionId}
+          AND s."position_id" = ${input.positionId}::uuid
           ORDER BY sq."updated_at" DESC
         `;
         
@@ -387,124 +419,101 @@ export const recordingsRouter = createTRPCRouter({
       }
     }),
 
-  // Analyze a video recording using Gemini AI
+  // Analyze a video recording for a specific question
   analyzeVideo: protectedProcedure
     .input(
       z.object({
-        videoUrl: z.string().optional(),
+        videoUrl: z.string(),
         question: z.string(),
         context: z.string().nullable(),
-        questionContext: z.string().nullable().optional(),
+        questionContext: z.string().nullable(),
         positionId: z.string(),
         questionId: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Extract the original question ID if it contains a timestamp
+      const originalQuestionId = input.questionId.includes('_') 
+        ? input.questionId.split('_')[0] 
+        : input.questionId;
+      
+      console.log(`Original question ID: ${originalQuestionId} (from ${input.questionId})`);
+      
+      // Only the user who owns the recording can analyze it
+      console.log(`Checking recording permissions for path: ${input.videoUrl}`);
+
+      // Use a direct SQL query to verify this recording belongs to the current user
+      const recordingResult = await ctx.db.$queryRaw`
+        SELECT rm."id" 
+        FROM "RecordingMetadata" rm
+        JOIN "SubmissionQuestion" sq ON rm."submission_question_id" = sq."id"
+        JOIN "Submission" s ON sq."submission_id" = s."id"
+        WHERE rm."filePath" = ${input.videoUrl}
+        AND s."candidate_id" = ${ctx.userId}
+        LIMIT 1
+      `;
+
+      // If no recording is found, throw an error
+      if (!Array.isArray(recordingResult) || recordingResult.length === 0) {
+        console.warn(`No recording found with path ${input.videoUrl} for user ${ctx.userId}`);
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Recording not found",
+        });
+      }
+
       try {
-        console.log(`Attempting to analyze video for question ${input.questionId}`);
-        console.log(`Video URL: ${input.videoUrl ? input.videoUrl.substring(0, 30) + '...' : 'Not provided'}`);
+        console.log("Getting video download URL from Supabase");
         
-        let videoData: Uint8Array | null = null;
-
-        // If videoUrl was provided, try to download it directly
-        if (input.videoUrl) {
-          console.log(`Attempting direct download with provided videoUrl...`);
-          const downloadResult = await supabase.storage
-            .from(BUCKET_NAME)
-            .download(input.videoUrl);
-          
-          if (downloadResult.error || !downloadResult.data) {
-            console.error("Error downloading video:", downloadResult.error);
-            console.log(`Direct download failed, will try fallback method...`);
-          } else {
-            console.log(`Direct download successful! Got ${downloadResult.data.size} bytes`);
-            videoData = new Uint8Array(await downloadResult.data.arrayBuffer());
-          }
+        // Generate a download URL for the video
+        const { data, error } = await supabase.storage
+          .from(BUCKET_NAME)
+          .createSignedUrl(input.videoUrl, 3600);
+        
+        if (error) {
+          console.error("Error creating download URL:", error);
+          throw new Error("Failed to generate download URL");
         }
-
-        // If we still don't have video data, try to find it in the database
-        if (!videoData) {
-          console.log(`Looking up recording in database by questionId: ${input.questionId}`);
-          
-          try {
-            // Find recording associated with this questionId and positionId
-            const recording = await ctx.db.$queryRaw`
-              SELECT rm.* 
-              FROM "RecordingMetadata" rm
-              JOIN "SubmissionQuestion" sq ON rm."submission_question_id" = sq."id"
-              JOIN "Submission" s ON sq."submission_id" = s."id"
-              WHERE s."candidate_id" = ${ctx.userId}
-              AND s."position_id" = ${input.positionId}
-              AND sq."position_question_id" = ${input.questionId}
-              ORDER BY rm."createdAt" DESC
-              LIMIT 1
-            `;
-            
-            if (!Array.isArray(recording) || recording.length === 0) {
-              console.error(`No recording found for question ${input.questionId}`);
-              throw new TRPCError({
-                code: "NOT_FOUND",
-                message: `No recording found for question ${input.questionId}`,
-              });
-            }
-            
-            console.log(`Found recording: ${JSON.stringify(recording[0], null, 2)}`);
-            const filePath = recording[0].filePath;
-            
-            if (!filePath) {
-              console.error(`No file path found for question ${input.questionId}`);
-              throw new TRPCError({
-                code: "NOT_FOUND", 
-                message: `No file path found for question ${input.questionId}`,
-              });
-            }
-            
-            // Now we need to download the file from supabase storage
-            console.log(`Downloading video from storage, path: ${filePath}`);
-            const downloadResult = await supabase.storage
-              .from(BUCKET_NAME)
-              .download(filePath);
-            
-            if (downloadResult.error || !downloadResult.data) {
-              console.error("Error downloading video from database path:", downloadResult.error);
-              throw new TRPCError({
-                code: "INTERNAL_SERVER_ERROR",
-                message: "Failed to download the video recording",
-              });
-            }
-
-            console.log(`Successfully downloaded video from database path, size: ${downloadResult.data.size} bytes`);
-            videoData = new Uint8Array(await downloadResult.data.arrayBuffer());
-          } catch (dbError) {
-            console.error("Error querying database for recording:", dbError);
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: "Failed to retrieve recording from database",
-            });
-          }
+        
+        if (!data || !data.signedUrl) {
+          throw new Error("No download URL generated");
         }
-
-        // Convert to blob
-        const videoBlob = new Blob([videoData as Uint8Array], { type: "video/webm" });
-        console.log(`Created video blob, size: ${videoBlob.size} bytes`);
-
-        // Analyze the video
-        console.log(`Starting video analysis with Gemini...`);
+        
+        const downloadUrl = data.signedUrl;
+        
+        console.log("Downloading video for analysis");
+        
+        // Download the video
+        const videoResponse = await fetch(downloadUrl);
+        if (!videoResponse.ok) {
+          throw new Error(`Failed to download video: ${videoResponse.status}`);
+        }
+        
+        const videoBlob = await videoResponse.blob();
+        console.log(`Video downloaded, size: ${videoBlob.size} bytes`);
+        
+        // Pass to the Gemini API for analysis
         const analysisResult = await analyzeVideoResponse(
-          videoBlob, 
-          input.question, 
+          videoBlob,
+          input.question,
           input.context,
           input.questionContext
         );
-        console.log(`Analysis completed successfully!`);
-
+        
+        console.log("Analysis completed");
+        
+        // Update the recording metadata to mark it as processed
+        await ctx.db.$executeRaw`
+          UPDATE "RecordingMetadata" 
+          SET "processed" = true,
+              "updatedAt" = NOW()
+          WHERE "filePath" = ${input.videoUrl}
+        `;
+        
         return analysisResult;
       } catch (error) {
         console.error("Error analyzing video:", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to analyze the video recording",
-        });
+        throw new Error("Failed to analyze video");
       }
     }),
 }); 
