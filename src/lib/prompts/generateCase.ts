@@ -48,38 +48,35 @@ You will receive two main inputs:
    ]
    \`\`\`
 
-## Output Format
-Your out put should be two different blocks enclosed in \`\`\` \`\`\` tags.
-
-The first block should be a markdown formatted text block with the following content:
-
-\`\`\`markdown
-"A detailed description of the scenario, including company background, role context, and available data/resources"
-\`\`\
-
-The second block of text should be a JSON object with the following structure:
-
+## Expected Output Format
+You must return a JSON object with the following structure:
 \`\`\`json
 {
+  "context": "string - the overall context of the assessment",
   "questions": [
     {
-      "context": "Brief context specific to this question",
-      "question": "The actual question to be answered by the candidate",
-      "skills_assessed": [
+      "context": "string - specific context for this question",
+      "question": "string - the actual question text",
+      "competencies_assessed": [
         {
-          "numId": 101,
-          "name": "Skill Name"
-        },
-        {
-          "numId": 102,
-          "name": "Another Skill"
+          "numId": number or null - the numerical ID of the competency,
+          "name": "string - the name of the competency",
+          "skillNumId": number or null - the numerical ID of the parent skill
         }
       ]
-    },
-    // Additional questions following the same structure
+    }
   ]
 }
 \`\`\`
+
+## Output Formatting Guidelines
+- Return a single, valid JSON object following the above schema exactly
+- The "context" field should provide overall background for the assessment case
+- Each question should have its own specific context
+- Each competency in "competencies_assessed" must have a numId when available
+- Always include skillNumId when available to enable proper matching
+- Use markdown formatting in text fields for better readability
+- Do not include any explanation or additional text outside the JSON object
 
 ## Guidelines for Creating the Case Study
 
@@ -109,7 +106,7 @@ The second block of text should be a JSON object with the following structure:
 ## Formatting Guidelines
 1. The output should be just the two blocks of text.
 2. For the "context" field, use markdown formatting. Feel free to use bullets, tables and other markdown elements to make the context more engaging.
-3. For the "skills_assessed" array, always include both the "numId" and "name" exactly as they appear in the input skills list
+3. For the "competencies_assessed" array, always include both the competency "numId" and its parent "skillNumId" exactly as they appear in the input skills list
 4. Do not include comments (like "// Additional questions...") in the final JSON output
 5. Ensure all questions are completely formulated and ready for assessment without placeholders
 
@@ -169,14 +166,16 @@ The company is considering launching a **group video chat** feature. You'll be u
     {
       "context": "Using the \`video_calls\` table.",
       "question": "Write a SQL query to calculate how many users started a call with more than three different people in the last 7 days. Explain how you would optimize this query if it needed to run against a massive dataset.",
-      "skills_assessed": [
+      "competencies_assessed": [
         {
           "numId": 101,
-          "name": "SQL Fundamentals"
+          "name": "SELECT Queries",
+          "skillNumId": 45
         },
         {
           "numId": 102,
-          "name": "Database Optimization"
+          "name": "CASE/IF",
+          "skillNumId": 45
         }
       ]
     }

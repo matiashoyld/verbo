@@ -37,9 +37,15 @@ interface CodeProps {
 interface AssessmentQuestion {
   context: string;
   question: string;
-  skills_assessed: Array<{
+  competencies_assessed?: Array<{
     numId: number | null;
     name: string;
+    skillNumId?: number | null;
+  }>;
+  skills_assessed?: Array<{
+    numId: number | null;
+    name: string;
+    skillNumId?: number | null;
   }>;
 }
 
@@ -52,6 +58,15 @@ interface Assessment {
   description: string;
   context: string;
   questions: AssessmentQuestion[];
+}
+
+// Define a new type for displaying competencies with their skill context
+interface CompetencyOption {
+  numId: number | null;
+  name: string;
+  skillName: string;
+  skillNumId: number | null;
+  categoryName: string;
 }
 
 interface AssessmentStepProps {
@@ -69,10 +84,11 @@ export function AssessmentStep({
   const [showNewQuestion, setShowNewQuestion] = React.useState(false);
   const [newQuestionContext, setNewQuestionContext] = React.useState("");
   const [newQuestion, setNewQuestion] = React.useState("");
-  const [newQuestionSkills, setNewQuestionSkills] = React.useState<
-    Array<{ numId: number | null; name: string }>
+  const [newQuestionCompetencies, setNewQuestionCompetencies] = React.useState<
+    Array<{ numId: number | null; name: string; skillNumId?: number | null }>
   >([]);
-  const [skillComboboxOpen, setSkillComboboxOpen] = React.useState(false);
+  const [competencyComboboxOpen, setCompetencyComboboxOpen] =
+    React.useState(false);
 
   // State for tracking question movement animation
   const [movingQuestionIndex, setMovingQuestionIndex] = React.useState<
@@ -88,17 +104,22 @@ export function AssessmentStep({
 
   // Function to handle adding a new question
   const handleAddQuestion = () => {
-    const updatedQuestions = [
-      ...assessment.questions,
-      {
-        context: newQuestionContext || "",
-        question: newQuestion || "",
-        skills_assessed: newQuestionSkills.map((skill) => ({
-          numId: skill.numId,
-          name: skill.name,
-        })),
-      },
-    ];
+    if (!newQuestion.trim()) return;
+
+    const competenciesData = newQuestionCompetencies.map((c) => ({
+      numId: c.numId,
+      name: c.name,
+      skillNumId: c.skillNumId,
+    }));
+
+    const newQuestionObj: AssessmentQuestion = {
+      context: newQuestionContext || "",
+      question: newQuestion,
+      competencies_assessed: competenciesData,
+      skills_assessed: competenciesData, // Include both for backward compatibility
+    };
+
+    const updatedQuestions = [...assessment.questions, newQuestionObj];
 
     const updatedAssessment = {
       ...assessment,
@@ -107,68 +128,61 @@ export function AssessmentStep({
 
     onAssessmentChange(updatedAssessment);
 
-    // Reset the form
+    // Reset form fields
     setNewQuestionContext("");
     setNewQuestion("");
-    setNewQuestionSkills([]);
+    setNewQuestionCompetencies([]);
     setShowNewQuestion(false);
   };
 
-  // Function to get all available skills
-  const getAvailableSkills = React.useCallback(() => {
+  // Function to get all available competencies grouped by skill
+  const getAvailableCompetencies = React.useCallback(() => {
     if (!dbSkillsData) return [];
 
-    return dbSkillsData.map(
-      (item: {
-        skillName: string;
-        skillNumId: number | null;
-        categoryName: string;
-        categoryNumId: number | null;
-      }) => ({
-        numId: item.skillNumId,
-        name: item.skillName,
-        category: item.categoryName,
-        categoryNumId: item.categoryNumId,
-      }),
-    );
+    const competencies: CompetencyOption[] = [];
+
+    // Flatten the skills data to get all competencies with their context
+    dbSkillsData.forEach((skillData: any) => {
+      if (skillData.competencies && skillData.competencies.length > 0) {
+        skillData.competencies.forEach((comp: any) => {
+          competencies.push({
+            numId: comp.numId,
+            name: comp.name,
+            skillName: skillData.skillName,
+            skillNumId: skillData.skillNumId,
+            categoryName: skillData.categoryName,
+          });
+        });
+      }
+    });
+
+    return competencies;
   }, [dbSkillsData]);
 
-  // Function to add a skill to the new question
-  const addSkillToQuestion = (skillName: string) => {
-    if (newQuestionSkills.some((skill) => skill.name === skillName)) return;
-
-    // Find the skill in the data to get its numId
-    const skillData = dbSkillsData?.find(
-      (item: { skillName: string; skillNumId: number | null }) =>
-        item.skillName === skillName,
-    );
-
-    if (!skillData || skillData.skillNumId === null) {
-      console.warn(
-        `Adding skill without numId: ${skillName}. This might cause issues when saving.`,
-      );
-    }
-
-    const skillNumId = skillData?.skillNumId || 0;
+  // Function to add a competency to the new question
+  const addCompetencyToQuestion = (competency: CompetencyOption) => {
+    if (newQuestionCompetencies.some((c) => c.numId === competency.numId))
+      return;
 
     console.log(
-      `Adding skill: ${skillName} with numId ${skillNumId} to question`,
+      `Adding competency: ${competency.name} (numId: ${competency.numId}) from skill: ${competency.skillName} (numId: ${competency.skillNumId})`,
     );
 
-    setNewQuestionSkills((prev) => [
+    setNewQuestionCompetencies((prev) => [
       ...prev,
       {
-        numId: skillNumId,
-        name: skillName,
+        numId: competency.numId,
+        skillNumId: competency.skillNumId,
+        name: `${competency.name} (${competency.skillName})`,
       },
     ]);
-    setSkillComboboxOpen(false);
+    setCompetencyComboboxOpen(false);
   };
 
-  // Function to remove a skill from new question
-  const removeSkillFromQuestion = (skillToRemove: string) => {
-    setNewQuestionSkills((prev) =>
-      prev.filter((skill) => skill.name !== skillToRemove),
+  // Function to remove a competency from new question
+  const removeCompetencyFromQuestion = (competencyToRemove: string) => {
+    setNewQuestionCompetencies((prev) =>
+      prev.filter((competency) => competency.name !== competencyToRemove),
     );
   };
 
@@ -392,6 +406,40 @@ export function AssessmentStep({
     ),
   };
 
+  const availableCompetencies = getAvailableCompetencies();
+
+  // Add display functions to better format competency information in badges
+
+  // Function to extract the skill name and competency name from a formatted competency string
+  // Format is expected to be "CompetencyName (SkillName)"
+  const extractCompetencyInfo = (
+    formattedName: string,
+  ): { competencyName: string; skillName: string | null } => {
+    const match = formattedName.match(/^(.+?) \((.+?)\)$/);
+    if (match && match.length >= 3) {
+      return {
+        competencyName: match[1]!,
+        skillName: match[2] || null,
+      };
+    }
+    return {
+      competencyName: formattedName,
+      skillName: null,
+    };
+  };
+
+  // Add a helper function at the top of the component to safely get competencies
+  // This helps avoid type errors by providing a consistent way to access competencies
+  const getCompetenciesFromQuestion = (
+    question: AssessmentQuestion,
+  ): Array<{
+    numId: number | null;
+    name: string;
+    skillNumId?: number | null;
+  }> => {
+    return question.competencies_assessed || question.skills_assessed || [];
+  };
+
   return (
     <div className="space-y-4">
       {!hideHeader && (
@@ -543,15 +591,32 @@ export function AssessmentStep({
                     </div>
 
                     <div className="mt-1.5 flex flex-wrap gap-1">
-                      {question.skills_assessed.map((skill, skillIdx) => (
-                        <Badge
-                          key={`${skill.numId || skillIdx}`}
-                          variant="outline"
-                          className="h-5 border-verbo-purple/20 bg-verbo-purple/10 px-1.5 py-0 text-[10px] text-verbo-purple"
-                        >
-                          {skill.name}
-                        </Badge>
-                      ))}
+                      {getCompetenciesFromQuestion(question).map(
+                        (competency, idx) => {
+                          const info = extractCompetencyInfo(competency.name);
+                          return (
+                            <Badge
+                              key={`${competency.numId || idx}`}
+                              variant="outline"
+                              className="h-5 border-verbo-purple/20 bg-verbo-purple/10 px-1.5 py-0 text-[10px] text-verbo-purple"
+                            >
+                              <span className="font-medium">
+                                {info.competencyName}
+                              </span>
+                              {info.skillName && (
+                                <>
+                                  <span className="mx-0.5 text-[8px] text-verbo-purple/60">
+                                    in
+                                  </span>
+                                  <span className="text-[9px] text-verbo-purple/80">
+                                    {info.skillName}
+                                  </span>
+                                </>
+                              )}
+                            </Badge>
+                          );
+                        },
+                      )}
                     </div>
                   </div>
                 ))}
@@ -571,11 +636,11 @@ export function AssessmentStep({
                                 onClick={handleAddQuestion}
                                 disabled={
                                   !newQuestion.trim() ||
-                                  newQuestionSkills.length === 0
+                                  newQuestionCompetencies.length === 0
                                 }
                                 className={`rounded-full p-1 ${
                                   newQuestion.trim() &&
-                                  newQuestionSkills.length > 0
+                                  newQuestionCompetencies.length > 0
                                     ? "text-verbo-green hover:bg-muted/20 hover:text-verbo-green"
                                     : "cursor-not-allowed text-muted-foreground"
                                 } focus:outline-none focus:ring-0`}
@@ -599,12 +664,12 @@ export function AssessmentStep({
                             <TooltipContent>
                               <p className="text-xs">
                                 {!newQuestion.trim() &&
-                                newQuestionSkills.length === 0
-                                  ? "Question text and at least one skill required"
+                                newQuestionCompetencies.length === 0
+                                  ? "Question text and at least one competency required"
                                   : !newQuestion.trim()
                                     ? "Question text required"
-                                    : newQuestionSkills.length === 0
-                                      ? "At least one skill required"
+                                    : newQuestionCompetencies.length === 0
+                                      ? "At least one competency required"
                                       : "Save this question"}
                               </p>
                             </TooltipContent>
@@ -619,7 +684,7 @@ export function AssessmentStep({
                                   setShowNewQuestion(false);
                                   setNewQuestionContext("");
                                   setNewQuestion("");
-                                  setNewQuestionSkills([]);
+                                  setNewQuestionCompetencies([]);
                                 }}
                                 className="rounded-full p-1 text-muted-foreground hover:bg-muted/20 hover:text-foreground focus:outline-none focus:ring-0"
                                 aria-label="Cancel new question"
@@ -661,20 +726,20 @@ export function AssessmentStep({
 
                     <div className="mb-2 space-y-1.5">
                       <label className="block text-xs text-muted-foreground">
-                        Skills assessed
+                        Competencies assessed
                       </label>
 
                       <div className="flex flex-wrap gap-1.5">
-                        {newQuestionSkills.map((skill, idx) => (
+                        {newQuestionCompetencies.map((competency, idx) => (
                           <Badge
                             key={idx}
                             variant="outline"
                             className="flex h-5 items-center gap-1 border-verbo-purple/20 bg-verbo-purple/10 px-1.5 py-0 text-[10px] text-verbo-purple"
                           >
-                            {skill.name}
+                            {competency.name}
                             <button
                               onClick={() =>
-                                removeSkillFromQuestion(skill.name)
+                                removeCompetencyFromQuestion(competency.name)
                               }
                               className="text-verbo-purple/70 hover:text-verbo-purple"
                             >
@@ -684,8 +749,8 @@ export function AssessmentStep({
                         ))}
 
                         <Popover
-                          open={skillComboboxOpen}
-                          onOpenChange={setSkillComboboxOpen}
+                          open={competencyComboboxOpen}
+                          onOpenChange={setCompetencyComboboxOpen}
                         >
                           <PopoverTrigger asChild>
                             <Button
@@ -694,40 +759,45 @@ export function AssessmentStep({
                               className="h-5 gap-1 rounded-md border-dashed border-verbo-purple/20 bg-transparent px-1.5 text-[10px] text-verbo-purple hover:bg-verbo-purple/5"
                             >
                               <Plus size={10} />
-                              <span>Add skill</span>
+                              <span>Add competency</span>
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent
-                            className="w-[220px] p-0"
+                            className="w-[280px] p-0"
                             align="start"
                             side="top"
                           >
                             <Command className="flex flex-col overflow-hidden rounded-md">
+                              <CommandInput
+                                placeholder="Search competencies..."
+                                className="h-8 border-0 text-[10px] placeholder:text-[10px]"
+                              />
                               <CommandList className="max-h-[200px] overflow-y-auto">
                                 <CommandEmpty className="p-2 text-xs text-muted-foreground">
-                                  No skills found.
+                                  No competencies found.
                                 </CommandEmpty>
-                                {getAvailableSkills().map((skill) => (
+                                {availableCompetencies.map((competency) => (
                                   <CommandItem
-                                    key={skill.numId?.toString() || skill.name}
-                                    value={`${skill.name} ${skill.category}`}
-                                    onSelect={() =>
-                                      addSkillToQuestion(skill.name)
+                                    key={
+                                      competency.numId?.toString() ||
+                                      competency.name
                                     }
-                                    className="flex items-center gap-2 text-xs"
+                                    value={`${competency.name} ${competency.skillName} ${competency.categoryName}`}
+                                    onSelect={() =>
+                                      addCompetencyToQuestion(competency)
+                                    }
+                                    className="flex items-center gap-2 text-[10px]"
                                   >
-                                    <span className="text-xs">
-                                      {skill.name}
+                                    <span className="font-medium">
+                                      {competency.name}
                                     </span>
+                                    <span className="text-muted-foreground">
+                                      in
+                                    </span>
+                                    <span>{competency.skillName}</span>
                                   </CommandItem>
                                 ))}
                               </CommandList>
-                              <div className="border-t">
-                                <CommandInput
-                                  placeholder="Search skills..."
-                                  className="h-8 border-0 text-[10px] placeholder:text-[10px]"
-                                />
-                              </div>
                             </Command>
                           </PopoverContent>
                         </Popover>

@@ -122,12 +122,14 @@ export async function generateAssessmentCase(
             return {
               numId: mappedId?.numId || null,
               name: skill,
+              skillNumId: mappedId?.skillNumId || null,
             };
           });
           
           questions.push({
             context: questionContext,
             question: questionText,
+            competencies_assessed: skillsAssessed,
             skills_assessed: skillsAssessed,
           });
         }
@@ -170,19 +172,30 @@ export async function generateAssessmentCase(
             questions = parsedJson.questions.map((q: { 
               context?: string; 
               question?: string; 
-              skills_assessed?: Array<{ numId?: number; name?: string }> 
+              skills_assessed?: Array<{ numId?: number; name?: string }>;
+              competencies_assessed?: Array<{ numId?: number; name?: string }>;
             }) => {
-              const skills_assessed = Array.isArray(q.skills_assessed) 
-                ? q.skills_assessed.map((s: { numId?: number; name?: string }) => ({
-                    numId: s.numId || null,
-                    name: s.name || "Unknown Skill"
-                  }))
+              // Support both old and new field names for backward compatibility
+              const competenciesArray = q.competencies_assessed || q.skills_assessed || [];
+              
+              const competencies_assessed = Array.isArray(competenciesArray) 
+                ? competenciesArray.map((c: { numId?: number; name?: string }) => {
+                    const competencyName = c.name?.toLowerCase() || "";
+                    const mappedCompetency = competencyIdMap.get(competencyName);
+                    
+                    return {
+                      numId: c.numId || mappedCompetency?.numId || null,
+                      name: c.name || "Unknown Competency",
+                      skillNumId: mappedCompetency?.skillNumId || null,
+                    };
+                  })
                 : [];
                 
               return {
                 context: q.context || "",
                 question: q.question || "",
-                skills_assessed
+                competencies_assessed,
+                skills_assessed: competencies_assessed
               };
             });
           }
@@ -203,17 +216,26 @@ export async function generateAssessmentCase(
         questions.push({
           context: lines[0] || "",
           question: lines[1] || "",
+          competencies_assessed: Array.from(competencyIdMap.entries())
+            .slice(0, 2)
+            .map(([key, value]) => ({
+              numId: value?.numId || null,
+              name: key,
+              skillNumId: value?.skillNumId || null,
+            })),
           skills_assessed: Array.from(competencyIdMap.entries())
             .slice(0, 2)
             .map(([key, value]) => ({
               numId: value?.numId || null,
-              name: key
+              name: key,
+              skillNumId: value?.skillNumId || null,
             }))
         });
       } else {
         questions.push({
           context: "Technical assessment scenario",
           question: "Demonstrate your technical skills by solving this problem",
+          competencies_assessed: [],
           skills_assessed: []
         });
       }

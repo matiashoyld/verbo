@@ -108,14 +108,20 @@ export interface AISkillsResult {
 }
 
 /**
- * Single assessment question with skills assessed
+ * Single assessment question with competencies assessed
  */
 export interface AssessmentQuestion {
   context: string;
   question: string;
-  skills_assessed: Array<{
+  competencies_assessed: Array<{
     numId: number | null;
     name: string;
+    skillNumId?: number | null; // Parent skill numId
+  }>;
+  skills_assessed?: Array<{
+    numId: number | null;
+    name: string;
+    skillNumId?: number | null; // Parent skill numId
   }>;
 }
 
@@ -127,9 +133,15 @@ export interface GeneratedAssessment {
   questions: Array<{
     context: string;
     question: string;
+    competencies_assessed: Array<{
+      numId: number | null;
+      name: string;
+      skillNumId?: number | null; // Parent skill numId
+    }>;
     skills_assessed?: Array<{
       numId: number | null;
       name: string;
+      skillNumId?: number | null; // Parent skill numId
     }>;
   }>;
   _internal?: {

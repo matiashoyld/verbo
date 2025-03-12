@@ -333,13 +333,27 @@ export const positionsRouter = createTRPCRouter({
             z.object({
               context: z.string(),
               question: z.string(),
+              competencies_assessed: z.array(
+                z.object({
+                  numId: z.number().optional(),         // Competency numId
+                  name: z.string(),
+                  skillNumId: z.number().nullable().optional(), // Parent skill numId
+                })
+              ).optional(),
               skills_assessed: z.array(
                 z.object({
-                  numId: z.number().optional(),
+                  numId: z.number().optional(),         // Competency numId
                   name: z.string(),
+                  skillNumId: z.number().nullable().optional(), // Parent skill numId
                 })
-              ),
-            })
+              ).optional(),
+            }).refine(data => 
+              // Ensure at least one of the two fields is present
+              data.competencies_assessed !== undefined || data.skills_assessed !== undefined,
+              {
+                message: "Either competencies_assessed or skills_assessed must be provided"
+              }
+            )
           ),
           _internal: z.object({
             competencyIdMap: z.record(z.string(), z.object({
@@ -398,49 +412,100 @@ export const positionsRouter = createTRPCRouter({
           if (questionRecord) {
             const questionId = questionRecord.id;
             
-            // Process skills for the question
+            // Process competencies for the question
             try {
-              if (question.skills_assessed && question.skills_assessed.length > 0) {
-                console.log(`Processing ${question.skills_assessed.length} skills for question ${questionId}`);
+              // Support both old and new field names for backward compatibility
+              const competenciesAssessed = question.competencies_assessed || question.skills_assessed || [];
+              
+              if (competenciesAssessed.length > 0) {
+                console.log(`Processing ${competenciesAssessed.length} competencies for question ${questionId}`);
                 
                 // Statistics tracking
                 let directMatches = 0;
                 let failed = 0;
                 let missingNumIds = 0;
                 
-                // Process each skill
-                for (const skill of question.skills_assessed) {
+                // Process each competency
+                for (const competency of competenciesAssessed) {
                   try {
                     let competencyId = null;
                     
                     // Skip negative numIds (these are our fallbacks from the generateFallbackId function)
-                    if (skill.numId !== null && skill.numId !== undefined) {
-                      if (skill.numId < 0) {
-                        console.warn(`Skipping fallback numId ${skill.numId} for "${skill.name}" - this is not a real database ID`);
+                    if (competency.numId !== null && competency.numId !== undefined) {
+                      if (competency.numId < 0) {
+                        console.warn(`Skipping fallback numId ${competency.numId} for "${competency.name}" - this is not a real database ID`);
                         missingNumIds++;
                         continue;
                       }
                       
-                      // Look up the competency by its numId using standard Prisma client
-                      const competency = await ctx.db.competency.findFirst({
+                      // Extract competency name for better logging
+                      const info = extractCompetencyInfo(competency.name);
+                      const competencyName = info.competencyName;
+                      const skillName = info.skillName;
+                      
+                      console.log(`Looking up competency "${competencyName}" (numId: ${competency.numId}), parent skill: "${skillName}" (numId: ${competency.skillNumId || 'unknown'})`);
+                      
+                      // IMPORTANT: Look up the competency by its numId, NOT the skill numId
+                      const competencyRecord = await ctx.db.competency.findFirst({
                         where: {
-                          numId: skill.numId,
+                          numId: competency.numId,
                         },
                         select: {
-                          id: true
+                          id: true,
+                          name: true,
+                          skill: {
+                            select: {
+                              name: true
+                            }
+                          }
                         }
                       });
                       
-                      if (competency) {
-                        competencyId = competency.id;
+                      if (competencyRecord) {
+                        competencyId = competencyRecord.id;
                         directMatches++;
-                        console.log(`✓ Direct numId match for "${skill.name}" using numId: ${skill.numId}`);
+                        console.log(`✓ Direct competency match for "${competencyName}" using numId: ${competency.numId} (belongs to skill: ${competencyRecord.skill?.name || 'unknown'})`);
                       } else {
-                        console.warn(`✗ No competency found with numId: ${skill.numId} for "${skill.name}"`);
-                        failed++;
+                        console.warn(`✗ No competency found with numId: ${competency.numId} for "${competencyName}"`);
+                        
+                        // If we have a skill ID, try looking up the competency by name and parent skill ID
+                        if (competency.skillNumId) {
+                          console.log(`Attempting to find competency "${competencyName}" by name and parent skill numId: ${competency.skillNumId}`);
+                          
+                          const skillBasedCompetency = await ctx.db.competency.findFirst({
+                            where: {
+                              name: {
+                                equals: competencyName,
+                                mode: 'insensitive'
+                              },
+                              skill: {
+                                numId: competency.skillNumId
+                              }
+                            },
+                            select: { 
+                              id: true,
+                              name: true,
+                              skill: {
+                                select: {
+                                  name: true,
+                                  numId: true
+                                }
+                              }
+                            }
+                          });
+                          
+                          if (skillBasedCompetency) {
+                            competencyId = skillBasedCompetency.id;
+                            console.log(`✓ Found competency "${competencyName}" using parent skill ID lookup (skill: "${skillBasedCompetency.skill?.name}", numId: ${skillBasedCompetency.skill?.numId})`);
+                          }
+                        }
+                        
+                        if (!competencyId) {
+                          failed++;
+                        }
                       }
                     } else {
-                      console.warn(`✗ Skill "${skill.name}" has no numId`);
+                      console.warn(`✗ Competency "${competency.name}" has no numId`);
                       missingNumIds++;
                     }
                     
@@ -454,23 +519,23 @@ export const positionsRouter = createTRPCRouter({
                         )
                       `;
                     } else {
-                      console.warn(`✗ Failed to find competency for "${skill.name}"`);
+                      console.warn(`✗ Failed to find competency for "${competency.name}"`);
                       failed++;
                     }
                   } catch (error) {
-                    console.error(`Error processing skill "${skill.name}":`, error);
+                    console.error(`Error processing competency "${competency.name}":`, error);
                     failed++;
                   }
                 }
                 
                 // Log summary statistics for this question
                 console.log(`Question competency matching: 
-- ${directMatches} direct matches (${Math.round((directMatches)/(question.skills_assessed.length)*100 || 0)}%)
+- ${directMatches} direct matches (${Math.round((directMatches)/(competenciesAssessed.length)*100 || 0)}%)
 - ${failed} failed matches
-- ${missingNumIds} skills with missing or invalid numIds`);
+- ${missingNumIds} competencies with missing or invalid numIds`);
               }
             } catch (error) {
-              console.error(`Error processing skills for question ${questionId}:`, error);
+              console.error(`Error processing competencies for question ${questionId}:`, error);
             }
           }
         }
@@ -643,7 +708,8 @@ export const positionsRouter = createTRPCRouter({
         context: z.string().optional(),
         skills: z.array(z.object({
           name: z.string(),
-          numId: z.number().nullable(),
+          numId: z.number().nullable(), // This should be competency numId
+          skillNumId: z.number().nullable().optional(), // Add parent skill numId
         })).optional(),
       })),
     }))
@@ -724,21 +790,115 @@ export const positionsRouter = createTRPCRouter({
             
             // Add new competencies for the question
             if (q.id && q.skills && q.skills.length > 0) {
-              for (const skill of q.skills) {
-                // Find the competency ID from numId if available
-                if (skill.numId !== null) {
-                  const competency = await tx.$queryRaw<[{ id: string }]>`
-                    SELECT id FROM "Competency" WHERE num_id = ${skill.numId}
+              for (const item of q.skills) {
+                // Important: item.numId should be a competency numId, not a skill numId
+                // Extract competency name (possibly with skill name in parentheses)
+                const competencyInfo = extractCompetencyInfo(item.name);
+                const competencyName = competencyInfo.competencyName;
+                const skillName = competencyInfo.skillName;
+                
+                console.log(`Looking up competency "${competencyName}" with numId: ${item.numId}, skill: "${skillName}" (numId: ${item.skillNumId || 'unknown'})`);
+                
+                if (item.numId !== null) {
+                  // Find the competency ID from numId if available - use competency numId, not skill numId
+                  const competencyRecord = await tx.$queryRaw<[{ id: string }]>`
+                    SELECT id FROM "Competency" WHERE num_id = ${item.numId}
                   `;
                   
-                  if (competency && competency[0]) {
+                  if (competencyRecord && competencyRecord[0]) {
                     await tx.$executeRaw`
                       INSERT INTO "QuestionCompetency" (
                         question_id, competency_id
                       ) VALUES (
-                        ${q.id}::uuid, ${competency[0].id}::uuid
+                        ${q.id}::uuid, ${competencyRecord[0].id}::uuid
                       )
                     `;
+                    console.log(`✓ Successfully linked competency "${competencyName}" to question`);
+                  } else {
+                    console.warn(`✗ No competency found with numId: ${item.numId}`);
+                    
+                    // Try fallback lookup by name and skill ID if numId lookup failed
+                    if (item.skillNumId) {
+                      console.log(`Attempting fallback lookup by name: "${competencyName}" and parent skill numId: ${item.skillNumId}`);
+                      
+                      // Look up by competency name and skill ID
+                      const skillBasedCompetency = await tx.$queryRaw<[{ id: string }]>`
+                        SELECT c.id
+                        FROM "Competency" c
+                        JOIN "Skill" s ON c.skill_id = s.id
+                        WHERE LOWER(c.name) = LOWER(${competencyName})
+                        AND s.num_id = ${item.skillNumId}
+                        LIMIT 1
+                      `;
+                      
+                      if (skillBasedCompetency && skillBasedCompetency[0]) {
+                        await tx.$executeRaw`
+                          INSERT INTO "QuestionCompetency" (
+                            question_id, competency_id
+                          ) VALUES (
+                            ${q.id}::uuid, ${skillBasedCompetency[0].id}::uuid
+                          )
+                        `;
+                        console.log(`✓ Successfully linked competency by skill numId lookup`);
+                      } else {
+                        console.warn(`✗ Fallback lookup also failed for "${competencyName}" with parent skill numId: ${item.skillNumId}`);
+                      }
+                    } else if (competencyName && skillName) {
+                      // Fall back to name-based lookup
+                      console.log(`Attempting fallback lookup by name: "${competencyName}" in skill: "${skillName}"`);
+                      
+                      // Look up by competency name and skill name
+                      const fallbackCompetency = await tx.$queryRaw<[{ id: string }]>`
+                        SELECT c.id
+                        FROM "Competency" c
+                        JOIN "Skill" s ON c.skill_id = s.id
+                        WHERE LOWER(c.name) = LOWER(${competencyName})
+                        AND LOWER(s.name) = LOWER(${skillName})
+                        LIMIT 1
+                      `;
+                      
+                      if (fallbackCompetency && fallbackCompetency[0]) {
+                        await tx.$executeRaw`
+                          INSERT INTO "QuestionCompetency" (
+                            question_id, competency_id
+                          ) VALUES (
+                            ${q.id}::uuid, ${fallbackCompetency[0].id}::uuid
+                          )
+                        `;
+                        console.log(`✓ Successfully linked competency by name lookup`);
+                      } else {
+                        console.warn(`✗ Fallback lookup also failed for "${competencyName}" in "${skillName}"`);
+                      }
+                    }
+                  }
+                } else {
+                  console.warn(`✗ Cannot link competency "${competencyName}" - missing numId`);
+                  
+                  // If we have a skill name, try to look up by name as a last resort
+                  if (competencyName && skillName) {
+                    console.log(`Attempting to find by name only: "${competencyName}" in "${skillName}"`);
+                    
+                    const namedCompetency = await tx.$queryRaw<[{ id: string }]>`
+                      SELECT c.id
+                      FROM "Competency" c
+                      JOIN "Skill" s ON c.skill_id = s.id
+                      WHERE LOWER(c.name) = LOWER(${competencyName})
+                      AND LOWER(s.name) = LOWER(${skillName})
+                      LIMIT 1
+                    `;
+                    
+                    if (namedCompetency && namedCompetency[0]) {
+                      await tx.$executeRaw`
+                        INSERT INTO "QuestionCompetency" (
+                          question_id, competency_id
+                        ) VALUES (
+                          ${q.id}::uuid, ${namedCompetency[0].id}::uuid
+                        )
+                      `;
+                      console.log(`✓ Successfully linked competency using name-only lookup`);
+                    } else {
+                      console.warn(`✗ Name-only lookup failed for "${competencyName}" in "${skillName}"`);
+                    }
                   }
                 }
               }
@@ -913,4 +1073,19 @@ function formatRelativeTime(date: Date): string {
   
   const diffInMonths = Math.floor(diffInDays / 30);
   return `${diffInMonths} month${diffInMonths !== 1 ? 's' : ''} ago`;
+}
+
+// Helper function to extract competency info
+function extractCompetencyInfo(formattedName: string): { competencyName: string; skillName: string | null } {
+  const match = formattedName.match(/^(.+?) \((.+?)\)$/);
+  if (match && match.length >= 3) {
+    return {
+      competencyName: match[1]!,
+      skillName: match[2] || null,
+    };
+  }
+  return {
+    competencyName: formattedName,
+    skillName: null,
+  };
 } 
