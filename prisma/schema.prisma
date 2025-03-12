@@ -54,6 +54,11 @@ model Competency {
   created_at        DateTime             @default(now()) @db.Timestamptz(6)
   updated_at        DateTime             @updatedAt @db.Timestamptz(6)
   numId             Int?                 @unique @map("num_id")
+  level_5_exceptional String?             @map("level_5_exceptional") 
+  level_4_proficient String?              @map("level_4_proficient")
+  level_3_competent String?               @map("level_3_competent")
+  level_2_needs_guidance String?          @map("level_2_needs_guidance")
+  level_1_inadequate String?              @map("level_1_inadequate")
   skill             Skill                @relation(fields: [skillId], references: [id])
   criteria          Criterion[]
   questionRelations QuestionCompetency[]

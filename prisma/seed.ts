@@ -22,6 +22,11 @@ interface Competency {
   skillId: number;
   name: string;
   criteria: string;
+  level_5_exceptional?: string;
+  level_4_proficient?: string;
+  level_3_competent?: string;
+  level_2_needs_guidance?: string;
+  level_1_inadequate?: string;
 }
 
 interface TaxonomyData {
@@ -125,6 +130,12 @@ async function seedSkillTaxonomy() {
           name: competency.name,
           numId: competency.id,
           skillId: skillUuid,
+          // Add the rubric levels if they exist
+          level_5_exceptional: competency.level_5_exceptional || null,
+          level_4_proficient: competency.level_4_proficient || null,
+          level_3_competent: competency.level_3_competent || null,
+          level_2_needs_guidance: competency.level_2_needs_guidance || null,
+          level_1_inadequate: competency.level_1_inadequate || null,
           // Create the criterion as part of the competency creation
           criteria: {
             create: {
