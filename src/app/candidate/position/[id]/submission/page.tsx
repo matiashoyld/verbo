@@ -554,10 +554,11 @@ export default function CandidateSubmissionPage() {
   };
 
   // Redirect to login page if not signed in
-  if (isLoaded && !isSignedIn) {
-    router.push(`/candidate/position/${params.id}`);
-    return null;
-  }
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.push(`/candidate/position/${params.id}`);
+    }
+  }, [isLoaded, isSignedIn, params.id, router]);
 
   // Handle loading state
   if (isLoading || !isLoaded) {
