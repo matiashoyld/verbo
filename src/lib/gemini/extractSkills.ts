@@ -65,8 +65,12 @@ export async function extractSkillsFromJobDescription(
       throw new Error("Invalid response format: missing or malformed 'selected_competencies'");
     }
 
+    // Extract the position name
+    const positionName = parsedIndexResponse.position_name || "Untitled Position";
+
     // Reconstruct the complete data structure from the indices
     const outputResult: AISkillsResult = {
+      positionName: positionName,
       categories: [],
     };
     

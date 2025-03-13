@@ -130,36 +130,42 @@ export const positionsRouter = createTRPCRouter({
         
         // Return a fallback result in case of error
         return {
+          positionName: "Software Developer",
           categories: [
             {
               name: "Programming",
+              numId: 1,
               skills: [
                 {
                   name: "JavaScript",
+                  numId: 1,
                   competencies: [
-                    { name: "DOM Manipulation", selected: true },
-                    { name: "ES6+ Features", selected: true },
-                    { name: "Asynchronous Patterns", selected: true },
+                    { name: "DOM Manipulation", numId: 1, selected: true },
+                    { name: "ES6+ Features", numId: 2, selected: true },
+                    { name: "Asynchronous Patterns", numId: 3, selected: true },
                   ],
                 },
                 {
                   name: "TypeScript",
+                  numId: 2,
                   competencies: [
-                    { name: "Type Definitions", selected: true },
-                    { name: "Advanced Types", selected: true },
+                    { name: "Type Definitions", numId: 4, selected: true },
+                    { name: "Advanced Types", numId: 5, selected: true },
                   ],
                 },
               ],
             },
             {
               name: "Frontend",
+              numId: 2,
               skills: [
                 {
                   name: "React",
+                  numId: 3,
                   competencies: [
-                    { name: "Hooks", selected: true },
-                    { name: "Context API", selected: true },
-                    { name: "State Management", selected: true },
+                    { name: "Hooks", numId: 6, selected: true },
+                    { name: "Context API", numId: 7, selected: true },
+                    { name: "State Management", numId: 8, selected: true },
                   ],
                 },
               ],

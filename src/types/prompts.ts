@@ -86,6 +86,7 @@ export interface IndexedSkillsData {
  * Response structure from the AI containing indices
  */
 export interface IndexedAIResponse {
+  position_name: string;
   selected_competencies: Array<{
     category_numId: number | null;
     skill_numId: number | null;
@@ -114,6 +115,7 @@ export interface AISkillCategory {
  * Complete result structure for the frontend
  */
 export interface AISkillsResult {
+  positionName: string;
   categories: AISkillCategory[];
 }
 

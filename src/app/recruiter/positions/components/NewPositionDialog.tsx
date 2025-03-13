@@ -121,6 +121,7 @@ export function NewPositionDialog({
   const [loading, setLoading] = React.useState(false);
   const [jobDescription, setJobDescription] = React.useState("");
   const [skills, setSkills] = React.useState<CategoryGroup[]>([]);
+  const [positionName, setPositionName] = React.useState("");
   const [assessment, setAssessment] =
     React.useState<Assessment>(defaultAssessment);
 
@@ -230,6 +231,7 @@ export function NewPositionDialog({
       setLoading(false);
       setJobDescription("");
       setSkills([]);
+      setPositionName("");
       setAssessment(defaultAssessment);
     }
   }, [open]);
@@ -253,6 +255,12 @@ export function NewPositionDialog({
 
           // Process valid result or use fallback
           if (result?.categories && result.categories.length > 0) {
+            // Extract position name if available
+            if (result.positionName) {
+              setPositionName(result.positionName);
+              console.log("Extracted position name:", result.positionName);
+            }
+
             const transformedSkills: CategoryGroup[] = result.categories
               .map((category) => ({
                 category: category.name as CategoryName,
@@ -289,10 +297,14 @@ export function NewPositionDialog({
           });
 
           if (result && result.context && result.questions) {
-            // Update with generated content
+            // Update with generated content but preserve position name information
+            // by not overwriting the assessment title with "Technical Assessment Case"
             setAssessment((prev) => ({
               ...prev,
-              title: "Technical Assessment Case",
+              // Use a title that incorporates the position name if available
+              title: positionName
+                ? `${positionName} Assessment`
+                : "Technical Assessment Case",
               context: result.context,
               questions: result.questions.map((q) => ({
                 context: q.context,
@@ -306,6 +318,10 @@ export function NewPositionDialog({
             setAssessment((prev) => ({
               ...prev,
               ...fallbackAssessmentData,
+              // Still try to use position name in the title if available
+              title: positionName
+                ? `${positionName} Assessment`
+                : fallbackAssessmentData.title,
             }));
           }
         } catch (error) {
@@ -314,6 +330,10 @@ export function NewPositionDialog({
           setAssessment((prev) => ({
             ...prev,
             ...fallbackAssessmentData,
+            // Still try to use position name in the title if available
+            title: positionName
+              ? `${positionName} Assessment`
+              : fallbackAssessmentData.title,
           }));
         }
       }
@@ -330,6 +350,15 @@ export function NewPositionDialog({
 
   // Helper function for fallback skills
   const applyFallbackSkills = () => {
+    // Set a fallback position name
+    setPositionName("Software Developer");
+
+    // Also update the assessment title with the position name
+    setAssessment((prev) => ({
+      ...prev,
+      title: "Software Developer Assessment",
+    }));
+
     setSkills([
       {
         category: "Programming",
@@ -348,6 +377,7 @@ export function NewPositionDialog({
             numId: 2,
             competencies: [
               { name: "Type Definitions", numId: 4, selected: true },
+              { name: "Advanced Types", numId: 5, selected: true },
             ],
           },
         ],
@@ -417,9 +447,13 @@ export function NewPositionDialog({
         })),
       }));
 
+      // Ensure we're using the position name we extracted, not the assessment title
+      // This fixes the issue where "Technical Assessment Case" might be saved instead
+      const finalPositionName = positionName || "Untitled Position";
+
       // Call the createPosition mutation
       const result = await createPositionMutation.mutateAsync({
-        title: assessment.title,
+        title: finalPositionName,
         jobDescription: jobDescription,
         skills: skills,
         assessment: {
