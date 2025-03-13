@@ -45,9 +45,7 @@ export default function RecruiterLayout({
                 { title: "Overview", href: "/recruiter" },
                 { title: "Skills", href: "/recruiter/skills" },
                 { title: "Positions", href: "/recruiter/positions" },
-                { title: "Challenges", href: "/recruiter/challenges" },
                 { title: "Submissions", href: "/recruiter/submissions" },
-                { title: "Analytics", href: "/recruiter/analytics" },
                 { title: "Settings", href: "/recruiter/settings" },
               ]}
             />

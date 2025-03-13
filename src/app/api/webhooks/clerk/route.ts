@@ -12,6 +12,9 @@ type UserWebhookEvent = {
     image_url: string | null;
     profile_image_url: string | null;
     has_image: boolean;
+    unsafe_metadata?: Record<string, unknown>;
+    public_metadata?: Record<string, unknown>;
+    private_metadata?: Record<string, unknown>;
     // Include all other fields from Clerk user data
   };
   type: string;
@@ -68,6 +71,25 @@ export async function POST(req: NextRequest) {
 
     console.log("Processing user.created event:", JSON.stringify(evt.data));
 
+    // Check if this is coming from a candidate position page
+    // Look for any indicators in the event data or request
+    const referer = req.headers.get("referer") || "";
+    const origin = req.headers.get("origin") || "";
+    const xForwardedFor = req.headers.get("x-forwarded-for") || "";
+    
+    const candidateSignUpPattern = /\/candidate\/position\//;
+    const isCandidateReferer = candidateSignUpPattern.test(referer);
+    const isCandidateOrigin = candidateSignUpPattern.test(origin);
+    
+    // Log all possible sources of information to debug
+    console.log("Sign-up source information:");
+    console.log("- Referer:", referer);
+    console.log("- Origin:", origin);
+    console.log("- X-Forwarded-For:", xForwardedFor);
+    console.log("- Is candidate sign-up based on referer:", isCandidateReferer);
+    console.log("- Is candidate sign-up based on origin:", isCandidateOrigin);
+    console.log("- Raw metadata from Clerk:", JSON.stringify(evt.data.unsafe_metadata || {}));
+
     const { id: clerkUserId, email_addresses, first_name, last_name } = evt.data;
     const email = email_addresses[0]?.email_address;
 
@@ -116,16 +138,42 @@ export async function POST(req: NextRequest) {
         console.log("User updated successfully:", JSON.stringify(updatedUser));
       } else {
         // Create a new user
+        // Check if the email domain indicates a candidate
+        const isCandidateEmail = email.includes("@candidate.") || email.includes("@student.") || email.endsWith(".edu");
+        
+        // Simplified pattern matching for candidate URLs
+        const pattern = /\/candidate\/position\//;
+        
+        // Declare role based on URL pattern matching or email pattern
+        let userRole: "CANDIDATE" | "RECRUITER" = "RECRUITER";
+        
+        // Check various signals for candidate status, prioritizing more direct ones
+        if (
+          // Direct URL pattern in referer (strongest signal)
+          (referer && pattern.test(referer)) ||
+          // URL pattern in origin
+          (origin && pattern.test(origin)) ||
+          // Other heuristics - educational email domains
+          isCandidateEmail
+        ) {
+          userRole = "CANDIDATE";
+          console.log("Setting user role to CANDIDATE based on detected signals");
+        } else {
+          console.log("Setting user role to RECRUITER (default)");
+        }
+        
+        console.log(`Creating user with role: ${userRole}, email: ${email}`);
+        
         const newUser = await db.user.create({
           data: {
-            id: clerkUserId, // Use Clerk's user ID
+            id: clerkUserId,
             email,
             name: [first_name, last_name].filter(Boolean).join(" ") || email,
             imageUrl: evt.data.image_url ?? evt.data.profile_image_url,
-            role: "RECRUITER"
+            role: userRole
           }
         });
-        console.log("New user created successfully:", JSON.stringify(newUser));
+        console.log(`New user created successfully with role ${userRole}:`, JSON.stringify(newUser));
       }
       
       // List all users in the database for verification

@@ -62,9 +62,7 @@ export default clerkMiddleware(async (auth, req) => {
   const pathsToRewrite = [
     "/skills",
     "/positions",
-    "/challenges",
     "/submissions",
-    "/analytics",
     "/settings"
   ];
   
@@ -98,9 +96,7 @@ export const config = {
     '/sign-up/:path*',
     '/skills',
     '/positions',
-    '/challenges',
     '/submissions',
-    '/analytics',
     '/settings',
     '/recruiter/:path*',
     '/candidate/:path*',

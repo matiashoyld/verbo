@@ -1,4 +1,3 @@
-import { challengeRouter } from "~/server/api/routers/challenge";
 import { submissionRouter } from "~/server/api/routers/submission";
 import { userRouter } from "~/server/api/routers/user";
 import { createTRPCRouter } from "~/server/api/trpc";
@@ -12,7 +11,6 @@ import { skillsRouter } from "./routers/skills";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  challenge: challengeRouter,
   submission: submissionRouter,
   skills: skillsRouter,
   positions: positionsRouter,

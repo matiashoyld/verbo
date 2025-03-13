@@ -56,7 +56,11 @@ export default function CandidatePositionPage() {
   const redirectUrl = `/candidate/position/${params.id}/submission`;
 
   return (
-    <div className="flex min-h-screen">
+    <div
+      className="flex min-h-screen"
+      data-page-type="candidate-position"
+      data-position-id={params.id}
+    >
       {loading ? (
         <div className="flex w-full items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-verbo-green"></div>

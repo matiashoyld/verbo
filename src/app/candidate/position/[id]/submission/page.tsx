@@ -37,6 +37,39 @@ export default function CandidateSubmissionPage() {
   const saveMetadataMutation = api.recordings.saveMetadata.useMutation();
   const saveAnalysisMutation = api.recordings.saveAnalysis.useMutation();
   const analyzeVideoMutation = api.recordings.analyzeVideo.useMutation();
+  const updateRoleMutation = api.user.updateUserToCandidate.useMutation();
+
+  // This effect ensures the user's role is set to CANDIDATE when they access this page
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      // Update user role to CANDIDATE through our API
+      updateRoleMutation.mutate(undefined, {
+        onSuccess: (data) => {
+          console.log("User role updated to CANDIDATE:", data);
+
+          // Force reload the page to ensure any role-based UI elements update correctly
+          if (data.role === "CANDIDATE") {
+            console.log("Role successfully set to CANDIDATE");
+          } else {
+            console.log(
+              "Failed to set role to CANDIDATE, refreshing page to try again",
+            );
+            // Wait a moment and refresh the page
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          }
+        },
+        onError: (error) => {
+          console.error("Failed to update user role:", error);
+          // On error, log details and potentially reload
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        },
+      });
+    }
+  }, [isLoaded, isSignedIn, updateRoleMutation]);
 
   // Track the active question index
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);

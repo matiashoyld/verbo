@@ -84,9 +84,7 @@ function RecruiterDashboard() {
                 { title: "Overview", href: "/" },
                 { title: "Skills", href: "/skills" },
                 { title: "Positions", href: "/positions" },
-                { title: "Challenges", href: "/challenges" },
                 { title: "Submissions", href: "/submissions" },
-                { title: "Analytics", href: "/analytics" },
                 { title: "Settings", href: "/settings" },
               ]}
             />

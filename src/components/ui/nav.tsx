@@ -77,17 +77,6 @@ export function MainNav() {
             <Separator orientation="vertical" className="mx-4 h-6" />
             <nav className="flex items-center gap-4 lg:gap-6">
               <Link
-                href="/challenges"
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-verbo-dark",
-                  pathname === "/challenges"
-                    ? "text-verbo-dark"
-                    : "text-verbo-dark/60",
-                )}
-              >
-                Challenges
-              </Link>
-              <Link
                 href="/submissions"
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-verbo-dark",
@@ -97,17 +86,6 @@ export function MainNav() {
                 )}
               >
                 Submissions
-              </Link>
-              <Link
-                href="/analytics"
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-verbo-dark",
-                  pathname === "/analytics"
-                    ? "text-verbo-dark"
-                    : "text-verbo-dark/60",
-                )}
-              >
-                Analytics
               </Link>
             </nav>
           </>
