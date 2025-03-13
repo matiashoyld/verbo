@@ -19,7 +19,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AuroraText } from "~/components/magicui/aurora-text";
-import { BentoCard, BentoGrid } from "~/components/magicui/bento-grid";
+import { BentoCard } from "~/components/magicui/bento-grid";
 import { InteractiveHoverButton } from "~/components/magicui/interactive-hover-button";
 import { Button } from "~/components/ui/button";
 import {
@@ -338,23 +338,23 @@ ORDER BY total_watch_minutes DESC;`,
         return (
           <div className="rounded-lg border border-gray-200 bg-white p-3">
             <div className="mb-2">
-              <p className="text-xs text-gray-500">
+              <p className="text-[8px] text-gray-500 sm:text-xs">
                 Using the{" "}
-                <span className="rounded bg-gray-100 px-1 py-0.5 font-mono text-[10px]">
+                <span className="rounded bg-gray-100 px-1 py-0.5 font-mono text-[8px] sm:text-[10px]">
                   reels_engagement
                 </span>{" "}
                 table, analyze the overall engagement distribution.
               </p>
             </div>
 
-            <h3 className="mb-1.5 text-sm font-semibold text-verbo-dark">
+            <h3 className="mb-1.5 text-[10px] font-semibold text-verbo-dark sm:text-sm">
               Question 1
             </h3>
 
-            <p className="text-xs text-gray-700">
+            <p className="text-[8px] text-gray-700 sm:text-xs">
               Write a SQL query to calculate the total number of 'likes',
               'comments', 'shares', and 'saves' for each{" "}
-              <span className="rounded bg-gray-100 px-1 py-0.5 font-mono text-[10px]">
+              <span className="rounded bg-gray-100 px-1 py-0.5 font-mono text-[7px] sm:text-[10px]">
                 reel_id
               </span>
               . Additionally, calculate the total watch time in minutes.
@@ -365,16 +365,16 @@ ORDER BY total_watch_minutes DESC;`,
         return (
           <div className="rounded-lg border border-gray-200 bg-white p-3">
             <div className="mb-2">
-              <p className="text-xs text-gray-500">
+              <p className="text-[8px] text-gray-500 sm:text-xs">
                 For this question, focus on user engagement patterns.
               </p>
             </div>
 
-            <h3 className="mb-1.5 text-sm font-semibold text-verbo-dark">
+            <h3 className="mb-1.5 text-[10px] font-semibold text-verbo-dark sm:text-sm">
               Question 2
             </h3>
 
-            <p className="text-xs text-gray-700">
+            <p className="text-[8px] text-gray-700 sm:text-xs">
               Write a SQL query to identify the top 5 reels with the highest
               average watch time. Then explain what factors might contribute to
               these reels having higher engagement than others.
@@ -385,16 +385,16 @@ ORDER BY total_watch_minutes DESC;`,
         return (
           <div className="rounded-lg border border-gray-200 bg-white p-3">
             <div className="mb-2">
-              <p className="text-xs text-gray-500">
+              <p className="text-[8px] text-gray-500 sm:text-xs">
                 Final question about product recommendations.
               </p>
             </div>
 
-            <h3 className="mb-1.5 text-sm font-semibold text-verbo-dark">
+            <h3 className="mb-1.5 text-[10px] font-semibold text-verbo-dark sm:text-sm">
               Question 3
             </h3>
 
-            <p className="text-xs text-gray-700">
+            <p className="text-[8px] text-gray-700 sm:text-xs">
               Based on the engagement data analysis, what three product
               recommendations would you make to increase user engagement with
               Reels? Support your recommendations with data-driven insights.
@@ -420,34 +420,36 @@ ORDER BY total_watch_minutes DESC;`,
 
     return (
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/90 backdrop-blur-sm">
-        <div className="w-[85%] max-w-xs">
-          <div className="mb-4 text-center">
-            <h1 className="mb-1 text-base font-semibold text-verbo-dark">
+        <div className="w-[90%] max-w-xs">
+          <div className="mb-3 text-center sm:mb-4">
+            <h1 className="mb-1 text-sm font-semibold text-verbo-dark sm:text-base">
               Analyzing Your Assessment
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[8px] text-muted-foreground sm:text-xs">
               Our AI is extracting and evaluating your skills
             </p>
           </div>
 
-          <div className="mb-4 rounded-lg border bg-white p-4 shadow-md">
+          <div className="mb-3 rounded-lg border bg-white p-3 shadow-md sm:mb-4 sm:p-4">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-medium">Progress</span>
-              <span className="text-xs font-medium">
+              <span className="text-[8px] font-medium sm:text-xs">
+                Progress
+              </span>
+              <span className="text-[8px] font-medium sm:text-xs">
                 {Math.round(analysisProgress)}%
               </span>
             </div>
 
-            <div className="mb-4 h-1.5 w-full rounded-full bg-gray-100">
+            <div className="mb-3 h-1 w-full rounded-full bg-gray-100 sm:mb-4 sm:h-1.5">
               <div
-                className="h-1.5 rounded-full bg-verbo-purple transition-all duration-300 ease-out"
+                className="h-1 rounded-full bg-verbo-purple transition-all duration-300 ease-out sm:h-1.5"
                 style={{ width: `${analysisProgress}%` }}
               ></div>
             </div>
 
             <div
               ref={questionsContainerRef}
-              className="max-h-[180px] space-y-2 overflow-y-auto pr-1"
+              className="max-h-[150px] space-y-1.5 overflow-y-auto pr-1 sm:max-h-[180px] sm:space-y-2"
             >
               {Array.from({ length: totalQuestions })
                 .filter((_, index) => index <= currentQuestionIndex)
@@ -460,7 +462,7 @@ ORDER BY total_watch_minutes DESC;`,
                   return (
                     <div
                       key={index}
-                      className={`relative flex items-center rounded-lg p-2 transition-all duration-300 ${
+                      className={`relative flex items-center rounded-lg p-1.5 transition-all duration-300 sm:p-2 ${
                         isComplete
                           ? "bg-verbo-purple/10"
                           : isCurrent
@@ -469,7 +471,7 @@ ORDER BY total_watch_minutes DESC;`,
                       }`}
                     >
                       <div
-                        className={`mr-2 flex h-6 w-6 items-center justify-center rounded-full ${
+                        className={`mr-1.5 flex h-4 w-4 items-center justify-center rounded-full sm:mr-2 sm:h-6 sm:w-6 ${
                           isComplete
                             ? "bg-verbo-purple text-white"
                             : isCurrent
@@ -478,17 +480,19 @@ ORDER BY total_watch_minutes DESC;`,
                         }`}
                       >
                         {isComplete ? (
-                          <Sparkles className="h-3 w-3" />
+                          <Sparkles className="h-2 w-2 sm:h-3 sm:w-3" />
                         ) : isCurrent ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <Loader2 className="h-2 w-2 animate-spin sm:h-3 sm:w-3" />
                         ) : (
-                          <span className="text-[9px]">{index + 1}</span>
+                          <span className="text-[7px] sm:text-[9px]">
+                            {index + 1}
+                          </span>
                         )}
                       </div>
 
                       <div className="flex-1">
                         <p
-                          className={`text-xs font-medium ${
+                          className={`text-[8px] font-medium sm:text-xs ${
                             isComplete
                               ? "text-foreground"
                               : isCurrent
@@ -498,7 +502,7 @@ ORDER BY total_watch_minutes DESC;`,
                         >
                           Question {index + 1}
                         </p>
-                        <p className="text-[9px] text-muted-foreground">
+                        <p className="text-[7px] text-muted-foreground sm:text-[9px]">
                           {isComplete
                             ? "Analysis complete"
                             : isCurrent
@@ -512,7 +516,7 @@ ORDER BY total_watch_minutes DESC;`,
             </div>
           </div>
 
-          <p className="text-center text-[10px] text-muted-foreground">
+          <p className="text-center text-[7px] text-muted-foreground sm:text-[10px]">
             This may take a few moments as we analyze your responses.
           </p>
         </div>
@@ -614,36 +618,40 @@ ORDER BY total_watch_minutes DESC;`,
     return (
       <div className="absolute inset-0 flex flex-col bg-background">
         {/* Browser Chrome */}
-        <div className="flex items-center justify-between border-b bg-muted/50 px-3 py-1.5">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between border-b bg-muted/50 px-2 py-1 sm:px-3 sm:py-1.5">
+          <div className="flex items-center gap-1 sm:gap-1.5">
             <div className="flex gap-1">
-              <XCircle className="h-3 w-3 text-muted-foreground/60" />
-              <MinusCircle className="h-3 w-3 text-muted-foreground/60" />
-              <Maximize2 className="h-3 w-3 text-muted-foreground/60" />
+              <XCircle className="h-2 w-2 text-muted-foreground/60 sm:h-3 sm:w-3" />
+              <MinusCircle className="h-2 w-2 text-muted-foreground/60 sm:h-3 sm:w-3" />
+              <Maximize2 className="h-2 w-2 text-muted-foreground/60 sm:h-3 sm:w-3" />
             </div>
-            <div className="ml-3 flex items-center gap-1 rounded-md bg-background/50 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            <div className="ml-1 hidden items-center gap-1 rounded-md bg-background/50 px-1.5 py-0.5 text-[10px] text-muted-foreground sm:ml-3 sm:flex">
               <Database className="h-2.5 w-2.5" />
               verbo.ai/assessment/results/ds-interview
             </div>
+            <div className="ml-1 flex items-center rounded-md bg-background/50 px-1 py-0.5 text-[7px] text-muted-foreground sm:hidden">
+              <Database className="mr-0.5 h-2 w-2" />
+              verbo.ai/results/...
+            </div>
           </div>
-          <div className="text-[10px] text-muted-foreground">
+          <div className="text-[7px] text-muted-foreground sm:text-[10px]">
             Data Scientist, Product Analytics Assessment
           </div>
         </div>
 
         <div className="flex flex-1 divide-x overflow-hidden">
           {/* Questions selector - Left */}
-          <div className="w-1/5 overflow-y-auto bg-white p-2">
-            <h3 className="mb-2 text-xs font-semibold text-verbo-dark">
+          <div className="w-1/5 overflow-y-auto bg-white p-1 sm:p-2">
+            <h3 className="mb-1 text-[9px] font-semibold text-verbo-dark sm:mb-2 sm:text-xs">
               Questions
             </h3>
-            <div className="space-y-1.5">
+            <div className="space-y-1 sm:space-y-1.5">
               {questions.map((q, i) => (
                 <div
                   key={i}
                   onClick={() => setSelectedQuestionIndex(i)}
                   className={cn(
-                    "cursor-pointer rounded-md p-1.5 transition-colors",
+                    "cursor-pointer rounded-md p-1 transition-colors sm:p-1.5",
                     selectedQuestionIndex === i
                       ? "bg-verbo-purple/10 text-verbo-purple"
                       : "hover:bg-gray-50",
@@ -651,7 +659,7 @@ ORDER BY total_watch_minutes DESC;`,
                 >
                   <p
                     className={cn(
-                      "text-[10px] font-medium",
+                      "text-[7px] font-medium sm:text-[10px]",
                       selectedQuestionIndex === i
                         ? "text-verbo-purple"
                         : "text-verbo-dark",
@@ -659,35 +667,35 @@ ORDER BY total_watch_minutes DESC;`,
                   >
                     Question {i + 1}
                   </p>
-                  <p className="line-clamp-1 text-[8px] text-muted-foreground">
+                  <p className="line-clamp-1 text-[6px] text-muted-foreground sm:text-[8px]">
                     {q.description}
                   </p>
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-2">
-              <p className="text-[10px] font-medium text-verbo-dark">
+            <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-1.5 sm:mt-4 sm:p-2">
+              <p className="text-[7px] font-medium text-verbo-dark sm:text-[10px]">
                 Overall Score
               </p>
-              <div className="mt-2 flex items-center justify-center">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-verbo-purple text-sm font-bold text-white">
+              <div className="mt-1 flex items-center justify-center sm:mt-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-verbo-purple text-[10px] font-bold text-white sm:h-10 sm:w-10 sm:text-sm">
                   85
                 </div>
               </div>
-              <p className="mt-1 text-center text-[9px] text-muted-foreground">
+              <p className="mt-1 text-center text-[6px] text-muted-foreground sm:text-[9px]">
                 Strong candidate
               </p>
             </div>
           </div>
 
           {/* Analysis panel - Center */}
-          <div className="w-3/5 overflow-y-auto bg-white p-3">
-            <div className="mb-3 space-y-1">
-              <h3 className="text-sm font-semibold text-verbo-dark">
+          <div className="w-3/5 overflow-y-auto bg-white p-2 sm:p-3">
+            <div className="mb-2 space-y-1 sm:mb-3">
+              <h3 className="text-[10px] font-semibold text-verbo-dark sm:text-sm">
                 Question {selectedQuestionIndex + 1}: {safeQuestion.title}
               </h3>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[7px] text-muted-foreground sm:text-[10px]">
                 {selectedQuestionIndex === 0 &&
                   "Write a SQL query to calculate engagement metrics per reel."}
                 {selectedQuestionIndex === 1 &&
@@ -697,8 +705,8 @@ ORDER BY total_watch_minutes DESC;`,
               </p>
             </div>
 
-            <div className="mb-4 rounded-lg border border-gray-100 bg-gray-50 p-2.5">
-              <div className="mt-1.5 aspect-video w-full overflow-hidden rounded-md bg-black">
+            <div className="mb-3 rounded-lg border border-gray-100 bg-gray-50 p-1.5 sm:mb-4 sm:p-2.5">
+              <div className="mt-1 aspect-video w-full overflow-hidden rounded-md bg-black sm:mt-1.5">
                 {/* Mock video player */}
                 <div className="relative h-full w-full">
                   {/* Video thumbnail - gradient background to simulate a paused video */}
@@ -706,57 +714,66 @@ ORDER BY total_watch_minutes DESC;`,
 
                   {/* Play button overlay */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-all hover:bg-white/30">
-                      <Play className="h-5 w-5 fill-white text-white" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-all hover:bg-white/30 sm:h-12 sm:w-12">
+                      <Play className="h-3 w-3 fill-white text-white sm:h-5 sm:w-5" />
                     </div>
                   </div>
 
                   {/* Video controls */}
-                  <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gradient-to-t from-black/70 to-transparent p-2">
-                    <div className="flex items-center gap-1.5">
-                      <div className="border-t-3 border-b-3 h-0 w-0 border-l-4 border-b-transparent border-l-white border-t-transparent"></div>
-                      <div className="h-1 w-24 rounded-full bg-white/30">
-                        <div className="h-1 w-16 rounded-full bg-verbo-purple"></div>
+                  <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gradient-to-t from-black/70 to-transparent p-1 sm:p-2">
+                    <div className="flex items-center gap-1 sm:gap-1.5">
+                      <div className="sm:border-t-3 sm:border-b-3 border-l-3 h-0 w-0 border-b-2 border-t-2 border-b-transparent border-l-white border-t-transparent sm:border-l-4"></div>
+                      <div className="h-0.5 w-14 rounded-full bg-white/30 sm:h-1 sm:w-24">
+                        <div className="h-0.5 w-8 rounded-full bg-verbo-purple sm:h-1 sm:w-16"></div>
                       </div>
-                      <span className="text-[8px] text-white">2:14 / 3:27</span>
+                      <span className="text-[6px] text-white sm:text-[8px]">
+                        2:14 / 3:27
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <div className="text-[8px] text-white">1x</div>
-                      <div className="text-[8px] text-white">HD</div>
-                      <div className="h-3 w-3 rounded-sm border border-white"></div>
+                    <div className="flex items-center gap-0.5 sm:gap-1">
+                      <div className="text-[6px] text-white sm:text-[8px]">
+                        1x
+                      </div>
+                      <div className="text-[6px] text-white sm:text-[8px]">
+                        HD
+                      </div>
+                      <div className="h-2 w-2 rounded-sm border border-white sm:h-3 sm:w-3"></div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="mt-1.5 flex items-center justify-between">
-                <span className="text-[8px] text-gray-500">
+              <div className="mt-1 flex items-center justify-between sm:mt-1.5">
+                <span className="text-[6px] text-gray-500 sm:text-[8px]">
                   Recorded {selectedQuestionIndex === 2 ? "today" : "yesterday"}
                 </span>
-                <span className="text-[8px] text-verbo-purple">
+                <span className="text-[6px] text-verbo-purple sm:text-[8px]">
                   Watch full response
                 </span>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="rounded-lg border border-verbo-purple/10 bg-verbo-purple/5 p-2.5">
-                <p className="text-[10px] font-medium text-verbo-purple">
+            <div className="space-y-2 sm:space-y-3">
+              <div className="rounded-lg border border-verbo-purple/10 bg-verbo-purple/5 p-1.5 sm:p-2.5">
+                <p className="text-[7px] font-medium text-verbo-purple sm:text-[10px]">
                   AI Assessment Overview
                 </p>
-                <p className="mt-1 text-[9px] text-gray-600">
+                <p className="mt-0.5 text-[6px] text-gray-600 sm:mt-1 sm:text-[9px]">
                   {safeAnalysis.overview}
                 </p>
               </div>
 
-              <div className="rounded-lg border border-verbo-green/10 bg-verbo-green/5 p-2.5">
-                <p className="text-[10px] font-medium text-verbo-green">
+              <div className="rounded-lg border border-verbo-green/10 bg-verbo-green/5 p-1.5 sm:p-2.5">
+                <p className="text-[7px] font-medium text-verbo-green sm:text-[10px]">
                   Strengths
                 </p>
-                <ul className="mt-1 space-y-1 pl-3">
+                <ul className="mt-0.5 space-y-0.5 pl-2 sm:mt-1 sm:space-y-1 sm:pl-3">
                   {safeAnalysis.strengths.map((strength, i) => (
-                    <li key={i} className="list-disc text-[9px] text-gray-600">
+                    <li
+                      key={i}
+                      className="list-disc text-[6px] text-gray-600 sm:text-[9px]"
+                    >
                       {strength}
-                      <span className="ml-1 text-[8px] text-verbo-green">
+                      <span className="ml-1 text-[5px] text-verbo-green sm:text-[8px]">
                         [
                         {selectedQuestionIndex === 0
                           ? "0:42"
@@ -770,15 +787,18 @@ ORDER BY total_watch_minutes DESC;`,
                 </ul>
               </div>
 
-              <div className="rounded-lg border border-blue-100 bg-blue-50/30 p-2.5">
-                <p className="text-[10px] font-medium text-verbo-blue">
+              <div className="rounded-lg border border-blue-100 bg-blue-50/30 p-1.5 sm:p-2.5">
+                <p className="text-[7px] font-medium text-verbo-blue sm:text-[10px]">
                   Areas for Improvement
                 </p>
-                <ul className="mt-1 space-y-1 pl-3">
+                <ul className="mt-0.5 space-y-0.5 pl-2 sm:mt-1 sm:space-y-1 sm:pl-3">
                   {safeAnalysis.improvements.map((improvement, i) => (
-                    <li key={i} className="list-disc text-[9px] text-gray-600">
+                    <li
+                      key={i}
+                      className="list-disc text-[6px] text-gray-600 sm:text-[9px]"
+                    >
                       {improvement}
-                      <span className="ml-1 text-[8px] text-verbo-blue">
+                      <span className="ml-1 text-[5px] text-verbo-blue sm:text-[8px]">
                         [
                         {selectedQuestionIndex === 0
                           ? "1:57"
@@ -792,32 +812,32 @@ ORDER BY total_watch_minutes DESC;`,
                 </ul>
               </div>
 
-              <div className="rounded-lg border border-gray-100 p-2.5">
-                <p className="text-[10px] font-medium text-verbo-dark">
+              <div className="rounded-lg border border-gray-100 p-1.5 sm:p-2.5">
+                <p className="text-[7px] font-medium text-verbo-dark sm:text-[10px]">
                   Video Analysis
                 </p>
-                <div className="mt-1.5 flex flex-wrap gap-2">
-                  <div className="flex items-center rounded-full bg-gray-100 px-2 py-0.5">
-                    <div className="mr-1 h-1.5 w-1.5 rounded-full bg-green-500"></div>
-                    <span className="text-[8px] text-gray-700">
+                <div className="mt-1 flex flex-wrap gap-1 sm:mt-1.5 sm:gap-2">
+                  <div className="flex items-center rounded-full bg-gray-100 px-1.5 py-0.5">
+                    <div className="mr-0.5 h-1 w-1 rounded-full bg-green-500 sm:mr-1 sm:h-1.5 sm:w-1.5"></div>
+                    <span className="text-[6px] text-gray-700 sm:text-[8px]">
                       Confident tone (85%)
                     </span>
                   </div>
-                  <div className="flex items-center rounded-full bg-gray-100 px-2 py-0.5">
-                    <div className="mr-1 h-1.5 w-1.5 rounded-full bg-green-500"></div>
-                    <span className="text-[8px] text-gray-700">
+                  <div className="flex items-center rounded-full bg-gray-100 px-1.5 py-0.5">
+                    <div className="mr-0.5 h-1 w-1 rounded-full bg-green-500 sm:mr-1 sm:h-1.5 sm:w-1.5"></div>
+                    <span className="text-[6px] text-gray-700 sm:text-[8px]">
                       Clear articulation (92%)
                     </span>
                   </div>
-                  <div className="flex items-center rounded-full bg-gray-100 px-2 py-0.5">
-                    <div className="mr-1 h-1.5 w-1.5 rounded-full bg-yellow-500"></div>
-                    <span className="text-[8px] text-gray-700">
+                  <div className="flex items-center rounded-full bg-gray-100 px-1.5 py-0.5">
+                    <div className="mr-0.5 h-1 w-1 rounded-full bg-yellow-500 sm:mr-1 sm:h-1.5 sm:w-1.5"></div>
+                    <span className="text-[6px] text-gray-700 sm:text-[8px]">
                       Eye contact (67%)
                     </span>
                   </div>
-                  <div className="flex items-center rounded-full bg-gray-100 px-2 py-0.5">
-                    <div className="mr-1 h-1.5 w-1.5 rounded-full bg-green-500"></div>
-                    <span className="text-[8px] text-gray-700">
+                  <div className="flex items-center rounded-full bg-gray-100 px-1.5 py-0.5">
+                    <div className="mr-0.5 h-1 w-1 rounded-full bg-green-500 sm:mr-1 sm:h-1.5 sm:w-1.5"></div>
+                    <span className="text-[6px] text-gray-700 sm:text-[8px]">
                       Engagement (78%)
                     </span>
                   </div>
@@ -827,25 +847,28 @@ ORDER BY total_watch_minutes DESC;`,
           </div>
 
           {/* Skills panel - Right */}
-          <div className="w-1/5 overflow-y-auto bg-white p-2">
-            <h3 className="mb-2 text-xs font-semibold text-verbo-dark">
+          <div className="w-1/5 overflow-y-auto bg-white p-1 sm:p-2">
+            <h3 className="mb-1 text-[9px] font-semibold text-verbo-dark sm:mb-2 sm:text-xs">
               Skills Assessment
             </h3>
-            <div className="space-y-2.5">
+            <div className="space-y-1.5 sm:space-y-2.5">
               {skills.map((skill, i) => (
-                <div key={i} className="rounded-lg border border-gray-100 p-2">
-                  <p className="text-[10px] font-medium text-verbo-dark">
+                <div
+                  key={i}
+                  className="rounded-lg border border-gray-100 p-1 sm:p-2"
+                >
+                  <p className="text-[7px] font-medium text-verbo-dark sm:text-[10px]">
                     {skill.name}
                   </p>
 
                   {/* 5-star rating system */}
-                  <div className="mt-1.5 flex items-center justify-between">
+                  <div className="mt-1 flex items-center justify-between sm:mt-1.5">
                     <div className="flex">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <div
                           key={star}
                           className={cn(
-                            "mr-0.5 h-2 w-2 rounded-full",
+                            "mr-0.5 h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2",
                             star <= Math.round(skill.score / 20)
                               ? "bg-verbo-purple"
                               : "bg-gray-200",
@@ -853,12 +876,12 @@ ORDER BY total_watch_minutes DESC;`,
                         />
                       ))}
                     </div>
-                    <span className="text-[8px] font-medium text-gray-500">
+                    <span className="text-[6px] font-medium text-gray-500 sm:text-[8px]">
                       {Math.round(skill.score / 20)}/5
                     </span>
                   </div>
 
-                  <p className="mt-1.5 text-right text-[8px] text-muted-foreground">
+                  <p className="mt-1 text-right text-[5px] text-muted-foreground sm:mt-1.5 sm:text-[8px]">
                     {skill.confidence} confidence
                   </p>
                 </div>
@@ -866,10 +889,10 @@ ORDER BY total_watch_minutes DESC;`,
 
               {/* Related skills */}
               <div className="mt-1 space-y-1">
-                <p className="text-[10px] font-medium text-verbo-dark">
+                <p className="text-[7px] font-medium text-verbo-dark sm:text-[10px]">
                   Related Skills
                 </p>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-0.5 sm:gap-1">
                   {[
                     "Data Visualization",
                     "Analytical Thinking",
@@ -878,7 +901,7 @@ ORDER BY total_watch_minutes DESC;`,
                   ].map((tag, i) => (
                     <span
                       key={i}
-                      className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[8px] font-medium text-gray-600"
+                      className="rounded-full bg-gray-100 px-1 py-0.5 text-[5px] font-medium text-gray-600 sm:px-1.5 sm:text-[8px]"
                     >
                       {tag}
                     </span>
@@ -887,10 +910,10 @@ ORDER BY total_watch_minutes DESC;`,
               </div>
             </div>
 
-            <div className="mt-4 flex justify-center">
+            <div className="mt-3 flex justify-center sm:mt-4">
               <Button
                 size="sm"
-                className="h-6 bg-verbo-purple px-3 py-0 text-[9px] text-white hover:bg-verbo-purple/90"
+                className="h-5 bg-verbo-purple px-2 py-0 text-[7px] text-white hover:bg-verbo-purple/90 sm:h-6 sm:px-3 sm:text-[9px]"
                 onClick={() => {
                   // Reset the demo state
                   setShowingResults(false);
@@ -910,30 +933,34 @@ ORDER BY total_watch_minutes DESC;`,
   };
 
   return (
-    <div className="relative mx-auto max-w-3xl overflow-hidden rounded-lg border bg-background/60 shadow-xl backdrop-blur-sm">
+    <div className="relative mx-auto w-full overflow-hidden rounded-lg border bg-background/60 shadow-xl backdrop-blur-sm sm:max-w-3xl">
       {/* Browser Chrome */}
-      <div className="flex items-center justify-between rounded-t-lg border-b bg-muted/50 px-3 py-1.5">
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between rounded-t-lg border-b bg-muted/50 px-2 py-1.5 sm:px-3">
+        <div className="flex items-center gap-1 sm:gap-1.5">
           <div className="flex gap-1">
-            <XCircle className="h-3 w-3 text-muted-foreground/60" />
-            <MinusCircle className="h-3 w-3 text-muted-foreground/60" />
-            <Maximize2 className="h-3 w-3 text-muted-foreground/60" />
+            <XCircle className="h-2 w-2 text-muted-foreground/60 sm:h-3 sm:w-3" />
+            <MinusCircle className="h-2 w-2 text-muted-foreground/60 sm:h-3 sm:w-3" />
+            <Maximize2 className="h-2 w-2 text-muted-foreground/60 sm:h-3 sm:w-3" />
           </div>
-          <div className="ml-3 flex items-center gap-1 rounded-md bg-background/50 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          <div className="ml-1 hidden items-center gap-1 rounded-md bg-background/50 px-1.5 py-0.5 text-[10px] text-muted-foreground sm:ml-3 sm:flex">
             <Database className="h-2.5 w-2.5" />
             verbo.ai/assessment/position/...
           </div>
+          <div className="ml-1 flex items-center rounded-md bg-background/50 px-1 py-0.5 text-[8px] text-muted-foreground sm:hidden">
+            <Database className="mr-0.5 h-2 w-2" />
+            verbo.ai/...
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {/* Always show recording status but style differently when not recording */}
           <div
-            className={`flex items-center gap-1 rounded-md ${isRecording ? "bg-red-500/10 px-1.5 py-0.5" : "px-1 py-0.5"}`}
+            className={`flex items-center gap-0.5 rounded-md sm:gap-1 ${isRecording ? "bg-red-500/10 px-1 py-0.5 sm:px-1.5" : "px-1 py-0.5"}`}
           >
             <div
               className={`h-1.5 w-1.5 rounded-full ${isRecording ? "animate-pulse bg-red-500" : "bg-gray-300"}`}
             />
             <span
-              className={`text-[10px] font-medium ${isRecording ? "text-red-500" : "text-gray-400"}`}
+              className={`text-[8px] font-medium sm:text-[10px] ${isRecording ? "text-red-500" : "text-gray-400"}`}
             >
               {isRecording ? "Recording" : "Not recording"}
             </span>
@@ -941,7 +968,7 @@ ORDER BY total_watch_minutes DESC;`,
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-[10px] text-muted-foreground"
+            className="text-[8px] text-muted-foreground sm:text-[10px]"
           >
             {Math.floor(currentTime / 60)}:
             {(currentTime % 60).toString().padStart(2, "0")}
@@ -950,18 +977,18 @@ ORDER BY total_watch_minutes DESC;`,
       </div>
 
       {/* Challenge Content */}
-      <div className="flex h-[420px] divide-x">
+      <div className="flex h-[280px] divide-x sm:h-[420px]">
         {/* Left Panel - Context */}
-        <div className="w-2/5 overflow-y-auto rounded-bl-lg border-r border-gray-200 bg-white p-4">
-          <h2 className="mb-2 text-base font-bold text-verbo-dark">
+        <div className="w-2/5 overflow-y-auto rounded-bl-lg border-r border-gray-200 bg-white p-2 sm:p-4">
+          <h2 className="mb-1 text-[10px] font-bold text-verbo-dark sm:mb-2 sm:text-base">
             Data Scientist, Product Analytics
           </h2>
-          <p className="mb-3 text-xs text-gray-600">
+          <p className="mb-2 text-[8px] text-gray-600 sm:mb-3 sm:text-xs">
             Review and understand the assessment case and questions.
           </p>
 
-          <div className="space-y-3">
-            <p className="text-xs text-gray-700">
+          <div className="space-y-2 sm:space-y-3">
+            <p className="text-[8px] text-gray-700 sm:text-xs">
               You are a Data Scientist at Instagram, focusing on Reels.
               Instagram Reels is a short-form video feature designed to
               entertain and engage users. You are tasked with analyzing user
@@ -969,34 +996,38 @@ ORDER BY total_watch_minutes DESC;`,
               strategies.
             </p>
 
-            <div className="rounded-lg border bg-gray-50 p-3">
-              <p className="text-xs font-medium">Table: reels_engagement</p>
-              <table className="mt-1.5 w-full text-[10px]">
-                <thead>
-                  <tr className="border-b text-left">
-                    <th className="pb-1 pr-2">Column</th>
-                    <th className="pb-1 pr-2">Description</th>
-                    <th className="pb-1">Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-gray-200">
-                    <td className="py-1 pr-2">reel_id</td>
-                    <td className="py-1 pr-2">Unique identifier for Reel</td>
-                    <td className="py-1">VARCHAR</td>
-                  </tr>
-                  <tr className="border-b border-gray-200">
-                    <td className="py-1 pr-2">user_id</td>
-                    <td className="py-1 pr-2">User identifier</td>
-                    <td className="py-1">INT</td>
-                  </tr>
-                  <tr className="border-b border-gray-200">
-                    <td className="py-1 pr-2">engagement_type</td>
-                    <td className="py-1 pr-2">Like, comment, share, etc.</td>
-                    <td className="py-1">VARCHAR</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="rounded-lg border bg-gray-50 p-2 sm:p-3">
+              <p className="text-[8px] font-medium sm:text-xs">
+                Table: reels_engagement
+              </p>
+              <div className="overflow-x-auto">
+                <table className="mt-1 w-full text-[7px] sm:mt-1.5 sm:text-[10px]">
+                  <thead>
+                    <tr className="border-b text-left">
+                      <th className="pb-1 pr-2">Column</th>
+                      <th className="pb-1 pr-2">Description</th>
+                      <th className="pb-1">Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-gray-200">
+                      <td className="py-1 pr-2">reel_id</td>
+                      <td className="py-1 pr-2">Unique identifier for Reel</td>
+                      <td className="py-1">VARCHAR</td>
+                    </tr>
+                    <tr className="border-b border-gray-200">
+                      <td className="py-1 pr-2">user_id</td>
+                      <td className="py-1 pr-2">User identifier</td>
+                      <td className="py-1">INT</td>
+                    </tr>
+                    <tr className="border-b border-gray-200">
+                      <td className="py-1 pr-2">engagement_type</td>
+                      <td className="py-1 pr-2">Like, comment, share, etc.</td>
+                      <td className="py-1">VARCHAR</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -1010,7 +1041,7 @@ ORDER BY total_watch_minutes DESC;`,
                 <button
                   key={question}
                   onClick={() => setActiveQuestion(question)}
-                  className={`flex items-center px-4 py-2 text-xs font-medium transition-colors ${
+                  className={`flex items-center px-1 py-1 text-[8px] font-medium transition-colors sm:px-4 sm:py-2 sm:text-xs ${
                     activeQuestion === question
                       ? "bg-verbo-purple/10 text-verbo-purple"
                       : "text-gray-600 hover:bg-gray-100"
@@ -1023,44 +1054,49 @@ ORDER BY total_watch_minutes DESC;`,
           </div>
 
           {/* Question content - Dynamic based on active question */}
-          <div className="p-4">{renderQuestionContent()}</div>
+          <div className="p-1 sm:p-4">{renderQuestionContent()}</div>
 
           {/* Notes section */}
-          <div className="flex flex-1 flex-col overflow-hidden bg-gray-50 p-4">
-            <div className="mb-1.5 flex items-center justify-between">
-              <h4 className="text-xs font-medium text-gray-700">Notes</h4>
+          <div className="flex flex-1 flex-col overflow-hidden bg-gray-50 p-1 sm:p-4">
+            <div className="mb-1 flex items-center justify-between">
+              <h4 className="text-[8px] font-medium text-gray-700 sm:text-xs">
+                Notes
+              </h4>
             </div>
-            <div className="flex-1 rounded-md border border-gray-200 bg-white p-2">
+            <div className="flex-1 rounded-md border border-gray-200 bg-white p-1 sm:p-2">
               <textarea
                 value={getCurrentNotes()}
                 onChange={handleNotesChange}
                 placeholder="If you need, you can take notes here..."
-                className="h-full w-full resize-none border-0 bg-transparent p-0 text-xs text-gray-700 focus:outline-none focus:ring-0"
+                className="h-full w-full resize-none border-0 bg-transparent p-0 text-[8px] text-gray-700 focus:outline-none focus:ring-0 sm:text-xs"
               />
             </div>
 
             {/* Recording controls */}
-            <div className="mt-3 flex items-center justify-between">
+            <div className="mt-1 flex items-center justify-between sm:mt-3">
               {/* Recording indicator - Always visible */}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-0.5 sm:gap-1">
                   <div
-                    className={`h-2 w-2 rounded-full ${isRecording ? "animate-pulse bg-red-500" : "bg-gray-300"}`}
+                    className={`h-1 w-1 rounded-full sm:h-2 sm:w-2 ${isRecording ? "animate-pulse bg-red-500" : "bg-gray-300"}`}
                   />
-                  <span className="text-[10px] font-medium text-gray-700">
+                  <span className="hidden text-[8px] font-medium text-gray-700 sm:inline sm:text-[10px]">
                     {isRecording
                       ? "Screen and audio recording in progress"
                       : "Click to start recording"}
+                  </span>
+                  <span className="text-[6px] font-medium text-gray-700 sm:hidden">
+                    {isRecording ? "Recording" : "Not recording"}
                   </span>
                 </div>
               </div>
 
               {/* Navigation buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 px-2 py-0 text-xs text-gray-600"
+                  className="h-6 px-2 py-0 text-[7px] text-gray-600 sm:h-7 sm:px-2 sm:text-xs"
                   disabled={activeQuestion === "Question 1"}
                   onClick={() => {
                     if (activeQuestion === "Question 2") {
@@ -1078,7 +1114,7 @@ ORDER BY total_watch_minutes DESC;`,
                     activeQuestion === "Question 3" ? "default" : "outline"
                   }
                   size="sm"
-                  className={`h-7 px-2 py-0 text-xs ${
+                  className={`h-6 px-2 py-0 text-[7px] sm:h-7 sm:px-2 sm:text-xs ${
                     activeQuestion === "Question 3"
                       ? "bg-verbo-purple hover:bg-verbo-purple/90"
                       : ""
@@ -1147,17 +1183,17 @@ export default function Page() {
       <BackgroundGradient />
 
       {/* Hero Section */}
-      <section className="relative pt-20">
+      <section className="relative pt-12 sm:pt-20">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center space-y-4 text-center">
-            <div className="mb-4 inline-block rounded-full bg-verbo-purple/10 px-3 py-1 text-sm text-verbo-purple">
+            <div className="mb-2 inline-block rounded-full bg-verbo-purple/10 px-3 py-1 text-sm text-verbo-purple sm:mb-4">
               Now in private beta
             </div>
-            <h1 className="max-w-3xl text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl">
+            <h1 className="max-w-3xl text-2xl font-bold tracking-tighter sm:text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
               <AuroraText>AI-Powered Skill Assessments</AuroraText>
               <span className="mt-2 block">for Modern Hiring</span>
             </h1>
-            <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
+            <p className="max-w-[42rem] text-sm leading-normal text-muted-foreground sm:text-base sm:text-xl sm:leading-8">
               Replace hours of interviews with accurate, consistent, and
               scalable skill assessments. Get deeper insights with less effort.
             </p>
@@ -1173,28 +1209,30 @@ export default function Page() {
       </section>
 
       {/* Demo Section */}
-      <section className="py-10 md:py-16 lg:py-20">
-        <div className="container px-4 md:px-6">
-          <InteractiveDemo />
+      <section className="py-4 sm:py-10 md:py-16 lg:py-20">
+        <div className="container px-1 sm:px-4 md:px-6">
+          <div className="scale-[0.9] transform sm:scale-100">
+            <InteractiveDemo />
+          </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-10 md:py-16">
+      <section className="py-8 sm:py-10 md:py-16">
         <div className="container px-4 md:px-6">
-          <h2 className="mb-4 text-center text-3xl font-bold">
+          <h2 className="mb-3 text-center text-2xl font-bold sm:mb-4 sm:text-3xl">
             Built for recruiters, backed by AI
           </h2>
-          <p className="mx-auto mb-12 max-w-3xl text-center text-muted-foreground">
+          <p className="mx-auto mb-8 max-w-3xl text-center text-sm text-muted-foreground sm:mb-12 sm:text-base">
             Transform your hiring process with consistent, thorough skill
             assessments that scale with your needs.
           </p>
-          <BentoGrid className="mx-auto max-w-5xl">
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4">
             <BentoCard
               name="Realistic Challenges"
               description="Put candidates in real-world scenarios that accurately test their skills, not just their interview abilities."
               Icon={MessageSquare}
-              className="md:col-span-2"
+              className="col-span-1"
               href="#"
               cta="Learn more"
               background={
@@ -1227,32 +1265,32 @@ export default function Page() {
               name="Candidate Insights"
               description="Deep, structured analysis of candidate skills, with specific evidence and clear scoring."
               Icon={Database}
-              className="md:col-span-2"
+              className="col-span-1"
               href="#"
               cta="Learn more"
               background={
                 <div className="absolute inset-0 bg-gradient-to-br from-verbo-dark/10 to-verbo-purple/5"></div>
               }
             />
-          </BentoGrid>
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24">
+      <section className="py-10 sm:py-16 md:py-24">
         <div className="container px-4 md:px-6">
-          <div className="mx-auto max-w-3xl rounded-lg bg-muted p-8 text-center md:p-12">
-            <h3 className="mb-2 text-2xl font-bold md:text-3xl">
+          <div className="mx-auto max-w-3xl rounded-lg bg-muted p-6 text-center sm:p-8 md:p-12">
+            <h3 className="mb-2 text-xl font-bold sm:text-2xl md:text-3xl">
               Ready to transform your hiring process?
             </h3>
-            <p className="mb-6 text-muted-foreground">
+            <p className="mb-4 text-sm text-muted-foreground sm:mb-6 sm:text-base">
               Join the companies already saving hundreds of interview hours per
               month.
             </p>
             <Link href="/sign-up">
-              <Button className="h-11 bg-verbo-purple px-8 text-white hover:bg-verbo-purple/90">
+              <Button className="h-9 bg-verbo-purple px-4 text-sm text-white hover:bg-verbo-purple/90 sm:h-11 sm:px-8 sm:text-base">
                 Get Started Now
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </Link>
           </div>
