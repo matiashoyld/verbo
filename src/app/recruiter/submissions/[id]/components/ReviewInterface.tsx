@@ -31,8 +31,7 @@ export function computeSubmissionStatus(
   // Count total position questions
   const totalPositionQuestions = submission.position.questions?.length || 0;
 
-  // Count answered questions (with completed recordings)
-  const answeredQuestions = submission.questions.length;
+  // Count completed questions (with processed recordings)
   const completedQuestions = submission.questions.filter(
     (question) => question.recordingMetadata?.processed === true,
   ).length;
@@ -517,12 +516,13 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({ submission }) => {
 
               <div className="bg-gray-50 p-5">
                 {activeTab === "video" ? (
-                  <VideoPlayer
-                    questionId={activeQuestionId}
-                    recordingFilePath={
-                      currentQuestion?.recordingMetadata?.filePath
-                    }
-                  />
+                  <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                    <VideoPlayer
+                      recordingFilePath={
+                        currentQuestion?.recordingMetadata?.filePath
+                      }
+                    />
+                  </div>
                 ) : activeTab === "competencies" ? (
                   renderCompetencyAssessments()
                 ) : (

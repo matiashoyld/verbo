@@ -329,7 +329,8 @@ export const skillsRouter = createTRPCRouter({
           console.log("Development mode: Skipping user role check for updateCompetency");
         } else {
           // Find user by alternative method since we can't rely on ctx.user directly
-          const { userId } = ctx;
+          // Extracting userId but not using it yet
+          // const { userId } = ctx;
           
           const users = await ctx.db.user.findMany({
             where: {

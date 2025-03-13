@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { Button } from "~/components/ui/button";
@@ -72,11 +73,17 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
                   ensure accurate assessment.
                 </p>
                 <div className="mt-2 overflow-hidden rounded border border-border/30">
-                  <img
+                  <Image
                     src="/images/screen-share-guide.png"
                     alt="Screen sharing guide"
-                    className="w-full"
-                    onError={(e) => (e.currentTarget.style.display = "none")}
+                    width={500}
+                    height={300}
+                    className="h-auto w-full"
+                    onError={(e) => {
+                      // Type assertion is needed for the style property
+                      const imgElement = e.currentTarget as HTMLImageElement;
+                      imgElement.style.display = "none";
+                    }}
                   />
                 </div>
               </div>

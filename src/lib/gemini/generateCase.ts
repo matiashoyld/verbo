@@ -200,7 +200,7 @@ export async function generateAssessmentCase(
             });
           }
         }
-      } catch (jsonError) {
+      } catch {
         // JSON extraction fallback failed, continue to final fallback
       }
     }

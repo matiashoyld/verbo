@@ -37,22 +37,6 @@ interface FeedbackItem {
   }>;
 }
 
-// Define types for the analysis results
-interface AnalysisResult {
-  id: string;
-  questionId: string | undefined;
-  overall_assessment: string;
-  strengths: string[];
-  areas_for_improvement: string[];
-  competency_assessments: Array<{
-    competency_id: string;
-    competency_name: string;
-    level: number;
-    rationale: string;
-  }>;
-  createdAt: string | Date;
-}
-
 // Generate fallback feedback data if AI analysis is not available
 const generateFallbackFeedback = (
   questions: { id: string; question: string; context: string | null }[],
@@ -93,7 +77,7 @@ export default function ResultsPage() {
   );
 
   // Fetch AI analysis results using the tRPC API
-  const { data: analysisData } = api.recordings.getAnalysisResults.useQuery(
+  const { data: _analysisData } = api.recordings.getAnalysisResults.useQuery(
     { positionId: params.id },
     { enabled: !!params.id && !!position, refetchOnWindowFocus: false },
   );
@@ -106,11 +90,11 @@ export default function ResultsPage() {
     setIsLoadingFeedback(true);
 
     if (position?.questions) {
-      if (analysisData?.results && analysisData.results.length > 0) {
+      if (_analysisData?.results && _analysisData.results.length > 0) {
         // Map the analysis results to feedback items
         const mappedFeedback = position.questions.map((question) => {
           // Find the analysis for this question
-          const analysis = analysisData.results.find(
+          const analysis = _analysisData.results.find(
             (a) => a.questionId === question.id,
           );
 
@@ -146,7 +130,7 @@ export default function ResultsPage() {
 
       setIsLoadingFeedback(false);
     }
-  }, [position, analysisData]);
+  }, [position, _analysisData]);
 
   // Load recordings from Supabase URLs
   useEffect(() => {

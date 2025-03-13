@@ -15,8 +15,7 @@ export function computeSubmissionStatus(
   // Count total position questions
   const totalPositionQuestions = submission.position.questions?.length || 0;
 
-  // Count answered questions (with completed recordings)
-  const answeredQuestions = submission.questions.length;
+  // Count completed questions (with processed recordings)
   const completedQuestions = submission.questions.filter(
     (question) => question.recordingMetadata?.processed === true,
   ).length;

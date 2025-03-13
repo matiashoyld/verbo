@@ -139,10 +139,13 @@ export async function POST(req: NextRequest) {
       } else {
         // Create a new user
         // Check if the email domain indicates a candidate
-        const isCandidateEmail = email.includes("@candidate.") || email.includes("@student.") || email.endsWith(".edu");
+        // Commented out unused variable
+        // const isCandidateEmail = email.includes("@candidate.") || email.includes("@student.") || email.endsWith(".edu");
         
         // Additional checks for candidate paths:
         // 1. Look for candidate path in the URL
+        // Commented out unused URL pattern variables
+        /*
         const candidatePathPatterns = [
           /\/candidate\/position\//,  // Main pattern
           /\/candidate\//,            // Any candidate path
@@ -154,6 +157,7 @@ export async function POST(req: NextRequest) {
           (referer && pattern.test(referer)) || 
           (origin && pattern.test(origin))
         );
+        */
         
         // Default to CANDIDATE for any users who aren't clearly recruiter signups
         // This is safer as we can always promote to RECRUITER if needed

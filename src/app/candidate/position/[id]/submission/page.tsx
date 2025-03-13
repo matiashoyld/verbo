@@ -466,14 +466,12 @@ export default function CandidateSubmissionPage() {
       }
 
       // 5. Upload the final recording directly
-      let finalRecordingFilePath: string | undefined;
       if (recordingBlob && recordingBlob.size > 0) {
         try {
           const uploadResult = await uploadRecording(
             activeQuestionId,
             recordingBlob,
           );
-          finalRecordingFilePath = uploadResult.filePath;
 
           // 5b. Analyze the final recording directly
           if (

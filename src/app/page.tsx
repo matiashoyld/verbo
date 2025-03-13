@@ -492,7 +492,7 @@ function InteractiveDemo() {
 }
 
 export default function Page() {
-  const { isLoaded, userId, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
 
   // Query to fetch the user's role from the database
   const { data: userData, isLoading: isLoadingUser } =

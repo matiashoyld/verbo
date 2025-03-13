@@ -2,14 +2,10 @@ import React, { useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 
 interface VideoPlayerProps {
-  questionId: string;
   recordingFilePath: string | undefined | null;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({
-  questionId,
-  recordingFilePath,
-}) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ recordingFilePath }) => {
   const [loading, setLoading] = useState(true);
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);

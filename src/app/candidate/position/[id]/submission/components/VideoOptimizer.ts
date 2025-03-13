@@ -76,7 +76,7 @@ export const processVideoBlob = async (blob: Blob): Promise<Blob> => {
     const url = URL.createObjectURL(blob);
     
     // Return a promise that resolves when processing is complete
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       // Clean up function to release resources
       const cleanup = () => {
         URL.revokeObjectURL(url);

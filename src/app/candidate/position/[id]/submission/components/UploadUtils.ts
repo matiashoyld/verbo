@@ -44,18 +44,6 @@ type AnalyzeVideoMutation = (input: {
   questionId: string;
 }) => Promise<VideoAnalysisResult | null>;
 
-// Add a type for the recording data
-type RecordingData = {
-  id: string;
-  questionId: string;
-  recordingId?: string;
-  url: string | null;
-  filePath: string;
-  fileSize: number | null;
-  durationSeconds: number | null;
-  createdAt: Date;
-};
-
 // Function to upload a recording to Supabase
 export const uploadRecording = async (
   questionId: string,

@@ -38,26 +38,6 @@ interface SubmissionQuestion {
   };
 }
 
-interface SkillLevelProps {
-  level: number;
-  maxLevel: number;
-}
-
-const SkillLevel: React.FC<SkillLevelProps> = ({ level, maxLevel = 5 }) => {
-  return (
-    <div className="flex items-center gap-1">
-      {Array.from({ length: maxLevel }).map((_, idx) => (
-        <div
-          key={idx}
-          className={`h-2 w-2 rounded-full ${
-            idx < level ? "bg-verbo-purple" : "bg-gray-200"
-          }`}
-        />
-      ))}
-    </div>
-  );
-};
-
 interface FeedbackProps {
   question: SubmissionQuestion | undefined;
 }
