@@ -1,9 +1,16 @@
 "use client";
 
-import { ArrowLeft, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "~/components/ui/breadcrumb";
 import { api } from "~/trpc/react";
 import type { RecruiterSubmission } from "~/types/submission";
 import ReviewInterface from "./components/ReviewInterface";
@@ -59,13 +66,19 @@ export default function SubmissionDetailPage() {
     return (
       <div className="animate-fade-in min-h-screen bg-background">
         <div className="mx-auto w-full max-w-[1400px] px-8 pt-6">
-          <Link
-            href="/recruiter/submissions"
-            className="inline-flex items-center rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-          >
-            <ArrowLeft className="mr-1 h-3.5 w-3.5" />
-            Back to Submissions
-          </Link>
+          <Breadcrumb className="mb-6">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/recruiter/submissions">
+                  Submissions
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Error</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
 
           <div className="mt-6 rounded-lg border bg-white p-8 text-center shadow-sm">
             <h2 className="mb-2 text-xl font-medium text-verbo-dark">
@@ -83,17 +96,25 @@ export default function SubmissionDetailPage() {
 
   // We've already checked that submission is not null
   const submissionData = submission as RecruiterSubmission;
+  const candidateName =
+    submissionData.candidate.name || submissionData.candidate.email;
 
   return (
     <div className="animate-fade-in min-h-screen bg-background">
       <div className="mx-auto w-full max-w-[1400px] px-8 pt-6">
-        <Link
-          href="/recruiter/submissions"
-          className="inline-flex items-center rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-        >
-          <ArrowLeft className="mr-1 h-3.5 w-3.5" />
-          Back to Submissions
-        </Link>
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/recruiter/submissions">
+                Submissions
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{candidateName}'s Submission</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
         <div className="mt-4">
           <ReviewInterface submission={submissionData} />

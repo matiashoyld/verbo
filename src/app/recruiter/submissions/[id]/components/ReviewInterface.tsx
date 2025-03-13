@@ -7,6 +7,12 @@ import {
   Video,
 } from "lucide-react";
 import React, { useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import type { RecruiterSubmission } from "~/types/submission";
 import QuestionFeedback from "./QuestionFeedback";
 import VideoPlayer from "./VideoPlayer";
@@ -69,6 +75,18 @@ interface CompetencySummary {
   competency_id: string;
   averageLevel: number;
   count: number;
+}
+
+interface SkillSummary {
+  id: string;
+  name: string;
+  averageLevel: number;
+  competencyCount: number;
+  competencies?: Array<{
+    id: string;
+    name: string;
+    level: number;
+  }>;
 }
 
 const ReviewInterface: React.FC<ReviewInterfaceProps> = ({ submission }) => {
@@ -176,22 +194,132 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({ submission }) => {
     });
   }
 
+  // Group competencies by skill
+  const skillMap = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      totalLevel: number;
+      competencyCount: number;
+      assessmentCount: number;
+      competenciesSeen: Set<string>;
+      competencies: Map<
+        string,
+        {
+          id: string;
+          name: string;
+          totalLevel: number;
+          count: number;
+        }
+      >;
+    }
+  >();
+
+  for (const comp of allCompetencies) {
+    if (
+      !comp ||
+      !comp.questionCompetency ||
+      !comp.questionCompetency.competency ||
+      !comp.questionCompetency.competency.skill
+    )
+      continue;
+
+    const skill = comp.questionCompetency.competency.skill;
+    const skillId = skill.id;
+    const skillName = skill.name;
+    const competency = comp.questionCompetency.competency;
+    const competencyId = competency.id;
+    const competencyName = competency.name;
+
+    const existing = skillMap.get(skillId);
+
+    if (existing) {
+      existing.totalLevel += comp.level;
+      existing.assessmentCount += 1;
+
+      // Check if we've already seen this competency
+      if (!existing.competenciesSeen.has(competencyId)) {
+        existing.competencyCount += 1;
+        existing.competenciesSeen.add(competencyId);
+
+        // Add new competency to our tracking
+        existing.competencies.set(competencyId, {
+          id: competencyId,
+          name: competencyName,
+          totalLevel: comp.level,
+          count: 1,
+        });
+      } else {
+        // Update existing competency data
+        const existingComp = existing.competencies.get(competencyId);
+        if (existingComp) {
+          existingComp.totalLevel += comp.level;
+          existingComp.count += 1;
+        }
+      }
+    } else {
+      // Create new skill entry with first competency
+      const competenciesMap = new Map();
+      competenciesMap.set(competencyId, {
+        id: competencyId,
+        name: competencyName,
+        totalLevel: comp.level,
+        count: 1,
+      });
+
+      skillMap.set(skillId, {
+        id: skillId,
+        name: skillName,
+        totalLevel: comp.level,
+        competencyCount: 1,
+        assessmentCount: 1,
+        competenciesSeen: new Set([competencyId]),
+        competencies: competenciesMap,
+      });
+    }
+  }
+
+  // Calculate skill summaries
+  const skillSummaries: SkillSummary[] = [];
+
+  for (const [skillId, data] of skillMap.entries()) {
+    // Calculate average for each competency
+    const competenciesArray = Array.from(data.competencies.values()).map(
+      (comp) => ({
+        id: comp.id,
+        name: comp.name,
+        level: Number((comp.totalLevel / comp.count).toFixed(1)),
+      }),
+    );
+
+    // Sort by highest level
+    competenciesArray.sort((a, b) => b.level - a.level);
+
+    skillSummaries.push({
+      id: skillId,
+      name: data.name,
+      averageLevel: Number((data.totalLevel / data.assessmentCount).toFixed(1)),
+      competencyCount: data.competencyCount,
+      competencies: competenciesArray,
+    });
+  }
+
   // Sort by highest average level
+  skillSummaries.sort((a, b) => b.averageLevel - a.averageLevel);
+
+  // Original competency sort
   competencySummaries.sort((a, b) => b.averageLevel - a.averageLevel);
 
   if (sortedQuestions.length === 0) {
     return (
       <div className="animate-fade-in bg-background">
         <div className="w-full max-w-[1400px]">
-          <header className="mb-6">
-            <h1 className="text-2xl font-semibold">
-              {submission.candidate.name || submission.candidate.email}'s
-              Submission
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
+          <div className="rounded-lg border bg-white p-6 shadow-sm">
+            <p className="text-center text-muted-foreground">
               No questions have been answered for this submission yet.
             </p>
-          </header>
+          </div>
         </div>
       </div>
     );
@@ -254,13 +382,6 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({ submission }) => {
   return (
     <div className="animate-fade-in min-h-screen bg-background">
       <div className="mt-4 w-full max-w-[1400px]">
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold">
-            {submission.candidate.name || submission.candidate.email}'s
-            Submission
-          </h1>
-        </header>
-
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Question selector sidebar (left) - Now with sticky positioning */}
           <div className="lg:col-span-2">
@@ -416,33 +537,88 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({ submission }) => {
             <div className="sticky top-16 rounded-lg border bg-card p-4 shadow-sm">
               <h2 className="mb-3 flex items-center text-sm font-medium">
                 <ListChecks className="mr-1.5 h-4 w-4 text-verbo-purple/70" />
-                Competency Summary
+                Skills Summary
               </h2>
 
-              {competencySummaries.length > 0 ? (
-                <div className="space-y-3">
-                  {competencySummaries.map((comp) => (
-                    <div key={comp.competency_id} className="group">
+              {skillSummaries.length > 0 ? (
+                <div className="space-y-4">
+                  {skillSummaries.map((skill) => (
+                    <div key={skill.id} className="group">
                       <div className="mb-1 flex items-center justify-between">
                         <span className="text-xs font-medium transition-colors group-hover:text-verbo-purple">
-                          {comp.name}
+                          {skill.name}
                         </span>
                         <span className="w-16 rounded-full bg-verbo-purple/10 px-1.5 py-0.5 text-center text-[10px] text-verbo-purple">
-                          Level {comp.averageLevel}/5
+                          Level {skill.averageLevel}/5
                         </span>
                       </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                      <div className="mb-1 h-2 overflow-hidden rounded-full bg-gray-100">
                         <div
                           className="h-full rounded-full bg-verbo-purple"
-                          style={{ width: `${(comp.averageLevel / 5) * 100}%` }}
+                          style={{
+                            width: `${(skill.averageLevel / 5) * 100}%`,
+                          }}
                         />
                       </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <p className="cursor-help text-[10px] text-muted-foreground transition-colors hover:text-verbo-purple">
+                              Based on {skill.competencyCount}{" "}
+                              {skill.competencyCount === 1
+                                ? "competency"
+                                : "competencies"}
+                            </p>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="right"
+                            className="max-w-[280px] overflow-hidden rounded-lg border border-gray-100 bg-white p-0 shadow-md"
+                          >
+                            <div className="p-3">
+                              <h4 className="mb-2 border-b pb-1 text-xs font-medium text-foreground">
+                                {skill.name} Competencies
+                              </h4>
+                              <div className="space-y-2">
+                                {skill.competencies?.map((comp) => (
+                                  <div
+                                    key={comp.id}
+                                    className="flex items-center justify-between"
+                                  >
+                                    <span className="text-xs font-medium text-muted-foreground">
+                                      {comp.name}
+                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                      <div className="flex gap-0.5">
+                                        {Array.from({ length: 5 }).map(
+                                          (_, i) => (
+                                            <div
+                                              key={i}
+                                              className={`h-1.5 w-1.5 rounded-full ${
+                                                i < comp.level
+                                                  ? "bg-verbo-purple"
+                                                  : "bg-gray-200"
+                                              }`}
+                                            />
+                                          ),
+                                        )}
+                                      </div>
+                                      <span className="text-[10px] font-medium text-verbo-dark">
+                                        {comp.level}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-center text-xs text-muted-foreground">
-                  No competency data available yet
+                  No skill data available yet
                 </p>
               )}
             </div>
