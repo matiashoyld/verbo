@@ -63,6 +63,7 @@ export default clerkMiddleware(async (auth, req) => {
     "/skills",
     "/positions",
     "/submissions",
+    "/candidates",
     "/settings"
   ];
   
@@ -97,6 +98,7 @@ export const config = {
     '/skills',
     '/positions',
     '/submissions',
+    '/candidates',
     '/settings',
     '/recruiter/:path*',
     '/candidate/:path*',

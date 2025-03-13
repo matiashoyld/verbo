@@ -141,28 +141,33 @@ export async function POST(req: NextRequest) {
         // Check if the email domain indicates a candidate
         const isCandidateEmail = email.includes("@candidate.") || email.includes("@student.") || email.endsWith(".edu");
         
-        // Simplified pattern matching for candidate URLs
-        const pattern = /\/candidate\/position\//;
+        // Additional checks for candidate paths:
+        // 1. Look for candidate path in the URL
+        const candidatePathPatterns = [
+          /\/candidate\/position\//,  // Main pattern
+          /\/candidate\//,            // Any candidate path
+          /position\/[a-zA-Z0-9-]+/   // Position paths
+        ];
         
-        // Declare role based on URL pattern matching or email pattern
-        let userRole: "CANDIDATE" | "RECRUITER" = "RECRUITER";
+        // Check URL patterns against referer and origin
+        const isCandidatePath = candidatePathPatterns.some(pattern => 
+          (referer && pattern.test(referer)) || 
+          (origin && pattern.test(origin))
+        );
         
-        // Check various signals for candidate status, prioritizing more direct ones
-        if (
-          // Direct URL pattern in referer (strongest signal)
-          (referer && pattern.test(referer)) ||
-          // URL pattern in origin
-          (origin && pattern.test(origin)) ||
-          // Other heuristics - educational email domains
-          isCandidateEmail
-        ) {
-          userRole = "CANDIDATE";
-          console.log("Setting user role to CANDIDATE based on detected signals");
+        // Default to CANDIDATE for any users who aren't clearly recruiter signups
+        // This is safer as we can always promote to RECRUITER if needed
+        let userRole: "CANDIDATE" | "RECRUITER" = "CANDIDATE";
+        
+        // Only set to RECRUITER if explicitly from the main signup page
+        if (referer && referer.includes("/sign-up") && !referer.includes("/candidate/")) {
+          userRole = "RECRUITER";
+          console.log("Setting user role to RECRUITER based on sign-up path");
         } else {
-          console.log("Setting user role to RECRUITER (default)");
+          console.log("Setting user role to CANDIDATE (default for safety)");
         }
         
-        console.log(`Creating user with role: ${userRole}, email: ${email}`);
+        console.log(`Creating user with role: ${userRole}, email: ${email}, referer: ${referer}`);
         
         const newUser = await db.user.create({
           data: {

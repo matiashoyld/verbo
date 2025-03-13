@@ -43,6 +43,7 @@ export default function RecruiterLayout({
             <SidebarNav
               items={[
                 { title: "Overview", href: "/recruiter" },
+                { title: "Candidates", href: "/recruiter/candidates" },
                 { title: "Skills", href: "/recruiter/skills" },
                 { title: "Positions", href: "/recruiter/positions" },
                 { title: "Submissions", href: "/recruiter/submissions" },

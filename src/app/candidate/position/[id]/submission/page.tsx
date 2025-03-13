@@ -39,37 +39,33 @@ export default function CandidateSubmissionPage() {
   const analyzeVideoMutation = api.recordings.analyzeVideo.useMutation();
   const updateRoleMutation = api.user.updateUserToCandidate.useMutation();
 
-  // This effect ensures the user's role is set to CANDIDATE when they access this page
+  // Keep track of whether we've attempted to update the role
+  const [roleUpdateAttempted, setRoleUpdateAttempted] = useState(false);
+
+  // This effect ensures the user's role is set to CANDIDATE, but only attempts once
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    // Only run if user is loaded and signed in, and we haven't attempted it yet
+    if (isLoaded && isSignedIn && !roleUpdateAttempted) {
+      // Mark that we've attempted the update to prevent further attempts
+      setRoleUpdateAttempted(true);
+
+      console.log(
+        "Attempting to update user role to CANDIDATE (one-time only)",
+      );
+
       // Update user role to CANDIDATE through our API
       updateRoleMutation.mutate(undefined, {
         onSuccess: (data) => {
-          console.log("User role updated to CANDIDATE:", data);
-
-          // Force reload the page to ensure any role-based UI elements update correctly
-          if (data.role === "CANDIDATE") {
-            console.log("Role successfully set to CANDIDATE");
-          } else {
-            console.log(
-              "Failed to set role to CANDIDATE, refreshing page to try again",
-            );
-            // Wait a moment and refresh the page
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
-          }
+          console.log("Role update response:", data);
+          // No page reload needed - the update is just to ensure DB consistency
         },
         onError: (error) => {
           console.error("Failed to update user role:", error);
-          // On error, log details and potentially reload
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
+          // Log error but don't retry to avoid rate limits
         },
       });
     }
-  }, [isLoaded, isSignedIn, updateRoleMutation]);
+  }, [isLoaded, isSignedIn, roleUpdateAttempted, updateRoleMutation]);
 
   // Track the active question index
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
