@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "~/trpc/react";
+import ContextAccordion from "./components/ContextAccordion";
 import MarkdownRenderer from "./components/MarkdownRenderer";
 import NavigationButtons from "./components/NavigationButtons";
 import NotesEditor from "./components/NotesEditor";
@@ -678,33 +679,46 @@ export default function CandidateSubmissionPage() {
         requestPermissions={requestPermissions}
       />
 
-      {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left panel - Context */}
-        <div className="w-2/5 overflow-y-auto border-r border-gray-200 bg-white p-6">
-          <h2 className="mb-3 text-xl font-bold text-verbo-dark">
-            {position.title}
-          </h2>
-          <p className="mb-4 text-sm text-gray-600">
-            Review and understand the assessment case and questions.
-          </p>
+      {/* Main content - Responsive layout */}
+      <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
+        {/* Context panel - Moved to top on mobile, side panel on desktop */}
+        <div className="order-1 w-full overflow-y-auto bg-white px-4 py-3 md:order-1 md:w-2/5 md:border-r md:border-gray-200 md:p-6">
+          {/* Only visible on desktop */}
+          <div className="hidden md:block">
+            <h2 className="mb-3 text-xl font-bold text-verbo-dark">
+              {position.title}
+            </h2>
+            <p className="mb-4 text-sm text-gray-600">
+              Review and understand the assessment case and questions.
+            </p>
 
-          {position.context && (
-            <div className="w-full space-y-4 overflow-visible whitespace-normal break-words text-sm">
-              <MarkdownRenderer content={position.context} />
-            </div>
-          )}
+            {position.context && (
+              <div className="w-full space-y-4 overflow-visible whitespace-normal break-words text-sm">
+                <MarkdownRenderer content={position.context} />
+              </div>
+            )}
+          </div>
+
+          {/* Only visible on mobile - Accordion */}
+          <div className="md:hidden">
+            <ContextAccordion
+              title={position.title}
+              context={position.context}
+            />
+          </div>
         </div>
 
-        {/* Right panel - Question and Notepad */}
-        <div className="flex w-3/5 flex-col overflow-hidden">
-          {/* Question tabs */}
-          <QuestionTabs
-            questions={position.questions}
-            activeQuestionId={activeQuestionId}
-            completedQuestions={completedQuestions}
-            setActiveQuestionId={setActiveQuestionId}
-          />
+        {/* Questions and Notepad panel */}
+        <div className="order-2 flex w-full flex-1 flex-col overflow-hidden md:order-2 md:w-3/5">
+          {/* Question tabs - Scrollable on mobile */}
+          <div className="overflow-x-auto">
+            <QuestionTabs
+              questions={position.questions}
+              activeQuestionId={activeQuestionId}
+              completedQuestions={completedQuestions}
+              setActiveQuestionId={setActiveQuestionId}
+            />
+          </div>
 
           {/* Question content */}
           {currentQuestion && (
@@ -714,19 +728,19 @@ export default function CandidateSubmissionPage() {
             />
           )}
 
-          {/* Notepad/Codepad - Taking up all remaining space */}
-          <div className="flex flex-1 flex-col overflow-hidden bg-gray-50 p-6">
-            <NotesEditor
-              activeQuestionId={activeQuestionId}
-              questionNotes={questionNotes}
-              setQuestionNotes={setQuestionNotes}
-            />
+          {/* Notepad/Codepad - Taking up all remaining space, account for fixed buttons */}
+          <div className="flex flex-1 flex-col overflow-hidden bg-gray-50 p-4 pb-20 md:p-6 md:pb-6">
+            <div className="h-full min-h-[200px] flex-1 overflow-hidden">
+              <NotesEditor
+                activeQuestionId={activeQuestionId}
+                questionNotes={questionNotes}
+                setQuestionNotes={setQuestionNotes}
+              />
+            </div>
 
-            <div className="mt-5 flex items-center justify-between">
-              {/* Recording indicator - positioned at the bottom left */}
+            {/* Desktop navigation - Only visible on desktop */}
+            <div className="mt-5 hidden items-center justify-between md:flex">
               <RecordingIndicator isRecording={isRecording} />
-
-              {/* Action buttons - navigation between questions */}
               <NavigationButtons
                 currentQuestionIndex={currentQuestionIndex}
                 isLastQuestion={isLastQuestion}
@@ -737,6 +751,21 @@ export default function CandidateSubmissionPage() {
               />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Fixed navigation buttons at the bottom - Only on mobile */}
+      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-gray-200 bg-white p-3 shadow-md md:hidden">
+        <div className="mx-auto flex max-w-screen-xl items-center justify-between">
+          <NavigationButtons
+            currentQuestionIndex={currentQuestionIndex}
+            isLastQuestion={isLastQuestion}
+            handleBackQuestion={handleBackQuestion}
+            handleNextQuestion={handleNextQuestion}
+            handleSubmitAssessment={handleSubmitAssessment}
+            isExtracting={isExtracting}
+            isRecording={isRecording}
+          />
         </div>
       </div>
     </div>

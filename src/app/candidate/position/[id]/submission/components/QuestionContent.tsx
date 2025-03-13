@@ -12,21 +12,21 @@ const QuestionContent: React.FC<QuestionContentProps> = ({
   currentQuestionIndex,
 }) => {
   return (
-    <div className="max-h-[35vh] overflow-y-auto border-b border-gray-200 bg-white p-6">
+    <div className="overflow-y-auto border-b border-gray-200 bg-white p-4 sm:p-6">
       {/* Question context - highlighted area */}
       {currentQuestion.context && (
-        <div className="mb-4 rounded-md bg-gray-50 p-4">
+        <div className="mb-3 rounded-md bg-gray-50 p-3 sm:mb-4 sm:p-4">
           <div className="flex items-start">
             <MarkdownRenderer content={currentQuestion.context} />
           </div>
         </div>
       )}
 
-      <h3 className="mb-3 text-base font-semibold text-verbo-dark">
+      <h3 className="mb-2 text-sm font-semibold text-verbo-dark sm:mb-3 sm:text-base">
         Question {currentQuestionIndex + 1}
       </h3>
 
-      <div className="mb-4 w-full overflow-visible whitespace-normal break-words">
+      <div className="mb-3 w-full overflow-visible whitespace-normal break-words text-sm sm:mb-4 sm:text-base">
         <MarkdownRenderer content={currentQuestion.question} />
       </div>
     </div>

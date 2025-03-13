@@ -29,7 +29,7 @@ export default {
   				green: '#73ea91',
   				purple: '#872ce5',
   				blue: '#53a1e8',
-  				dark: '#321864',
+  				dark: '#321864'
   			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

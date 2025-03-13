@@ -16,7 +16,8 @@ const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({
         <div className="h-2 w-2 animate-pulse rounded-full bg-red-500"></div>
       </div>
       <span className="text-xs font-medium text-verbo-dark">
-        Recording in progress
+        <span className="md:hidden">Recording</span>
+        <span className="hidden md:inline">Recording in progress</span>
       </span>
       <div className="flex gap-1.5">
         <Mic className="h-3.5 w-3.5 text-verbo-purple/70" />
