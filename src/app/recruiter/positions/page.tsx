@@ -142,6 +142,50 @@ export default function PositionsPage() {
         positionId={selectedPositionId}
       />
 
+      {/* Counter Cards - Moved above the table */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">
+              Total Positions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{positions?.length || 0}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">New Today</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {positions?.filter(
+                (p: Position) =>
+                  p.created.includes("minute") ||
+                  p.created.includes("hour") ||
+                  p.created === "today",
+              ).length || 0}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">
+              Total Questions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {positions?.reduce(
+                (sum: number, p: Position) => sum + p.questionCount,
+                0,
+              ) || 0}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>All Positions</CardTitle>
@@ -248,49 +292,6 @@ export default function PositionsPage() {
           )}
         </CardContent>
       </Card>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">
-              Total Positions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{positions?.length || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">New Today</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {positions?.filter(
-                (p: Position) =>
-                  p.created.includes("minute") ||
-                  p.created.includes("hour") ||
-                  p.created === "today",
-              ).length || 0}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">
-              Total Questions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {positions?.reduce(
-                (sum: number, p: Position) => sum + p.questionCount,
-                0,
-              ) || 0}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Delete Confirmation Dialog */}
       {deleteDialogOpen && (
