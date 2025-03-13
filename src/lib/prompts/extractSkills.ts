@@ -17,13 +17,13 @@ export function createSkillExtractionPrompt(
     ${JSON.stringify(indexedData, null, 2)}
     
     Based on the job description provided:
-    1. Come up with a name for the position. Should be in the form of "Job Title @ Company Name"
+    1. Come up with a name for the position. Should be in the form of "Job Title"
     2. Identify the relevant competencies that match this position. Include competencies that are either explicitly mentioned OR strongly implied by the role.
     
     Respond ONLY with a valid JSON that lists the database numIds of the selected competencies:
     
     {
-      "position_name": "Job Title @ Company Name",
+      "position_name": "Job Title",
       "selected_competencies": [
         {
           "category_numId": 123, // Database numId of the category
