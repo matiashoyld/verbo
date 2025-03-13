@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { cn } from "~/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 import { Button } from "./button";
 import {
@@ -16,7 +15,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
-import { Separator } from "./separator";
 
 export function MainNav() {
   const pathname = usePathname();
@@ -72,24 +70,7 @@ export function MainNav() {
             verbo.ai
           </span>
         </Link>
-        {isLoaded && !isSignedIn ? (
-          <>
-            <Separator orientation="vertical" className="mx-4 h-6" />
-            <nav className="flex items-center gap-4 lg:gap-6">
-              <Link
-                href="/submissions"
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-verbo-dark",
-                  pathname === "/submissions"
-                    ? "text-verbo-dark"
-                    : "text-verbo-dark/60",
-                )}
-              >
-                Submissions
-              </Link>
-            </nav>
-          </>
-        ) : null}
+
         <div className="ml-auto flex items-center gap-2">
           {isLoaded && isSignedIn ? (
             <DropdownMenu>

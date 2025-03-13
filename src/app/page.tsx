@@ -1250,7 +1250,7 @@ export default function Page() {
               month.
             </p>
             <Link href="/sign-up">
-              <Button className="h-11 bg-verbo-green px-8 text-black hover:bg-verbo-green/90">
+              <Button className="h-11 bg-verbo-purple px-8 text-white hover:bg-verbo-purple/90">
                 Get Started Now
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
