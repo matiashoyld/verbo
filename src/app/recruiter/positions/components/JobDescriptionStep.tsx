@@ -72,79 +72,77 @@ export function JobDescriptionStep({
 
   return (
     <div className="space-y-6">
+      {/* AI Connection Test Button - Always visible regardless of hideHeader */}
+      <div className="flex justify-end">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTestGeminiApi}
+                disabled={isTestingApi}
+                className="flex items-center gap-1.5"
+              >
+                <Terminal className="h-3.5 w-3.5" />
+                {isTestingApi ? "Testing..." : "Test AI Connection"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Check if the AI service is working correctly</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
+      {/* Display diagnostic results - Always visible when available */}
+      {diagnosticsResult && (
+        <div
+          className={`rounded-md p-3 text-sm ${
+            diagnosticsResult.success
+              ? "bg-green-50 text-green-800"
+              : "bg-rose-50 text-rose-800"
+          }`}
+        >
+          <div className="font-semibold">
+            {diagnosticsResult.success
+              ? "AI Connection: OK"
+              : "AI Connection: Failed"}
+          </div>
+          <div className="mt-1 space-y-1">
+            {diagnosticsResult.environment && (
+              <div>Environment: {diagnosticsResult.environment}</div>
+            )}
+            {diagnosticsResult.modelName && (
+              <div>Model: {diagnosticsResult.modelName}</div>
+            )}
+            {diagnosticsResult.responseTime && (
+              <div>Response Time: {diagnosticsResult.responseTime}ms</div>
+            )}
+            {diagnosticsResult.apiKeyLength && (
+              <div>API Key Length: {diagnosticsResult.apiKeyLength} chars</div>
+            )}
+            {diagnosticsResult.response && (
+              <div>AI Response: {diagnosticsResult.response}</div>
+            )}
+            {diagnosticsResult.error && (
+              <div className="text-rose-700">
+                Error: {diagnosticsResult.error}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {!hideHeader && (
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold leading-none tracking-tight">
-              Job Description
-            </h3>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleTestGeminiApi}
-                    disabled={isTestingApi}
-                    className="flex items-center gap-1.5"
-                  >
-                    <Terminal className="h-3.5 w-3.5" />
-                    {isTestingApi ? "Testing..." : "Test AI Connection"}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Check if the AI service is working correctly</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-
+          <h3 className="text-lg font-semibold leading-none tracking-tight">
+            Job Description
+          </h3>
           <p className="text-sm text-muted-foreground">
             Select from our list of common positions or write your own job
             description.
           </p>
-
-          {/* Show diagnostic results if available */}
-          {diagnosticsResult && (
-            <div
-              className={`mt-2 rounded-md p-3 text-sm ${
-                diagnosticsResult.success
-                  ? "bg-green-50 text-green-800"
-                  : "bg-rose-50 text-rose-800"
-              }`}
-            >
-              <div className="font-semibold">
-                {diagnosticsResult.success
-                  ? "AI Connection: OK"
-                  : "AI Connection: Failed"}
-              </div>
-              <div className="mt-1 space-y-1">
-                {diagnosticsResult.environment && (
-                  <div>Environment: {diagnosticsResult.environment}</div>
-                )}
-                {diagnosticsResult.modelName && (
-                  <div>Model: {diagnosticsResult.modelName}</div>
-                )}
-                {diagnosticsResult.responseTime && (
-                  <div>Response Time: {diagnosticsResult.responseTime}ms</div>
-                )}
-                {diagnosticsResult.apiKeyLength && (
-                  <div>
-                    API Key Length: {diagnosticsResult.apiKeyLength} chars
-                  </div>
-                )}
-                {diagnosticsResult.response && (
-                  <div>AI Response: {diagnosticsResult.response}</div>
-                )}
-                {diagnosticsResult.error && (
-                  <div className="text-rose-700">
-                    Error: {diagnosticsResult.error}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       )}
 

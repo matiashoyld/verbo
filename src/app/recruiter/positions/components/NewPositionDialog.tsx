@@ -124,6 +124,10 @@ export function NewPositionDialog({
   const [positionName, setPositionName] = React.useState("");
   const [assessment, setAssessment] =
     React.useState<Assessment>(defaultAssessment);
+  // Add state for tracking extraction errors
+  const [extractionError, setExtractionError] = React.useState<string | null>(
+    null,
+  );
 
   // State for the add skill popover
   const [addSkillOpen, setAddSkillOpen] = React.useState(false);
@@ -233,6 +237,7 @@ export function NewPositionDialog({
       setSkills([]);
       setPositionName("");
       setAssessment(defaultAssessment);
+      setExtractionError(null);
     }
   }, [open]);
 
@@ -244,6 +249,7 @@ export function NewPositionDialog({
 
   const handleNext = async () => {
     setLoading(true);
+    setExtractionError(null);
 
     try {
       if (step === 1) {
@@ -282,10 +288,27 @@ export function NewPositionDialog({
             setSkills(transformedSkills);
           } else {
             console.warn("No skills were extracted, using fallback");
+            setExtractionError(
+              "No skills could be extracted from the job description. Using fallback skills instead.",
+            );
+            toast.warning(
+              "No skills could be extracted. Using default skills.",
+            );
             applyFallbackSkills();
           }
         } catch (error) {
           console.error("Error extracting skills:", error);
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error occurred";
+          setExtractionError(`AI error: ${errorMessage}`);
+          toast.error(
+            "Failed to extract skills. Using default skills instead.",
+            {
+              description:
+                "The AI service might be experiencing issues. You can try the Test AI Connection button to diagnose.",
+              duration: 5000,
+            },
+          );
           applyFallbackSkills();
         }
       } else if (step === 2) {
@@ -315,6 +338,9 @@ export function NewPositionDialog({
           } else {
             // Use fallback if result is invalid
             console.warn("Invalid assessment result, using fallback");
+            toast.warning(
+              "Could not generate a custom assessment. Using a default template.",
+            );
             setAssessment((prev) => ({
               ...prev,
               ...fallbackAssessmentData,
@@ -327,6 +353,7 @@ export function NewPositionDialog({
         } catch (error) {
           console.error("Error generating assessment:", error);
           // Use fallback on error
+          toast.error("Error generating assessment. Using default template.");
           setAssessment((prev) => ({
             ...prev,
             ...fallbackAssessmentData,
@@ -340,6 +367,10 @@ export function NewPositionDialog({
     } catch (error) {
       console.error("Error in step transition:", error);
       if (step === 1) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        setExtractionError(`Error in step transition: ${errorMessage}`);
+        toast.error("An unexpected error occurred. Using default values.");
         applyFallbackSkills();
       }
     } finally {
@@ -558,6 +589,7 @@ export function NewPositionDialog({
                   skills={skills}
                   onSkillsChange={setSkills}
                   hideHeader={true}
+                  extractionError={extractionError}
                 />
               </motion.div>
             )}
@@ -614,7 +646,7 @@ export function NewPositionDialog({
                         <CommandItem
                           key={skillName}
                           value={skillName}
-                          onSelect={() => addSkill(skillName)}
+                          onSelect={() => addSkill(skillName as SkillName)}
                           className="text-sm"
                         >
                           {skillName}

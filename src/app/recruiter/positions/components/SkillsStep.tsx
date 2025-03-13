@@ -36,6 +36,7 @@ interface SkillsStepProps {
   ) => void;
   hideHeader?: boolean;
   onAddSkill?: (skillName: SkillName) => void;
+  extractionError?: string | null;
 }
 
 export function SkillsStep({
@@ -43,6 +44,7 @@ export function SkillsStep({
   onSkillsChange,
   hideHeader = false,
   onAddSkill,
+  extractionError,
 }: SkillsStepProps) {
   // Use our new database endpoint to fetch skills and categories
   const { data: dbSkillsData } =
@@ -236,6 +238,17 @@ export function SkillsStep({
           </p>
         </CardHeader>
         <CardContent>
+          {extractionError && (
+            <div className="mb-4 rounded-md bg-rose-50 p-3 text-sm text-rose-800">
+              <p className="font-medium">Skills Extraction Error</p>
+              <p className="mt-1">{extractionError}</p>
+              <p className="mt-2">
+                You can manually add skills using the interface below, or try
+                the &quot;Test AI Connection&quot; button in the Job Description
+                step to diagnose issues.
+              </p>
+            </div>
+          )}
           <ScrollArea className="h-[350px] pr-4">
             <SkillsContent
               skills={skills}
@@ -250,13 +263,26 @@ export function SkillsStep({
 
   // When used within the dialog (hideHeader=true), don't use the Card wrapper
   return (
-    <ScrollArea className="">
-      <SkillsContent
-        skills={skills}
-        removeSkill={removeSkill}
-        toggleCompetency={toggleCompetency}
-      />
-    </ScrollArea>
+    <>
+      {extractionError && (
+        <div className="mb-4 rounded-md bg-rose-50 p-3 text-sm text-rose-800">
+          <p className="font-medium">Skills Extraction Error</p>
+          <p className="mt-1">{extractionError}</p>
+          <p className="mt-2">
+            You can manually add skills using the &quot;Add Skill&quot; button
+            below, or try the &quot;Test AI Connection&quot; button in the Job
+            Description step to diagnose issues.
+          </p>
+        </div>
+      )}
+      <ScrollArea className="">
+        <SkillsContent
+          skills={skills}
+          removeSkill={removeSkill}
+          toggleCompetency={toggleCompetency}
+        />
+      </ScrollArea>
+    </>
   );
 }
 
