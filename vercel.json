@@ -1,15 +1,12 @@
 {
   "functions": {
-    "api/*.js": {
+    ".next/server/pages/api/**/*.js": {
       "maxDuration": 60
     },
-    "src/app/api/**/*.js": {
+    ".next/server/app/api/**/*.js": {
       "maxDuration": 60
     },
-    "api/trpc/*.js": {
-      "maxDuration": 60
-    },
-    "api/trpc/positions/*.js": {
+    ".vercel/output/functions/**/*.func/**/*.js": {
       "maxDuration": 60
     }
   },
