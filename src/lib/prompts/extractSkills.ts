@@ -20,7 +20,8 @@ export function createSkillExtractionPrompt(
     1. Come up with a name for the position. Should be in the form of "Job Title"
     2. Identify the relevant competencies that match this position. Include competencies that are either explicitly mentioned OR strongly implied by the role.
     
-    Respond ONLY with a valid JSON that lists the database numIds of the selected competencies:
+    YOUR RESPONSE MUST BE VALID JSON. Do not include any explanations, markdown formatting or additional text.
+    You must respond with nothing but a valid, parseable JSON object in this exact format:
     
     {
       "position_name": "Job Title",
@@ -34,10 +35,13 @@ export function createSkillExtractionPrompt(
       ]
     }
     
-    IMPORTANT:
+    EXTREMELY IMPORTANT RULES:
+    - Your response MUST CONTAIN ONLY the JSON object and NOTHING else
+    - Do not include "[backticks]json" or any other markdown formatting
+    - Do not include any text before or after the JSON
     - Use ONLY the provided numIds from the data structure - these are actual database IDs
     - If a numId is null in the provided data, you can still include that item, but use null as the numId
     - ONLY return competencies that are relevant to the job description
-    - Return ONLY the JSON with the selected database numIds. No explanations.
+    - Ensure your output is valid JSON that can be parsed with JSON.parse()
   `;
 } 

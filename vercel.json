@@ -1,0 +1,28 @@
+{
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 60
+    },
+    "src/app/api/**/*.js": {
+      "maxDuration": 60
+    },
+    "api/trpc/*.js": {
+      "maxDuration": 60
+    },
+    "api/trpc/positions/*.js": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Connection",
+          "value": "keep-alive"
+        }
+      ]
+    }
+  ]
+}

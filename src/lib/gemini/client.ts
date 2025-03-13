@@ -23,4 +23,17 @@ try {
 const modelName = "gemini-2.0-flash-thinking-exp-01-21";
 console.log(`[GEMINI CLIENT] Using model: ${modelName}`);
 
-export const model = genAI.getGenerativeModel({ model: modelName }); 
+// Set up the generation config - optimized for Vercel serverless environments
+const generationConfig = {
+  temperature: 0.2,
+  topP: 0.8,
+  topK: 40,
+  maxOutputTokens: 8192,
+  // Don't set responseMimeType as it's not supported by gemini-2.0-flash-thinking-exp-01-21
+};
+
+// Create and export the model with config optimized for serverless environments
+export const model = genAI.getGenerativeModel({ 
+  model: modelName,
+  generationConfig,
+}); 
