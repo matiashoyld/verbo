@@ -37,8 +37,10 @@ export default function CandidatePositionPage() {
   if (!loading && !position) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-verbo-dark to-verbo-purple p-4 text-white">
-        <h1 className="mb-2 text-3xl font-bold">Position Not Found</h1>
-        <p className="mb-6">
+        <h1 className="mb-2 text-2xl font-bold sm:text-3xl">
+          Position Not Found
+        </h1>
+        <p className="mb-6 text-center">
           The position you're looking for doesn't exist or is no longer
           available.
         </p>
@@ -57,21 +59,24 @@ export default function CandidatePositionPage() {
 
   return (
     <div
-      className="flex min-h-screen"
+      className="flex min-h-screen flex-col"
       data-page-type="candidate-position"
       data-position-id={params.id}
     >
       {loading ? (
-        <div className="flex w-full items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-verbo-green"></div>
+        <div className="flex min-h-screen w-full items-center justify-center">
+          <div className="flex flex-col items-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-verbo-green"></div>
+            <p className="mt-4 text-sm text-gray-500">Loading position...</p>
+          </div>
         </div>
       ) : (
-        <div className="flex w-full">
+        <div className="flex min-h-screen w-full flex-col lg:flex-row">
           {/* Left side - Dark with gradient, showing position info */}
-          <div className="hidden w-1/2 bg-gradient-to-br from-black to-gray-900 p-12 lg:block">
+          <div className="hidden w-full bg-gradient-to-br from-black to-gray-900 p-8 lg:block lg:w-1/2 lg:p-12">
             <div className="flex h-full flex-col justify-between">
               <div>
-                <div className="mb-16">
+                <div className="mb-12 lg:mb-16">
                   <Image
                     src="/logo.png"
                     alt="Verbo Logo"
@@ -79,7 +84,7 @@ export default function CandidatePositionPage() {
                     height={48}
                   />
                 </div>
-                <h1 className="mb-4 text-4xl font-bold tracking-tight text-white">
+                <h1 className="mb-4 text-3xl font-bold tracking-tight text-white lg:text-4xl">
                   {position?.title || "Position"}
                 </h1>
                 <p className="text-xl text-gray-300">
@@ -87,7 +92,7 @@ export default function CandidatePositionPage() {
                 </p>
               </div>
 
-              <div className="space-y-12">
+              <div className="space-y-8 lg:space-y-12">
                 <div>
                   <p className="text-sm font-medium uppercase tracking-wider text-gray-400">
                     Questions
@@ -119,39 +124,23 @@ export default function CandidatePositionPage() {
           </div>
 
           {/* Right side - Sign In component */}
-          <div className="flex w-full flex-col justify-center px-4 py-12 lg:w-1/2">
-            <div className="mx-auto w-full max-w-sm">
-              <div className="mb-8 space-y-2 lg:hidden">
-                <div className="mb-8">
+          <div className="flex w-full flex-1 items-center justify-center px-5 py-8 sm:px-6 sm:py-10 lg:w-1/2 lg:py-12">
+            <div className="mx-auto flex w-full max-w-sm flex-col items-center justify-center">
+              {/* Mobile header - Only visible on mobile */}
+              <div className="mb-4 lg:hidden">
+                <div className="flex justify-center">
                   <Image
                     src="/logo.png"
                     alt="Verbo Logo"
-                    width={48}
-                    height={48}
+                    width={56}
+                    height={56}
                   />
                 </div>
-                <h1 className="text-2xl font-bold">
-                  {position?.title || "Position"}
-                </h1>
-                <p className="text-gray-600">
-                  {position?.creator_name || "Company"}
-                </p>
-                <div className="flex gap-4 py-4">
-                  <div>
-                    <p className="text-sm font-medium uppercase tracking-wider text-gray-500">
-                      Questions
-                    </p>
-                    <p className="text-xl font-bold">
-                      {position?.questions?.length || 0}
-                    </p>
-                  </div>
-                </div>
-                <div className="h-px bg-gray-200" />
               </div>
 
               {/* Custom header above Clerk component */}
-              <div className="mb-6 w-full">
-                <h2 className="text-2xl font-bold tracking-tight text-verbo-dark">
+              <div className="mb-5 w-full text-center lg:text-left">
+                <h2 className="text-xl font-bold tracking-tight text-verbo-dark sm:text-2xl">
                   Welcome!
                 </h2>
                 <p className="text-sm text-gray-500">
@@ -167,8 +156,10 @@ export default function CandidatePositionPage() {
                     footerActionLink:
                       "text-verbo-purple hover:text-verbo-purple/90",
                     card: "shadow-none border-none",
-                    headerTitle: "text-2xl font-bold tracking-tight",
+                    headerTitle: "text-xl font-bold tracking-tight sm:text-2xl",
                     headerSubtitle: "text-sm text-gray-500",
+                    formFieldInput: "rounded-lg",
+                    formFieldLabel: "text-sm font-medium text-gray-700",
                   },
                 }}
                 routing="hash"
@@ -181,7 +172,7 @@ export default function CandidatePositionPage() {
               />
 
               {/* Privacy text at the bottom */}
-              <p className="mt-8 text-center text-xs text-gray-500">
+              <p className="mt-6 text-center text-xs text-gray-500 sm:mt-8">
                 Your information will be shared with the recruiter for
                 evaluation purposes
               </p>
