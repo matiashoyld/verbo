@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { extractSkillsFromJobDescription, generateAssessmentCase } from "~/lib/gemini";
+import { model } from "~/lib/gemini/client";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
 // Types for the structured data format we send to the AI
@@ -985,6 +986,43 @@ export const positionsRouter = createTRPCRouter({
       } catch (error) {
         console.error(`Error fetching position by ID (public):`, error);
         throw error;
+      }
+    }),
+
+  // Add this new debug endpoint
+  testGeminiConnection: publicProcedure
+    .mutation(async () => {
+      try {
+        console.log("[API TEST] Testing Gemini API connection");
+        
+        // Try to make a simple API call to check if Gemini is working
+        const startTime = Date.now();
+        
+        const testResult = await model.generateContent("Respond with 'OK' if you can read this message.");
+        const responseTime = Date.now() - startTime;
+        
+        const response = await testResult.response;
+        const text = response.text();
+        
+        console.log(`[API TEST] Gemini response (${responseTime}ms): ${text}`);
+        
+        return {
+          success: true,
+          responseTime,
+          response: text,
+          environment: process.env.NODE_ENV || "unknown",
+          apiKeyLength: (process.env.GOOGLE_AI_API_KEY || "").length,
+          modelName: "gemini-2.0-flash-thinking-exp-01-21",
+        };
+      } catch (error) {
+        console.error("[API TEST] Gemini API test failed:", error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+          environment: process.env.NODE_ENV || "unknown",
+          apiKeyLength: (process.env.GOOGLE_AI_API_KEY || "").length,
+          modelName: "gemini-2.0-flash-thinking-exp-01-21",
+        };
       }
     }),
 });

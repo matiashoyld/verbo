@@ -1,8 +1,15 @@
 import * as LucideIcons from "lucide-react";
-import { HelpCircle, LucideIcon } from "lucide-react";
+import { HelpCircle, LucideIcon, Terminal } from "lucide-react";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { Textarea } from "~/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { api } from "~/trpc/react";
 import { CommonPosition } from "~/types/skills";
 
@@ -20,6 +27,23 @@ export function JobDescriptionStep({
   const { data: commonPositions = [], isLoading: isLoadingPositions } =
     api.positions.getCommonPositions.useQuery();
 
+  // State for the diagnostics data
+  const [diagnosticsResult, setDiagnosticsResult] = useState<{
+    success?: boolean;
+    response?: string;
+    error?: string;
+    environment?: string;
+    responseTime?: number;
+    apiKeyLength?: number;
+    modelName?: string;
+  } | null>(null);
+
+  // Loading state for diagnostics button
+  const [isTestingApi, setIsTestingApi] = useState(false);
+
+  // Get the test API function
+  const testGeminiConnection = api.positions.testGeminiConnection.useMutation();
+
   // Helper function to safely get an icon component
   const getIconComponent = (iconName: string): LucideIcon => {
     const IconComponent = LucideIcons[
@@ -28,17 +52,99 @@ export function JobDescriptionStep({
     return IconComponent || HelpCircle;
   };
 
+  // Function to test the Gemini API connection
+  const handleTestGeminiApi = async () => {
+    setIsTestingApi(true);
+    setDiagnosticsResult(null);
+
+    try {
+      const result = await testGeminiConnection.mutateAsync();
+      setDiagnosticsResult(result);
+    } catch (error) {
+      setDiagnosticsResult({
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsTestingApi(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {!hideHeader && (
         <div className="space-y-1.5">
-          <h3 className="text-lg font-semibold leading-none tracking-tight">
-            Job Description
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold leading-none tracking-tight">
+              Job Description
+            </h3>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTestGeminiApi}
+                    disabled={isTestingApi}
+                    className="flex items-center gap-1.5"
+                  >
+                    <Terminal className="h-3.5 w-3.5" />
+                    {isTestingApi ? "Testing..." : "Test AI Connection"}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Check if the AI service is working correctly</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
           <p className="text-sm text-muted-foreground">
             Select from our list of common positions or write your own job
             description.
           </p>
+
+          {/* Show diagnostic results if available */}
+          {diagnosticsResult && (
+            <div
+              className={`mt-2 rounded-md p-3 text-sm ${
+                diagnosticsResult.success
+                  ? "bg-green-50 text-green-800"
+                  : "bg-rose-50 text-rose-800"
+              }`}
+            >
+              <div className="font-semibold">
+                {diagnosticsResult.success
+                  ? "AI Connection: OK"
+                  : "AI Connection: Failed"}
+              </div>
+              <div className="mt-1 space-y-1">
+                {diagnosticsResult.environment && (
+                  <div>Environment: {diagnosticsResult.environment}</div>
+                )}
+                {diagnosticsResult.modelName && (
+                  <div>Model: {diagnosticsResult.modelName}</div>
+                )}
+                {diagnosticsResult.responseTime && (
+                  <div>Response Time: {diagnosticsResult.responseTime}ms</div>
+                )}
+                {diagnosticsResult.apiKeyLength && (
+                  <div>
+                    API Key Length: {diagnosticsResult.apiKeyLength} chars
+                  </div>
+                )}
+                {diagnosticsResult.response && (
+                  <div>AI Response: {diagnosticsResult.response}</div>
+                )}
+                {diagnosticsResult.error && (
+                  <div className="text-rose-700">
+                    Error: {diagnosticsResult.error}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
