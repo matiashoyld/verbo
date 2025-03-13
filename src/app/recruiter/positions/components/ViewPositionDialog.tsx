@@ -174,20 +174,9 @@ export function ViewPositionDialog({
         {/* Dialog Header */}
         <div className="p-5">
           <DialogHeader className="text-center sm:text-left">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-lg font-semibold leading-none tracking-tight">
-                {position?.title || "Position Details"}
-              </DialogTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 border-verbo-purple/20 text-verbo-purple hover:bg-verbo-purple/10"
-                onClick={copyCandidateLink}
-              >
-                <Link className="h-4 w-4" />
-                <span>Copy Candidate Link</span>
-              </Button>
-            </div>
+            <DialogTitle className="text-lg font-semibold leading-none tracking-tight">
+              {position?.title || "Position Details"}
+            </DialogTitle>
             <p className="text-sm text-muted-foreground">
               Review and edit the assessment case and questions.
             </p>
@@ -217,21 +206,31 @@ export function ViewPositionDialog({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-2 border-t p-4">
+        <div className="flex justify-between border-t p-4">
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={saving}
+            className="flex items-center gap-2 border-verbo-purple/20 text-verbo-purple hover:bg-verbo-purple/10"
+            onClick={copyCandidateLink}
           >
-            Cancel
+            <Link className="h-4 w-4" />
+            <span>Copy Candidate Link</span>
           </Button>
-          <Button
-            onClick={handleSaveChanges}
-            disabled={!hasChanges || saving}
-            className="bg-verbo-green hover:bg-verbo-green/90"
-          >
-            {saving ? "Saving..." : "Save Changes"}
-          </Button>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveChanges}
+              disabled={!hasChanges || saving}
+              className="bg-verbo-purple hover:bg-verbo-purple/90"
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
