@@ -303,13 +303,50 @@ Ensure you have properly set up your Clerk project and environment variables.
 
 ## Deployment
 
-The app is deployed on [Vercel](https://vercel.com), and you can access the live version at [verbo-alpha.vercel.app](https://verbo-alpha.vercel.app/).
+The application can be deployed to Vercel by following these steps:
 
-For deploying your own instance:
+1. **Push your code to a Git repository** (GitHub, GitLab, or Bitbucket)
 
-1. Set up a Vercel account and connect your repository
-2. Configure the environment variables in Vercel's dashboard
-3. Deploy the application
+2. **Connect your repository to Vercel**
+   - Go to [vercel.com](https://vercel.com)
+   - Click "Add New" → "Project"
+   - Select your repository and click "Import"
+
+3. **Configure environment variables**
+   - Add all the required environment variables from your `.env` file
+
+4. **Set up database**
+   - Ensure your Supabase database is configured properly
+   - Check that the `DATABASE_URL` and `DIRECT_URL` environment variables are set correctly
+
+5. **Configure Vercel Function Timeout**
+   - This application uses AI features that may require longer execution times
+   - After deploying, go to Project Settings → Functions
+   - Set "Max Duration" to at least 60 seconds
+   - Alternatively, add `VERCEL_FUNCTIONS_MAXDURATION` with value `60` in environment variables
+
+6. **Deploy!**
+   - Click "Deploy" and wait for the build process to complete
+
+### Troubleshooting Vercel Deployments
+
+If you encounter issues with function timeouts or error messages like "Stream closed", try these steps:
+
+1. **Ensure function timeout is set to 60 seconds**
+   - Go to Project Settings → Functions → set "Max Duration" to 60
+   - This is critical for AI operations that may take longer than the default timeout
+
+2. **Check Vercel logs**
+   - Functions using AI models (especially for skills extraction) may take longer
+   - Log into Vercel dashboard and check the function logs for errors
+
+3. **Verify API keys**
+   - Double-check that all API keys (Google AI, OpenAI) are correctly set
+   - Different environments (development vs production) may require different API keys
+
+4. **Database connection issues**
+   - Make sure your database connection URLs are correct
+   - Verify that your IP is whitelisted in Supabase if required
 
 ---
 

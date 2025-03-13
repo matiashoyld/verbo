@@ -1,16 +1,5 @@
 {
-  "functions": {
-    ".next/server/pages/api/**/*.js": {
-      "maxDuration": 60
-    },
-    ".next/server/app/api/**/*.js": {
-      "maxDuration": 60
-    },
-    ".vercel/output/functions/**/*.func/**/*.js": {
-      "maxDuration": 60
-    }
-  },
-  "crons": [],
+  "buildCommand": "prisma generate && next build",
   "headers": [
     {
       "source": "/(.*)",
@@ -21,5 +10,8 @@
         }
       ]
     }
-  ]
+  ],
+  "env": {
+    "VERCEL_FUNCTIONS_MAXDURATION": "60"
+  }
 }
