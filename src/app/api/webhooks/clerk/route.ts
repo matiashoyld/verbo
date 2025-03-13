@@ -88,7 +88,16 @@ export async function POST(req: NextRequest) {
     console.log("- X-Forwarded-For:", xForwardedFor);
     console.log("- Is candidate sign-up based on referer:", isCandidateReferer);
     console.log("- Is candidate sign-up based on origin:", isCandidateOrigin);
+    
+    // Add more detailed logging for metadata
     console.log("- Raw metadata from Clerk:", JSON.stringify(evt.data.unsafe_metadata || {}));
+    console.log("- Has unsafe_metadata?", Boolean(evt.data.unsafe_metadata));
+    console.log("- unsafe_metadata type:", evt.data.unsafe_metadata ? typeof evt.data.unsafe_metadata : "N/A");
+    if (evt.data.unsafe_metadata && typeof evt.data.unsafe_metadata === 'object') {
+      console.log("- unsafe_metadata keys:", Object.keys(evt.data.unsafe_metadata));
+      console.log("- role in metadata:", evt.data.unsafe_metadata.role);
+      console.log("- role type:", evt.data.unsafe_metadata.role ? typeof evt.data.unsafe_metadata.role : "N/A");
+    }
 
     const { id: clerkUserId, email_addresses, first_name, last_name } = evt.data;
     const email = email_addresses[0]?.email_address;
@@ -163,8 +172,37 @@ export async function POST(req: NextRequest) {
         // This is safer as we can always promote to RECRUITER if needed
         let userRole: "CANDIDATE" | "RECRUITER" = "CANDIDATE";
         
-        // Only set to RECRUITER if explicitly from the main signup page
-        if (referer && referer.includes("/sign-up") && !referer.includes("/candidate/")) {
+        // First check if role is explicitly set in unsafeMetadata from Clerk
+        if (evt.data.unsafe_metadata && typeof evt.data.unsafe_metadata === 'object') {
+          // Log all metadata keys for debugging
+          console.log("All metadata keys:", Object.keys(evt.data.unsafe_metadata));
+          
+          // Check for role property
+          if (evt.data.unsafe_metadata.role) {
+            const metadataRole = String(evt.data.unsafe_metadata.role);
+            console.log("Found role in metadata:", metadataRole);
+            
+            if (metadataRole === "RECRUITER") {
+              userRole = "RECRUITER";
+              console.log("Setting user role to RECRUITER based on metadata.role");
+            } else if (metadataRole === "CANDIDATE") {
+              userRole = "CANDIDATE";
+              console.log("Setting user role to CANDIDATE based on metadata.role");
+            }
+          }
+          // Check for isRecruiter property as fallback
+          else if (evt.data.unsafe_metadata.isRecruiter === true) {
+            userRole = "RECRUITER";
+            console.log("Setting user role to RECRUITER based on metadata.isRecruiter");
+          }
+          // Check for userType property as another fallback
+          else if (evt.data.unsafe_metadata.userType && String(evt.data.unsafe_metadata.userType) === "RECRUITER") {
+            userRole = "RECRUITER";
+            console.log("Setting user role to RECRUITER based on metadata.userType");
+          }
+        }
+        // Fallback to URL-based detection if no role in metadata
+        else if (referer && referer.includes("/sign-up") && !referer.includes("/candidate/")) {
           userRole = "RECRUITER";
           console.log("Setting user role to RECRUITER based on sign-up path");
         } else {

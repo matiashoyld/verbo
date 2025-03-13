@@ -174,6 +174,10 @@ export default function CandidatePositionPage() {
                 routing="hash"
                 forceRedirectUrl={redirectUrl}
                 signUpForceRedirectUrl={redirectUrl}
+                unsafeMetadata={{
+                  role: "CANDIDATE",
+                  signUpUrl: `/candidate/position/${params.id}`,
+                }}
               />
 
               {/* Privacy text at the bottom */}

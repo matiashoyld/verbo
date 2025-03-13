@@ -15,6 +15,8 @@ export default function SignUpPage() {
         unsafeMetadata={{
           role: "RECRUITER",
           signUpUrl: "/sign-up",
+          isRecruiter: true,
+          userType: "RECRUITER",
         }}
       />
     </div>
