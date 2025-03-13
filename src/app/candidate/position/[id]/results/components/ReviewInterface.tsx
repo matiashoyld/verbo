@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   ArrowRight,
+  ChevronDown,
   ListChecks,
   MessageSquare,
   Video,
@@ -43,6 +44,9 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
     questions[0]?.id || "",
   );
   const [activeTab, setActiveTab] = useState<"video" | "feedback">("feedback");
+
+  // State to control mobile dropdown visibility
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
 
   // Find current question and feedback
   const currentQuestion = questions.find((q) => q.id === activeQuestionId);
@@ -136,7 +140,7 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
 
   return (
     <div className="animate-fade-in min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-8 py-6">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-8">
         <header className="mb-6">
           <h1 className="mb-1 text-2xl font-semibold">Assessment Review</h1>
           <p className="text-sm text-muted-foreground">
@@ -145,8 +149,8 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
         </header>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          {/* Question selector sidebar (left) - Now with sticky positioning */}
-          <div className="lg:col-span-2">
+          {/* Question selector sidebar (left) - hidden on mobile */}
+          <div className="hidden lg:col-span-2 lg:block">
             <div className="sticky top-16 overflow-hidden rounded-lg border bg-card shadow-sm">
               <div className="p-4">
                 <h2 className="mb-2 text-sm font-medium">Questions</h2>
@@ -188,12 +192,60 @@ const ReviewInterface: React.FC<ReviewInterfaceProps> = ({
             {/* Question display with inline navigation buttons */}
             <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
               <div className="p-5">
+                {/* Mobile dropdown selector for questions */}
+                <div className="relative mb-4 block lg:hidden">
+                  <button
+                    onClick={() => setMobileDropdownOpen(!mobileDropdownOpen)}
+                    className="flex w-full items-center justify-between rounded-md bg-verbo-purple/10 p-3 text-sm text-verbo-purple"
+                  >
+                    <span>
+                      Question {currentIndex + 1} of {questions.length}
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${mobileDropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {mobileDropdownOpen && (
+                    <div className="absolute z-10 mt-1 w-full rounded-md border bg-white shadow-lg">
+                      {questions.map((question, index) => (
+                        <button
+                          key={question.id}
+                          onClick={() => {
+                            setActiveQuestionId(question.id);
+                            setMobileDropdownOpen(false);
+                          }}
+                          className={`w-full p-3 text-left ${
+                            activeQuestionId === question.id
+                              ? "bg-verbo-purple/10 text-verbo-purple"
+                              : "hover:bg-gray-50"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <span
+                              className={`mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium ${
+                                activeQuestionId === question.id
+                                  ? "bg-verbo-purple text-white"
+                                  : "bg-secondary text-muted-foreground"
+                              }`}
+                            >
+                              {index + 1}
+                            </span>
+                            <div className="flex-1 truncate text-xs">
+                              Question {index + 1}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex items-center justify-between">
-                  <span className="inline-block rounded-md bg-verbo-purple/10 px-2 py-0.5 text-xs text-verbo-purple">
+                  <span className="inline-block hidden rounded-md bg-verbo-purple/10 px-2 py-0.5 text-xs text-verbo-purple lg:inline">
                     Question {currentIndex + 1} of {questions.length}
                   </span>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="hidden items-center space-x-2 lg:flex">
                     <button
                       onClick={handlePrev}
                       className={`flex items-center rounded-lg px-2 py-1 text-xs ${
