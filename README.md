@@ -2,9 +2,9 @@
 
 ![Verbo.ai Banner](/public/verbo-banner.png)
 
-(You can play with the app [here](https://verbo-alpha.vercel.app/))
+(You can play with the app as a Recruiter you can create an account [here](https://verbo-alpha.vercel.app/). If you want to test the app as a Candidate, try out [this case](https://verbo-alpha.vercel.app/candidate/position/6cf04ff0-5854-4344-87fd-2733f615b6b3))
 
-A skill assessment platform that transforms the hiring process through AI-driven interviews. Recruiters select specific technical or soft skills to evaluate, and applicants engage with an AI agent that guides them through interactive challenges while recording both audio and screen activity. The platform automatically extracts evidence of each skill from the recorded session and provides AI-powered assessments, drastically reducing the manual overhead of live interviews while maintaining consistency and objectivity.
+Verbo is a skill assessment platform that transforms the hiring process through AI-driven interviews. Recruiters select specific technical or soft skills to evaluate, and applicants engage with an AI agent that guides them through interactive challenges while recording both audio and screen activity. The platform automatically extracts evidence of each skill from the recorded session and provides AI-powered assessments, drastically reducing the manual overhead of live interviews while maintaining consistency and objectivity.
 
 ---
 
@@ -16,13 +16,14 @@ A skill assessment platform that transforms the hiring process through AI-driven
   - [Core Objectives](#core-objectives)
   - [Features and Use Cases](#features-and-use-cases)
   - [Tech Stack](#tech-stack)
+  - [Skills Taxonomy](#skills-taxonomy)
+  - [Video Compression](#video-compression)
   - [Folder Structure](#folder-structure)
   - [Prerequisites](#prerequisites)
   - [Getting Started](#getting-started)
   - [Usage](#usage)
   - [Authentication](#authentication)
   - [Deployment](#deployment)
-  - [Additional Considerations](#additional-considerations)
   - [Color Palette](#color-palette)
 
 ---
@@ -85,6 +86,7 @@ verbo.ai is built on the [T3 Stack](https://create.t3.gg/), which combines:
   - [Next.js](https://nextjs.org/) – React-based framework for server-rendered or static apps
   - [Tailwind CSS](https://tailwindcss.com/) – Utility-first CSS framework
   - [shadcn/ui](https://ui.shadcn.com/) – Pre-built Tailwind-based components
+  - [Magic UI](https://magic-ui.design/) – Advanced UI components for interactivity enhancements
 
 - **Back-End**:  
   - [TypeScript](https://www.typescriptlang.org/) – Type-safe development
@@ -96,12 +98,40 @@ verbo.ai is built on the [T3 Stack](https://create.t3.gg/), which combines:
   - [Clerk](https://clerk.com/) – Full-featured authentication and user management
 
 - **AI Integration**:
-  - [Vercel AI SDK](https://sdk.vercel.ai/) – AI integration framework
-  - [OpenAI API](https://openai.com/api/) – GPT models for AI interactions
   - [Google Generative AI](https://ai.google.dev/) – Advanced AI capabilities
 
 - **Additional Services / Tools**:  
   - Hosted on [Vercel](https://vercel.com)
+
+---
+
+## Skills Taxonomy
+
+Verbo uses a comprehensive skills taxonomy that categorizes skills across different domains. The taxonomy is structured as:
+
+- **Categories**: Broad skill domains (e.g., Programming, Data Visualization, Leadership & Management)
+- **Skills**: Specific competencies within categories (e.g., Python, Design Principles, Team Motivation)
+- **Competencies**: Specific measurable abilities within skills (e.g., Data Manipulation, Performance & Parallelization)
+
+Each competency includes detailed rubrics with 5 levels of proficiency:
+1. **Level 1 (Inadequate)**: Fundamental misunderstanding or inability
+2. **Level 2 (Needs Guidance)**: Limited understanding, requires significant assistance
+3. **Level 3 (Competent)**: Basic understanding and application with some guidance
+4. **Level 4 (Proficient)**: Strong understanding with consistent application
+5. **Level 5 (Exceptional)**: Mastery with advanced application and innovation
+
+The taxonomy serves as the foundation for assessment, providing standardized evaluation criteria across all interviews.
+
+## Video Compression
+
+Verbo implements efficient video recording and compression to optimize file sizes while maintaining quality for AI analysis:
+
+- **Stream Optimization**: Before recording begins, video streams are optimized with reduced resolution (960x540), lower frame rate (10 fps), and aggressive encoding parameters
+- **In-Browser Processing**: Video is recorded using the `MediaRecorder` API with optimized codec selection (vp9 with opus audio when available)
+- **Post-Recording Compression**: After recording, videos undergo additional processing to further reduce file size
+- **Upload Optimization**: Compressed videos are efficiently uploaded to Supabase storage with metadata tracking
+
+This multi-stage approach ensures recordings are small enough for efficient storage and AI processing while maintaining sufficient quality for accurate skill assessment.
 
 ---
 
@@ -114,12 +144,13 @@ verbo/
 ├─ .env # Environment variables (DB connections, API keys)
 ├─ prisma/
 │  ├─ schema.prisma # Database schema
+│  ├─ data/ # Seed data including skills taxonomy
 │  └─ migrations/ # Database migrations
 ├─ src/
 │  ├─ app/ # Next.js App Router pages
 │  │  ├─ api/ # API routes
 │  │  │  ├─ trpc/[trpc]/ # tRPC handler
-│  │  │  └─ webhooks/ # External service webhooks
+│  │  │  └─ webhooks/ # External service webhooks (Clerk)
 │  │  ├─ recruiter/ # Recruiter dashboard and features
 │  │  ├─ candidate/ # Candidate assessment interface
 │  │  ├─ sign-in/ # Clerk authentication pages
@@ -128,10 +159,9 @@ verbo/
 │  │  └─ page.tsx # Landing page
 │  ├─ components/ # React components
 │  │  ├─ ui/ # shadcn/ui components
-│  │  ├─ recruiter/ # Recruiter-specific components
-│  │  └─ candidate/ # Candidate-specific components
+│  │  └─ magicui/ # Magic UI custom components
 │  ├─ lib/ # Utility functions and shared logic
-│  │  ├─ ai.ts # AI integration utilities
+│  │  ├─ gemini/ # Google AI integration
 │  │  ├─ prompts/ # LLM prompt templates
 │  │  └─ recording.ts # Audio/screen recording logic
 │  ├─ middleware.ts # Clerk authentication middleware
@@ -176,11 +206,7 @@ Before you begin, ensure you have the following installed and set up:
   2. Create a new application
   3. Get your API keys from the dashboard
 
-- **OpenAI API Key** for AI features
-  1. Sign up at [platform.openai.com](https://platform.openai.com)
-  2. Create an API key in your dashboard
-
-- **Google AI API Key** for generative AI features
+- **Google AI API Key** for Gemini AI integration
   1. Sign up at [ai.google.dev](https://ai.google.dev)
   2. Create an API key in your dashboard
 
@@ -205,42 +231,59 @@ Before you begin, ensure you have the following installed and set up:
    Create a `.env` file in the root directory with the following variables:
 
    ```env
-   # Database Configuration (Required)
-   DATABASE_URL="your-supabase-database-url"
-   DIRECT_URL="your-supabase-direct-connection-url"
+   # Prisma - Supabase connection URLs
+   # Connection pooling for normal operations
+   DATABASE_URL="postgresql://postgres:password@host:port/database?pgbouncer=true"
+   # Direct connection for migrations
+   DIRECT_URL="postgresql://postgres:password@host:port/database"
 
-   # Clerk Authentication (Required)
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="your-clerk-publishable-key"
-   CLERK_SECRET_KEY="your-clerk-secret-key"
-   CLERK_WEBHOOK_SECRET="your-clerk-webhook-secret"
+   # Supabase
+   NEXT_PUBLIC_SUPABASE_URL="https://your-project-id.supabase.co"
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+   SUPABASE_SERVICE_ROLE_KEY=""
 
-   # OpenAI (Required for AI features)
-   OPENAI_API_KEY="your-openai-api-key"
+   # Clerk Authentication
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=""
+   CLERK_SECRET_KEY=""
+   CLERK_WEBHOOK_SECRET=""
 
-   # Google Generative AI (Required for AI features)
-   GOOGLE_AI_API_KEY="your-google-ai-api-key"
+   # Google AI
+   GOOGLE_AI_API_KEY=""
 
    # Node Environment
    NODE_ENV="development"
    ```
 
-4. **Set Up the Database**  
+4. **Set Up the Database & Storage**  
 
    a. First, make sure your Supabase project is properly configured
+   
+   b. Set up storage buckets and policies in Supabase:
 
-   b. Run Prisma migrations to set up your database schema:
+   ```bash
+   npm run setup-supabase-storage
+   ```
+
+   c. Set up recording tables in Supabase:
+
+   ```bash
+   npm run setup-supabase-recording
+   ```
+
+   d. Run Prisma migrations to set up your database schema:
 
    ```bash
    # Generate Prisma Client
    npx prisma generate
 
-   # Run migrations or push schema to database
+   # Run migrations
    npx prisma migrate dev
-   # or
-   npx prisma db push
+
+   # Seed the database with initial data including skills taxonomy
+   npx prisma db seed
    ```
 
-   c. (Optional) View your database with Prisma Studio:
+   e. (Optional) View your database with Prisma Studio:
 
    ```bash
    npm run db:studio
@@ -270,6 +313,10 @@ Before you begin, ensure you have the following installed and set up:
    - If you get authentication errors:
      - Verify your Clerk API keys
      - Ensure all required Clerk environment variables are set
+
+   - If you get AI integration errors:
+     - Check your Google AI API key
+     - Verify the API key has access to Gemini 2.0 Flash Thinking
 
    - If you get TypeScript errors:
      - Run `npm run typecheck` to see detailed errors
@@ -312,29 +359,6 @@ For deploying your own instance:
 3. Deploy the application
 
 ---
-
-## Additional Considerations
-
-1. **AI Integration**  
-   - Leverages [Vercel AI SDK](https://sdk.vercel.ai/) for skill assessment and analysis
-   - Uses multiple AI models including OpenAI's GPT models and Google's Generative AI
-   - Implements streaming responses for real-time AI interaction
-
-2. **Recording & Storage**  
-   - Uses `MediaRecorder` for audio/screen capture
-   - Secure storage in Supabase for all recordings
-   - Efficient chunking and upload strategies
-
-3. **Analytics & Assessment**  
-   - AI-powered skill evidence extraction
-   - Comparative analytics across candidates
-   - Customizable assessment criteria
-
-4. **LLM Prompts Management**
-   - All prompt templates stored in `src/lib/prompts/`
-   - Each prompt template in its own file for maintainability
-   - Exposed through `src/lib/prompts/index.ts`
-   - Function parameters for dynamic content injection
 
 ## Color Palette
 
