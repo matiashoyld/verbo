@@ -13,10 +13,10 @@ export default function SignUpPage() {
         redirectUrl="/"
         afterSignUpUrl="/"
         unsafeMetadata={{
-          role: "RECRUITER",
+          role: "CANDIDATE",
           signUpUrl: "/sign-up",
-          isRecruiter: true,
-          userType: "RECRUITER",
+          isCandidate: true,
+          userType: "CANDIDATE",
         }}
       />
     </div>

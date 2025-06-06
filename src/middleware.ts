@@ -52,10 +52,10 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Extract user role from the session claims
-  // Default to "RECRUITER" if we can't determine role
+  // Default to "CANDIDATE" if we can't determine role
   const role = sessionClaims?.metadata ? 
-    (sessionClaims.metadata as { role?: string })?.role ?? "RECRUITER" 
-    : "RECRUITER";
+    (sessionClaims.metadata as { role?: string })?.role ?? "CANDIDATE" 
+    : "CANDIDATE";
   
   // List of paths that should be redirected based on role
   // Skip the root path as it's handled by the page component

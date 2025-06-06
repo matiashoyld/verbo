@@ -168,11 +168,10 @@ export async function POST(req: NextRequest) {
         );
         */
         
-        // Default to CANDIDATE for any users who aren't clearly recruiter signups
-        // This is safer as we can always promote to RECRUITER if needed
+        // Default to CANDIDATE as per new platform strategy
         let userRole: "CANDIDATE" | "RECRUITER" = "CANDIDATE";
         
-        // First check if role is explicitly set in unsafeMetadata from Clerk
+        // Check if role is explicitly set in unsafeMetadata from Clerk
         if (evt.data.unsafe_metadata && typeof evt.data.unsafe_metadata === 'object') {
           // Log all metadata keys for debugging
           console.log("All metadata keys:", Object.keys(evt.data.unsafe_metadata));
@@ -201,15 +200,8 @@ export async function POST(req: NextRequest) {
             console.log("Setting user role to RECRUITER based on metadata.userType");
           }
         }
-        // Fallback to URL-based detection if no role in metadata
-        else if (referer && referer.includes("/sign-up") && !referer.includes("/candidate/")) {
-          userRole = "RECRUITER";
-          console.log("Setting user role to RECRUITER based on sign-up path");
-        } else {
-          console.log("Setting user role to CANDIDATE (default for safety)");
-        }
         
-        console.log(`Creating user with role: ${userRole}, email: ${email}, referer: ${referer}`);
+        console.log(`Creating user with role: ${userRole} (default is now CANDIDATE), email: ${email}, referer: ${referer}`);
         
         const newUser = await db.user.create({
           data: {
